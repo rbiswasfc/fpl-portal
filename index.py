@@ -8,18 +8,16 @@ import dash_bootstrap_components as dbc
 from app import server
 from app import app
 
-
 dropdown = dbc.DropdownMenu(
     children=[
         dbc.DropdownMenuItem("Stats", href="/stats"),
         dbc.DropdownMenuItem("Predictions", href="/lgbm-ml"),
         dbc.DropdownMenuItem("FPL Squad", href="/squad"),
     ],
-    nav = True,
-    in_navbar = True,
-    label = "Explore",
+    nav=True,
+    in_navbar=True,
+    label="Explore",
 )
-
 
 navbar = dbc.Navbar(
     dbc.Container(
@@ -58,6 +56,7 @@ def toggle_navbar_collapse(n, is_open):
         return not is_open
     return is_open
 
+
 for i in [2]:
     app.callback(
         Output(f"navbar-collapse{i}", "is_open"),
@@ -79,6 +78,7 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
+
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
@@ -88,6 +88,7 @@ def display_page(pathname):
         return html.Div("My Squad")
     else:
         return html.Div("This is Home")
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
