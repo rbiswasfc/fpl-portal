@@ -86,7 +86,7 @@ class DataScraper(object):
 
     def get_gameweek_data(self):
         bootstrap_data = self.get_bootstrap_data()
-        gameweek_data = bootstrap_data["events"] 
+        gameweek_data = bootstrap_data["events"]
         return gameweek_data
 
     def get_all_players_data(self):
@@ -111,7 +111,6 @@ class DataScraper(object):
         url = self.fpl_url + self.player_suburl + "/{}/".format(player_id)
         data = fetch_data(url)
         return data
-        
 
     def get_team_data(self):
         """
@@ -238,7 +237,7 @@ class DataScraper(object):
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
     data_scraper = DataScraper(this_config)
-    
+
     # gw_data = data_scraper.get_gameweek_data()
     # print(gw_data[2])
     # print(len(gw_data))
