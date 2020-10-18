@@ -54,7 +54,12 @@ class DataProcessor(object):
         pass
 
     def save_fixtures_data(self):
-        pass
+        data = self.data_scraper.get_fixtures_data()
+        file_path = os.path.join(self.data_dir_raw, "fixtures.json")
+        save_json_data(data, file_path)
+        df = pd.DataFrame(data)
+        df.to_csv(os.path.join(self.data_dir_clean, 'fixtures.csv'), index=False)
+        print(df.head())
 
     def merge_gameweek_data(self):
         pass
@@ -63,4 +68,5 @@ class DataProcessor(object):
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data"}
     data_processor = DataProcessor(this_config)
-    data_processor.save_teams_data()
+    # data_processor.save_teams_data()
+    data_processor.save_fixtures_data()
