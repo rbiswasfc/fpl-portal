@@ -4,6 +4,7 @@ import json
 import requests
 
 import pandas as pd
+from datetime import datetime
 
 sys.path.insert(0, './')
 from scripts.utils import load_config, check_create_dir
@@ -50,6 +51,7 @@ class DataScraper(object):
         self.team_entry_suburl = "entry/"
         self.bootstrap_suburl = "bootstrap-static/"
         self.player_suburl = "element-summary/"
+        self.fixtures_suburl = "fixtures/"
 
         self.league_standing_url = self.fpl_url + self.classic_league_suburl
 
@@ -78,12 +80,16 @@ class DataScraper(object):
         return data
 
     def get_fixtures_data(self):
-        pass
+        url = self.fpl_url + self.fixtures_suburl
+        data = fetch_data(url)
+        return data
 
     def get_gameweek_data(self):
-        pass
+        bootstrap_data = self.get_bootstrap_data()
+        gameweek_data = bootstrap_data["events"] 
+        return gameweek_data
 
-    def get_player_data(self):
+    def get_all_players_data(self):
         """
         Fetch player specific data from the FPL REST API endpoint
         :return:
@@ -100,6 +106,12 @@ class DataScraper(object):
             data = fetch_data(player_url)
             player['history'] = data['history']
         return players
+
+    def get_player_data(self, player_id):
+        url = self.fpl_url + self.player_suburl + "/{}/".format(player_id)
+        data = fetch_data(url)
+        return data
+        
 
     def get_team_data(self):
         """
@@ -211,6 +223,14 @@ class DataScraper(object):
         data = fetch_data(url)
         return data
 
+    def get_recent_gameweek_id(self):
+        gws = self.get_gameweek_data()
+        now = datetime.utcnow()
+        for gw in gws:
+            deadline = datetime.strptime(gw['deadline_time'], '%Y-%m-%dT%H:%M:%SZ')
+            if deadline > now:
+                return gw['id'] - 1
+
     def execute_all(self):
         pass
 
@@ -218,20 +238,33 @@ class DataScraper(object):
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
     data_scraper = DataScraper(this_config)
-    data_scraped = data_scraper.get_bootstrap_data()
+    
+    # gw_data = data_scraper.get_gameweek_data()
+    # print(gw_data[2])
+    # print(len(gw_data))
 
-    print(data_scraped.keys())
+    # this_player_id = 4
+    # this_player_data = data_scraper.get_player_data(this_player_id)
+    # print(this_player_data.keys())
+    # print(this_player_data["history"][0].keys())
 
-    df = data_scraper.get_fpl_manager_entry_ids()
-    print(df)
-    this_entry_id = '2235933'
-    gws = 4
+    cur_gw = data_scraper.get_recent_gameweek_id()
+    print(cur_gw)
+
+    # df = data_scraper.get_fpl_manager_entry_ids()
+    # print(df)
+    # this_entry_id = '2235933'
+    # gws = 4
+
+    # fixtures_data = data_scraper.get_fixtures_data()
+    # print(fixtures_data[5])
+    # print(len(fixtures_data))
 
     # personal_data = data_scraper.get_entry_personal_data(this_entry_id)
     # print(personal_data)
 
-    entry_data = data_scraper.get_entry_data(this_entry_id)
-    print(entry_data)
+    # entry_data = data_scraper.get_entry_data(this_entry_id)
+    # print(entry_data)
 
     # entry_gw_data = data_scraper.get_entry_gws_data(this_entry_id, gws)
     # print(entry_gw_data)
