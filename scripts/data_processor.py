@@ -50,6 +50,16 @@ class DataProcessor(object):
         df.to_csv(os.path.join(self.data_dir_clean, 'teams.csv'), index=False)
         print(df.head())
 
+    def save_players_data(self):
+        # data = self.data_scraper.get_all_players_data()
+        bootstrap_data = self.data_scraper.get_bootstrap_data()
+        data = bootstrap_data['elements']
+        file_path = os.path.join(self.data_dir_raw, "players_raw.json")
+        save_json_data(data, file_path)
+        df = pd.DataFrame(data)
+        df.to_csv(os.path.join(self.data_dir_clean, 'players_raw.csv'), index=False)
+        print(df.head())
+
     def save_gameweek_data(self):
         pass
 
@@ -69,4 +79,5 @@ if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data"}
     data_processor = DataProcessor(this_config)
     # data_processor.save_teams_data()
-    data_processor.save_fixtures_data()
+    # data_processor.save_fixtures_data()
+    data_processor.save_players_data()
