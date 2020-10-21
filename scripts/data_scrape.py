@@ -84,7 +84,7 @@ class DataScraper(object):
         data = fetch_data(url)
         return data
 
-    def get_gameweek_data(self):
+    def get_gameweek_metadata(self):
         bootstrap_data = self.get_bootstrap_data()
         gameweek_data = bootstrap_data["events"]
         return gameweek_data
@@ -222,13 +222,13 @@ class DataScraper(object):
         data = fetch_data(url)
         return data
 
-    def get_recent_gameweek_id(self):
-        gws = self.get_gameweek_data()
+    def get_next_gameweek_id(self):
+        gws = self.get_gameweek_metadata()
         now = datetime.utcnow()
         for gw in gws:
             deadline = datetime.strptime(gw['deadline_time'], '%Y-%m-%dT%H:%M:%SZ')
             if deadline > now:
-                return gw['id'] - 1
+                return gw['id']
 
     def execute_all(self):
         pass
