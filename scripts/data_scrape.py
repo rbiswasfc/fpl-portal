@@ -193,7 +193,7 @@ class DataScraper(object):
         data = fetch_data(url)
         return data
 
-    def get_entry_gws_data(self, entry_id, num_gws):
+    def get_entry_gw_picks(self, entry_id, num_gws):
         """
         get gameweek picks of fantasy managers
         :param entry_id:
@@ -206,11 +206,14 @@ class DataScraper(object):
         gw_data = []
         for i in range(1, num_gws + 1):
             url = self.manager_url + str(entry_id) + "/event/" + str(i) + "/picks/"
-            data = fetch_data(url)
-            gw_data += [data]
+            try:
+                data = fetch_data(url)
+                gw_data += [data]
+            except:
+                print("Squad data not found for {} in gw {}".format(entry_id, i))
         return gw_data
 
-    def get_entry_transfers_data(self, entry_id):
+    def get_entry_gw_transfers(self, entry_id):
         """
         get transfer data of fpl managers
         :param entry_id:

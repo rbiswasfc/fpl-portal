@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import pickle
 import pandas as pd
 from tqdm import tqdm
 
@@ -61,9 +62,6 @@ class DataProcessor(object):
         df.to_csv(os.path.join(self.data_dir_clean, 'players_raw.csv'), index=False)
         print(df.head())
 
-    def merge_gameweek_data(self):
-        pass
-
     def save_fixtures_data(self):
         data = self.data_scraper.get_fixtures_data()
         file_path = os.path.join(self.data_dir_raw, "fixtures.json")
@@ -82,13 +80,12 @@ class DataProcessor(object):
 
     def save_gameweek_data(self):
         bootstrap_data = self.data_scraper.get_bootstrap_data()
-        this_gw = self.data_scraper.get_next_gameweek_id() -1
+        this_gw = self.data_scraper.get_next_gameweek_id() - 1
         players = bootstrap_data['elements']
         position_map = {'1': 'GK', '2': 'DEF', '3': 'MID', '4': 'FWD'}
         snapshot_data = []
         player_dfs = []
         for player in tqdm(players):
-
             player_id = player['id']
             player_name = player['first_name'] + ' ' + player['second_name']
             player_position = position_map[str(int(player['element_type']))]
@@ -117,6 +114,35 @@ class DataProcessor(object):
         print(df_gws.head())
         df_gws.to_csv(merged_df_path, index=False)
 
+    def save_classic_league_history(self, league_id="1457340"):
+        df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
+        manager_ids = df_league["entry_id"].unique().tolist()
+        league_history_rows = []
+        for manager_id in manager_ids:
+            this_manager_history = self.data_scraper.get_entry_data(manager_id)['current']
+            for this_gw in this_manager_history:
+                this_gw['entry_id'] = manager_id
+                league_history_rows.append(this_gw)
+        df_league.to_csv(os.path.join(self.data_dir_clean, "league_{}_metadata.csv".format(league_id)))
+        df_league_history = pd.DataFrame(league_history_rows)
+        df_tmp = df_league[["entry_id", "entry_name", "manager_name"]].copy()
+        df_league_history = pd.merge(df_league_history, df_tmp, on='entry_id', how='left')
+        df_league_history.to_csv(os.path.join(self.data_dir_clean, "league_{}_history.csv".format(league_id)))
+        # print(df_league_history.head())
+
+    def save_classic_league_picks(self, league_id="1457340"):
+
+        df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
+        manager_ids = df_league["entry_id"].unique().tolist()
+        this_gw = self.data_scraper.get_next_gameweek_id() - 1
+        manage_picks_dict = {}
+        for manager_id in manager_ids:
+            this_manager_picks = self.data_scraper.get_entry_gw_picks(manager_id, this_gw)
+            manage_picks_dict[manager_id] = this_manager_picks
+
+        with open(os.path.join(self.data_dir_clean, "league_{}_manager_picks.pkl".format(league_id)), 'wb') as f:
+            pickle.dump(manage_picks_dict, f)
+
 
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data"}
@@ -125,4 +151,15 @@ if __name__ == "__main__":
     # data_processor.save_fixtures_data()
     # data_processor.save_players_data()
     # data_processor.save_gameweek_metadata()
-    data_processor.save_gameweek_data()
+    # data_processor.save_gameweek_data()
+    # data_processor.save_classic_league_history()
+    # data_processor.save_classic_league_picks()
+
+    with open("./data/2020_21/clean/league_1457340_manager_picks.pkl", 'rb') as f:
+        manage_picks_dict = pickle.load(f)
+    manager_picks = manage_picks_dict[7006192]
+    gw_id = 5
+    for pick in manager_picks:
+        if pick["entry_history"]["event"] == gw_id:
+            df_picks = pd.DataFrame(pick["picks"])
+            print(df_picks)
