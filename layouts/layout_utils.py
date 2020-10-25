@@ -53,7 +53,7 @@ def make_line_plot(data, xlabel=None, ylabel=None):
     layout = go.Layout(xaxis={'title': xlabel},
                        yaxis={'title': ylabel},
                        margin={'l': 5, 'b': 75, 't': 25, 'r': 5},
-                       hovermode='closest')
+                       hovermode='x')
     figure = go.Figure(data=data, layout=layout)
     figure.layout.template = 'seaborn'
 

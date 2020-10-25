@@ -67,11 +67,6 @@ def make_team_selection_section(league_id, league_data):
               [State('league-search-dropdown', 'value')])
 def make_gw_history_plot(teams, league_id):
 
-    def format_hover(x):
-        team_name, ovr, val = x
-        text = "{}\nOVR: {:.1f}M\nBudget: {:.1f}".format(team_name, ovr/1e6, val/10)
-        return text
-
     if not league_id:
         return ""
 
@@ -91,7 +86,8 @@ def make_gw_history_plot(teams, league_id):
         tmp_df = tmp_df[tmp_df["event"] >= start_gw].copy()
         tmp_df = tmp_df.sort_values(by="event")
         tmp_df["league_points"] = tmp_df["points"].cumsum()
-        tmp_df["hover_text"] = tmp_df[["entry_name", "overall_rank", "value"]].apply(lambda x: format_hover(x), axis=1)
+        tmp_df["gain"] = (tmp_df["overall_rank"] - tmp_df["overall_rank"].shift(periods=1)).fillna(0)
+
         # x_values = tmp_df["event"].tolist()
         # x_values.insert(0, x_values[0]-1)
         # y_values = tmp_df["league_points"].tolist()
@@ -103,8 +99,9 @@ def make_gw_history_plot(teams, league_id):
                            marker_size=tmp_df['points'],
                            hovertext=tmp_df['entry_name'],
                            hoverlabel=dict(namelength=0),
-                           hovertemplate='%{hovertext}<br>Score: %{y}' + '<br>%{text}</br>',
-                           text=['OVR: {:.1f}M \n Budget: {:.1f}'.format(ovr/1e6, val/10) for ovr, val in zip(tmp_df["overall_rank"].values, tmp_df["value"].values)]
+                           hovertemplate='%{hovertext}<br>Score: %{y} | GW Score: %{marker.size:,}' + '<br>%{text}</br>',
+                           text=['OVR: {:.1f}M | Budget: {:.1f} | Gain: {:.1f}k'.format(ovr/1e6, val/10, -delta/1000) for ovr, val, delta in zip(tmp_df["overall_rank"].values,
+                                                                                                                                                tmp_df["value"].values, tmp_df["gain"].values)]
                            )
         # trace = go.Scatter(tmp_df, x="event", y="league_points")
         data.append(trace)
