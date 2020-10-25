@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 
 
+
+
 def check_create_dir(dir_path):
     """
     check if folder exists at a specific path, if not create the directory
@@ -17,6 +19,8 @@ def load_config():
     with open("./assets/config_scrape.json", 'r') as f:
         config = json.load(f)
     return config
+
+
 
 
 if __name__ == "__main__":
