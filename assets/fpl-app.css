@@ -143,11 +143,12 @@
   }
   
   .section-title, #map-title {
-    font-size: 20px;
+    font-size: 18px;
     display: block;
-    text-align: left;
+    text-align: center;
     text-transform: uppercase;
-    margin-top: 3rem
+    margin-top: 2rem,
+    margin-bottom: 2rem
   }
   
   .mapboxgl-canvas,
@@ -241,7 +242,7 @@ New Additions for FPL Portal
 .title-modifier {
     font-size: 20px;
     text-transform: uppercase;
-    text-align: left
+    text-align: center
 }
 .tabs-modifier {
   font-size: 16px;
@@ -254,6 +255,18 @@ New Additions for FPL Portal
   flex-direction: row;
   align-items: left;
   justify-content: space-between;
-  padding: 1rem 0rem 1rem 0rem;
+  padding: 1rem 2rem 1rem 2rem;
   width: 100%;
+}
+
+.inline-header {
+  font-size: 16px;
+  text-transform: uppercase;
+  align-items: left;
+  margin-top: 3rem;
+  margin-bottom: 2rem;
+}
+
+.inline-search-bar {
+    background-color: black
 }

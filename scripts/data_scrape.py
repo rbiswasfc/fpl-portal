@@ -142,6 +142,8 @@ class DataScraper(object):
         player_names = []
         points = []
         ranks = []
+        last_rank = []
+        cur_gw_points = []
         ls_page = 1
         while (True):
             league_url = self.league_standing_url + str(
@@ -159,6 +161,8 @@ class DataScraper(object):
                 player_names.append(manager["player_name"])
                 points.append(manager["total"])
                 ranks.append(manager["rank"])
+                last_rank.append(manager["last_rank"])
+                cur_gw_points.append(manager["event_total"])
             ls_page += 1
         df_manager = pd.DataFrame()
         df_manager["entry_id"] = entries
@@ -166,7 +170,20 @@ class DataScraper(object):
         df_manager["manager_name"] = player_names
         df_manager["score"] = points
         df_manager["rank"] = ranks
+        df_manager["previous_rank"] = last_rank
+        df_manager["gw_points"] = cur_gw_points
+
+        # keep top 100 manages
+        n_keep = min(100, len(df_manager))
+        df_manager = df_manager.sort_values(by="score", ascending=False).head(n_keep)
+
         return df_manager
+
+    def get_league_start_gameweek(self, league_id="1457340"):
+        league_url = self.league_standing_url + str(league_id) + "/standings/"
+        data = fetch_data(league_url)
+        return int(data['league']['start_event'])
+
 
     def get_entry_data(self, entry_id):
         """
@@ -250,11 +267,14 @@ if __name__ == "__main__":
     # print(this_player_data.keys())
     # print(this_player_data["history"][0].keys())
 
-    cur_gw = data_scraper.get_recent_gameweek_id()
+    cur_gw = data_scraper.get_next_gameweek_id()
     print(cur_gw)
 
-    # df = data_scraper.get_fpl_manager_entry_ids()
-    # print(df)
+    league_start_gw = data_scraper.get_league_start_gameweek()
+    print(league_start_gw)
+
+    df = data_scraper.get_fpl_manager_entry_ids()
+    print(df)
     # this_entry_id = '2235933'
     # gws = 4
 

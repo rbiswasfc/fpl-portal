@@ -114,6 +114,11 @@ class DataProcessor(object):
         print(df_gws.head())
         df_gws.to_csv(merged_df_path, index=False)
 
+    def save_classic_league_standing(self, league_id="1457340"):
+        df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
+        df_league.to_csv(os.path.join(self.data_dir_clean, "league_{}_standing.csv".format(league_id)),
+                         index=False)
+
     def save_classic_league_history(self, league_id="1457340"):
         df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
         manager_ids = df_league["entry_id"].unique().tolist()
@@ -127,7 +132,8 @@ class DataProcessor(object):
         df_league_history = pd.DataFrame(league_history_rows)
         df_tmp = df_league[["entry_id", "entry_name", "manager_name"]].copy()
         df_league_history = pd.merge(df_league_history, df_tmp, on='entry_id', how='left')
-        df_league_history.to_csv(os.path.join(self.data_dir_clean, "league_{}_history.csv".format(league_id)))
+        df_league_history.to_csv(os.path.join(self.data_dir_clean, "league_{}_history.csv".format(league_id)),
+                                 index=False)
         # print(df_league_history.head())
 
     def save_classic_league_picks(self, league_id="1457340"):
@@ -154,12 +160,13 @@ if __name__ == "__main__":
     # data_processor.save_gameweek_data()
     # data_processor.save_classic_league_history()
     # data_processor.save_classic_league_picks()
+    data_processor.save_classic_league_standing()
 
-    with open("./data/2020_21/clean/league_1457340_manager_picks.pkl", 'rb') as f:
-        manage_picks_dict = pickle.load(f)
-    manager_picks = manage_picks_dict[7006192]
-    gw_id = 5
-    for pick in manager_picks:
-        if pick["entry_history"]["event"] == gw_id:
-            df_picks = pd.DataFrame(pick["picks"])
-            print(df_picks)
+    # with open("./data/2020_21/clean/league_1457340_manager_picks.pkl", 'rb') as f:
+    #    manage_picks_dict = pickle.load(f)
+    # manager_picks = manage_picks_dict[7006192]
+    # gw_id = 5
+    # for pick in manager_picks:
+    #    if pick["entry_history"]["event"] == gw_id:
+    #        df_picks = pd.DataFrame(pick["picks"])
+    #        print(df_picks)

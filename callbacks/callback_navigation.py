@@ -1,8 +1,9 @@
-import dash  
-import dash_html_components as html 
-from dash.dependencies import Input, Output 
+import dash
+import dash_html_components as html
+from dash.dependencies import Input, Output
 from app import app
 from layouts.layout_league import make_league_page
+
 
 @app.callback(Output('current-tab-content', 'children'),
               [Input('navigation-tab', 'active_tab')])
