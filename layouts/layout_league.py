@@ -18,16 +18,18 @@ def make_league_search_section():
 
 def make_left_layout_league():
     header = make_header("League Standing")
+    dropdown_section = make_dropdown('team-selection-dropdown', None,
+                    placeholder="Select Teams For Comparison ...", multi_flag=True)
     layout = html.Div(
         id='league-layout-left',
         className="six columns",
         children=[
             header,
             make_league_search_section(),
-            html.Div(id="league-standing-table"),
+            html.Div(id="league-standing-table", style={"width": "100%"}),
             dcc.Store(id="league-standing-memory"),
             html.Div("League Gameweek History", className='inline-header'),
-            html.Div(id='team-selection-div'),
+            dropdown_section,
             html.Div(id="league-point-history", style={"width": "100%"})
         ],
     )

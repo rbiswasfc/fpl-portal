@@ -45,21 +45,19 @@ def make_league_standing_table(league_id):
         return html.Div("Warning! This League Info Not Found!"), None
 
 
-@app.callback(Output('team-selection-div', 'children'),
+@app.callback(Output('team-selection-dropdown', 'options'),
               [Input('league-search-dropdown', 'value'),
                Input('league-standing-memory', 'data')])
 def make_team_selection_section(league_id, league_data):
-    if league_data:
+    if (league_id) and (league_data):
         df_managers = pd.DataFrame(league_data)
         managers = df_managers["Team"].unique().tolist()
         manager_options = [{'label': this_manager, 'value': this_manager} for this_manager in managers]
-        dropdown_id = 'team-selection-dropdown'
-        dropdown_section = make_dropdown(dropdown_id, manager_options,
-                                         placeholder="Select Teams For Comparison ...", multi_flag=True)
-        return dropdown_section
+
+        return manager_options
 
     else:
-        return None
+        return []
 
 
 @app.callback(Output('league-point-history', 'children'),
@@ -67,7 +65,7 @@ def make_team_selection_section(league_id, league_data):
               [State('league-search-dropdown', 'value')])
 def make_gw_history_plot(teams, league_id):
 
-    if not league_id:
+    if (not league_id) or (not teams):
         return ""
 
     config = load_config()

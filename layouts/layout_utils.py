@@ -33,12 +33,20 @@ def make_table(df):
 
 
 def make_dropdown(dropdown_id, dropdown_options, placeholder=None, multi_flag=False):
-    dropdown = dcc.Dropdown(
-        id=dropdown_id,
-        options=dropdown_options,
-        placeholder=placeholder,
-        multi=multi_flag
-    )
+    if dropdown_options:
+        dropdown = dcc.Dropdown(
+            id=dropdown_id,
+            options=dropdown_options,
+            placeholder=placeholder,
+            multi=multi_flag
+        )
+    else:
+        dropdown = dcc.Dropdown(
+            id=dropdown_id,
+            placeholder=placeholder,
+            multi=multi_flag
+        )
+
     dropdown_section = dbc.Row(
         children=[
             html.Div(dropdown, className='col-12')
