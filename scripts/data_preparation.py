@@ -1,8 +1,11 @@
 import os 
-import sys 
+import sys
+import pickle
+
 
 import numpy as np 
 import pandas as pd 
+import pdb 
 
 sys.path.insert(0, './')
 from scripts.utils import load_config, check_create_dir
@@ -19,6 +22,7 @@ class ModelDataMaker(object):
         self.team_filepath = os.path.join(self.data_dir, config["file_team"])
         self.gw_filepath = os.path.join(self.data_dir, config["file_gw"])
         self.player_filepath = os.path.join(self.data_dir, config["file_player"])
+        self.understat_team_filepath = os.path.join(self.data_dir, config["file_understat_team"])
 
     def get_fixtures_data(self):
         df = pd.read_csv(self.fixture_filepath)
@@ -42,6 +46,11 @@ class ModelDataMaker(object):
         df = pd.read_csv(self.player_filepath)
         df.columns = df.columns.str.lower()
         return df
+
+    def get_understat_team_data(self):
+        with open(self.understat_team_filepath, 'rb') as f:
+            data = pickle.load(f)
+        return data
     
     def get_player_id_team_id_map(self):
         player_id_team_id_map = {}
@@ -83,6 +92,47 @@ class ModelDataMaker(object):
         self.team_id_team_name_map = team_id_team_name_map
         return team_id_team_name_map
 
+    def get_team_name_team_id_map(self):
+        team_id_team_name_map = self.get_team_id_team_name_map()
+        team_name_team_id_map = {}
+        for k,v in team_id_team_name_map.items():
+            team_name_team_id_map[v] = k
+        self.team_name_team_id_map = team_name_team_id_map
+        return team_name_team_id_map
+
+    def prepare_understat_data(self):
+        data = self.get_understat_team_data()
+        
+        with open(os.path.join(self.data_dir, "understat_team_mapping.json"), 'rb') as f:
+            team_name_mapping = json.load(f)
+        
+        team_name_team_id_map = self.get_team_name_team_id_map()
+        understat_ids = list(data.keys())
+        dfs = []
+        for this_id in understat_ids:
+            this_data = data[this_id]
+            
+            team_name = this_data['title']
+            team_history_data = this_data['history']
+            team_df = pd.DataFrame(team_history_data)
+            # print(team_df.columns)
+            team_df['date'] = pd.to_datetime(team_df['date'])
+            team_df = team_df.sort_values(by='date')
+            team_df["effective_gw_id"] = [i+1 for i in range(len(team_df))]
+            team_df["ppda_att"] = team_df["ppda"].apply(lambda x: x['att'])
+            team_df["ppda_def"] = team_df["ppda"].apply(lambda x: x['def'])
+            team_df["ppda_allowed_att"] = team_df["ppda_allowed"].apply(lambda x: x['att'])
+            team_df["ppda_allowed_def"] = team_df["ppda_allowed"].apply(lambda x: x['def'])
+            team_df = team_df.drop(columns=["ppda", "ppda_allowed"])
+            team_df["team_name"] = team_name
+            team_df["fpl_team_name"] = team_df["team_name"].apply(lambda x: team_name_mapping.get(x, x))
+            team_df["understat_id"] = this_id
+            team_df["team_id"] = team_df["fpl_team_name"].apply(lambda x: team_name_team_id_map.get(x, 'NA'))
+            dfs.append(team_df)
+        df_understat = pd.concat(dfs)
+        df_understat.columns = df_understat.columns.str.lower()
+        return df_understat
+
     def make_base_data(self):
         
         df_teams = self.get_teams_data()
@@ -93,7 +143,8 @@ class ModelDataMaker(object):
         df_gw["player_id"] = df_gw["element"].astype(int)
         df_gw["gw_id"] = df_gw["gw"].astype(int)
         df_gw["opp_team_id"] = df_gw["opponent_team"].astype(int)
-        df_gw["own_team_id"] = df_gw["player_id"].apply(lambda x: self.player_id_team_id_map[x])
+        player_id_team_id_map = self.get_player_id_team_id_map()
+        df_gw["own_team_id"] = df_gw["player_id"].apply(lambda x: player_id_team_id_map[x])
         
         id_cols = ["player_id", "gw_id", "opp_team_id", "own_team_id"]
         remove_cols = ['name', 'kickoff_time', 'gw', 'element', 'opponent_team'] + id_cols
@@ -116,7 +167,7 @@ class ModelDataMaker(object):
 
         player_id_player_position_map = self.get_player_id_player_position_map() 
         df_gw["element_type"] = df_gw["player_id"].apply(lambda x: player_id_player_position_map[x])
-        print(df_gw.head().T)
+        return df_gw
 
 if __name__ == "__main__":
     config_2020 = {
@@ -132,7 +183,8 @@ if __name__ == "__main__":
         "file_fixture": "fixtures.csv",
         "file_team": "teams.csv",
         "file_gw": "merged_gw.csv",
-        "file_player": "players_raw.csv"
+        "file_player": "players_raw.csv",
+        "file_understat_team": "understat_team_data.pkl"
     }
 
     config_2018 = {
@@ -148,15 +200,19 @@ if __name__ == "__main__":
     df_teams = pd.DataFrame(data['teams'])
     df_teams.to_csv(os.path.join(config_2018["data_dir"], "teams.csv"), index=False)
 
-    data_maker = ModelDataMaker(config_2018)
+    data_maker = ModelDataMaker(config_2019)
     df_fixture = data_maker.get_fixtures_data()
     df_team = data_maker.get_teams_data()
     df_gw = data_maker.get_gw_data()
     df_players = data_maker.get_players_data()
 
-    player_id_team_id_map = data_maker.get_player_id_team_id_map() 
-    player_id_player_name_map = data_maker.get_player_id_player_name_map() 
-    player_id_player_position_map = data_maker.get_player_id_player_position_map() 
-    team_id_team_name_map = data_maker.get_team_id_team_name_map() 
+    # player_id_team_id_map = data_maker.get_player_id_team_id_map() 
+    # player_id_player_name_map = data_maker.get_player_id_player_name_map() 
+    # player_id_player_position_map = data_maker.get_player_id_player_position_map() 
+    # team_id_team_name_map = data_maker.get_team_id_team_name_map() 
 
-    data_maker.make_base_data()
+    df = data_maker.make_base_data()
+    df_understat = data_maker.prepare_understat_data()
+    print(df_understat.sample(5).T)
+    pdb.set_trace()
+

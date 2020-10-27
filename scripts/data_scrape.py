@@ -1,7 +1,12 @@
 import os
 import sys
 import json
+import pickle
 import requests
+
+import re
+import codecs
+from bs4 import BeautifulSoup
 
 import pandas as pd
 from datetime import datetime
@@ -253,10 +258,41 @@ class DataScraper(object):
     def execute_all(self):
         pass
 
+def get_understat_data(url):
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception("Response was code " + str(response.status_code))
+    html = response.text
+    parsed_html = BeautifulSoup(html, 'html.parser')
+    scripts = parsed_html.findAll('script')
+    filtered_scripts = []
+    for script in scripts:
+        if len(script.contents) > 0:
+            filtered_scripts += [script]
+    return scripts
+
+def get_understat_epl_season_data(season='2020'):
+    url = "https://understat.com/league/EPL/" + str(season)
+    scripts = get_understat_data(url)
+    teamData, playerData = {}, {}
+    for script in scripts:
+        for c in script.contents:
+            split_data = c.split('=')
+            data = split_data[0].strip()
+            if data == 'var teamsData':
+                content = re.findall(r'JSON\.parse\(\'(.*)\'\)',split_data[1])
+                decoded_content = codecs.escape_decode(content[0], "hex")[0].decode('utf-8')
+                teamData = json.loads(decoded_content)
+            elif data == 'var playersData':
+                content = re.findall(r'JSON\.parse\(\'(.*)\'\)',split_data[1])
+                decoded_content = codecs.escape_decode(content[0], "hex")[0].decode('utf-8')
+                playerData = json.loads(decoded_content)
+    return teamData, playerData
+
 
 if __name__ == "__main__":
-    this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
-    data_scraper = DataScraper(this_config)
+    # this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
+    # data_scraper = DataScraper(this_config)
 
     # gw_data = data_scraper.get_gameweek_data()
     # print(gw_data[2])
@@ -267,14 +303,14 @@ if __name__ == "__main__":
     # print(this_player_data.keys())
     # print(this_player_data["history"][0].keys())
 
-    cur_gw = data_scraper.get_next_gameweek_id()
-    print(cur_gw)
+    # cur_gw = data_scraper.get_next_gameweek_id()
+    # print(cur_gw)
 
-    league_start_gw = data_scraper.get_league_start_gameweek()
-    print(league_start_gw)
+    # league_start_gw = data_scraper.get_league_start_gameweek()
+    # print(league_start_gw)
 
-    df = data_scraper.get_fpl_manager_entry_ids()
-    print(df)
+    # df = data_scraper.get_fpl_manager_entry_ids()
+    # print(df)
     # this_entry_id = '2235933'
     # gws = 4
 
@@ -293,3 +329,16 @@ if __name__ == "__main__":
 
     # transfer_data = data_scraper.get_entry_transfers_data(this_entry_id)
     # print(transfer_data)
+
+    team_data_2019, player_data_2019 = get_understat_epl_season_data('2019')
+    #keys = team_data.keys()
+
+    #for key in keys:
+    #    team = team_data[key]['title']
+    #    print(team)
+    #    df = pd.DataFrame(team_data[key]['history'])
+    #    df["effective_gw"] = [i+1 for i in range(len(df))]
+    #    print(df.head().T)
+    #    break
+    with open("./data/model_data/2019_20/understat_team_data.pkl", 'wb') as f:
+        pickle.dump(team_data_2019, f)
