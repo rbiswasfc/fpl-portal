@@ -49,8 +49,10 @@ class DataProcessor(object):
         file_path = os.path.join(self.data_dir_raw, "teams.json")
         save_json_data(data, file_path)
         df = pd.DataFrame(data)
+        df.columns = df.columns.str.lower()
         df.to_csv(os.path.join(self.data_dir_clean, 'teams.csv'), index=False)
-        print(df.head())
+        # print(df.head())
+        return df
 
     def save_players_data(self):
         # data = self.data_scraper.get_all_players_data()
@@ -59,16 +61,20 @@ class DataProcessor(object):
         file_path = os.path.join(self.data_dir_raw, "players_raw.json")
         save_json_data(data, file_path)
         df = pd.DataFrame(data)
+        df.columns = df.columns.str.lower()
         df.to_csv(os.path.join(self.data_dir_clean, 'players_raw.csv'), index=False)
-        print(df.head())
+        # print(df.head())
+        return df
 
     def save_fixtures_data(self):
         data = self.data_scraper.get_fixtures_data()
         file_path = os.path.join(self.data_dir_raw, "fixtures.json")
         save_json_data(data, file_path)
         df = pd.DataFrame(data)
+        df.columns = df.columns.str.lower()
         df.to_csv(os.path.join(self.data_dir_clean, 'fixtures.csv'), index=False)
-        print(df.head())
+        # print(df.head())
+        return df
 
     def save_gameweek_metadata(self):
         data = self.data_scraper.get_gameweek_metadata()
@@ -76,7 +82,7 @@ class DataProcessor(object):
         save_json_data(data, file_path)
         df = pd.DataFrame(data)
         df.to_csv(os.path.join(self.data_dir_clean, 'gw_metadata.csv'), index=False)
-        print(df.head())
+        # print(df.head())
 
     def save_gameweek_data(self):
         bootstrap_data = self.data_scraper.get_bootstrap_data()
@@ -107,12 +113,13 @@ class DataProcessor(object):
         snapshot_file_name = "snapshot_players_gw_{}.csv".format(this_gw)
         snapshot_df = pd.DataFrame(snapshot_data)
         snapshot_df.to_csv(os.path.join(self.data_dir_clean, snapshot_file_name), index=False)
-        print(snapshot_df.head())
+        # print(snapshot_df.head())
 
         df_gws = pd.concat(player_dfs)
         merged_df_path = os.path.join(self.data_dir_clean, "merged_gw_data.csv")
         print(df_gws.head())
-        df_gws.to_csv(merged_df_path, index=False)
+        # df_gws.to_csv(merged_df_path, index=False)
+        return df_gws
 
     def save_classic_league_standing(self, league_id="1457340"):
         df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)

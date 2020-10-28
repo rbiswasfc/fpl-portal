@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import pdb
-
+from datetime import datetime, timedelta
 sys.path.insert(0, './')
 from scripts.utils import load_config, check_create_dir
 
@@ -151,12 +151,17 @@ class ModelDataMaker(object):
             df_this_team = df_fixtures[
                 (df_fixtures["team_a"] == this_team) | (df_fixtures["team_h"] == this_team)].copy()
             df_this_team["kickoff_time"] = pd.to_datetime(df_this_team["kickoff_time"])
+            last_kickoff = df_this_team["kickoff_time"].max()
+            df_this_team["kickoff_time"] = df_this_team["kickoff_time"].fillna(last_kickoff + timedelta(days=365))
+            df_this_team = df_this_team.sort_values(by="kickoff_time")
 
             df_this_team = df_this_team.rename(columns={"event": "gw_id"})
+            df_this_team["gw_id"] = df_this_team["gw_id"].fillna(-1)
+            df_this_team["gw_id"] = df_this_team["gw_id"].astype(int)
             df_this_team["own_team_id"] = int(this_team)
             df_this_team["fixture_opp_team_id"] = df_this_team[["team_h", "team_a"]].apply(
                 lambda x: x[0] if x[0] != this_team else x[1], axis=1)
-            df_this_team["effective_gw_id"] = [i+1 for i in range(len(df_this_team))]
+            df_this_team["effective_gw_id"] = [i + 1 for i in range(len(df_this_team))]
             df_this_team = df_this_team[["own_team_id", "gw_id", "effective_gw_id", "fixture_opp_team_id"]].copy()
             dfs.append(df_this_team)
         df_map = pd.concat(dfs)
@@ -250,6 +255,8 @@ if __name__ == "__main__":
     print(df.sample(5))
     df_understat_tmp = data_maker.prepare_understat_data()
     print(df_understat_tmp.sample(5))
+
+    df_map_tmp = data_maker.get_effective_gameweek_map()
+    print(df_map_tmp.sample(10))
+
     # pdb.set_trace()
-    # df_map_tmp = data_maker.get_effective_gameweek_map()
-    # print(df_map_tmp.sample(10))
