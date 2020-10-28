@@ -254,7 +254,7 @@ if __name__ == "__main__":
     df = data_maker.make_base_data()
     print(df.sample(5))
     df_understat_tmp = data_maker.prepare_understat_data()
-    print(df_understat_tmp.sample(5))
+    print(df_understat_tmp.sample(5).T)
 
     df_map_tmp = data_maker.get_effective_gameweek_map()
     print(df_map_tmp.sample(10))

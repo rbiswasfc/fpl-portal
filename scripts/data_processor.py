@@ -116,9 +116,11 @@ class DataProcessor(object):
         # print(snapshot_df.head())
 
         df_gws = pd.concat(player_dfs)
+        df_gws['gw'] = df_gws['round'].fillna(-1).astype(int)
         merged_df_path = os.path.join(self.data_dir_clean, "merged_gw_data.csv")
-        print(df_gws.head())
-        # df_gws.to_csv(merged_df_path, index=False)
+        # print(df_gws.head())
+        df_gws.to_csv(merged_df_path, index=False)
+
         return df_gws
 
     def save_classic_league_standing(self, league_id="1457340"):
