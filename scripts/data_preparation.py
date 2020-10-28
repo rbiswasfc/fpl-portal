@@ -202,7 +202,9 @@ class ModelDataMaker(object):
         player_id_player_position_map = self.get_player_id_player_position_map()
         df_gw["element_type"] = df_gw["player_id"].apply(lambda x: player_id_player_position_map[x])
         df_map = self.get_effective_gameweek_map()
-        df_gw = pd.merge(df_gw, df_map, how='left', on=['own_team_id', 'gw_id'])
+        # df_gw = pd.merge(df_gw, df_map, how='left', on=['own_team_id', 'gw_id'])
+        df_gw = pd.merge(df_gw, df_map, how='left', left_on=['own_team_id', 'opp_team_id', 'gw_id'], 
+        right_on=['own_team_id', 'fixture_opp_team_id', 'gw_id'])
         return df_gw
 
 
