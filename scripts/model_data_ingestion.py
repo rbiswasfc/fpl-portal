@@ -47,7 +47,7 @@ class DataIngestor(object):
 
 if __name__ == "__main__":
     config_2020 = {"season": "2020_21",
-                   "source_dir": "./data/raw/",
+                   "source_dir": "./data",
                    "ingest_dir": "./data/model_data/2020_21/",
                    "player_ingest_filename": "players_raw.csv",
                    "team_ingest_filename": "teams.csv",
