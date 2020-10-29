@@ -238,8 +238,7 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     df_2020["season_id"] = 2
 
     df_XY = pd.concat([df_2018, df_2019, df_2020])
-    num_gw_per_season = 38
-    df_XY["global_gw_id"] = df_XY[["season_id", "gw_id"]].apply(lambda x: x[0] * num_gw_per_season + x[1], axis=1)
+    df_XY["global_gw_id"] = df_XY[["season_id", "gw_id"]].apply(lambda x: x[0] * 100 + x[1], axis=1)
     df_XY["global_gw_id"] = df_XY["global_gw_id"].fillna(-1)
     df_XY["global_gw_id"] = df_XY["global_gw_id"].astype(int)
     global_scoring_gw = df_XY["global_gw_id"].max()
@@ -259,7 +258,7 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     with open(os.path.join(dataset_dir, "features_after_fe.pkl"), 'wb') as f:
         pickle.dump(features_dict, f)
 
-    pdb.set_trace()
+    # pdb.set_trace()
 
 
 if __name__ == "__main__":
