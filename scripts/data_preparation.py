@@ -7,8 +7,14 @@ import numpy as np
 import pandas as pd
 import pdb
 from datetime import datetime, timedelta
+
 sys.path.insert(0, './')
-from scripts.utils import load_config, check_create_dir
+
+try:
+    from scripts.utils import load_config, check_create_dir
+    from scripts.data_scrape import DataScraper
+except:
+    raise ImportError
 
 
 class ModelDataMaker(object):
@@ -161,14 +167,39 @@ class ModelDataMaker(object):
             df_this_team["own_team_id"] = int(this_team)
             df_this_team["fixture_opp_team_id"] = df_this_team[["team_h", "team_a"]].apply(
                 lambda x: x[0] if x[0] != this_team else x[1], axis=1)
+            df_this_team["home_flag"] = df_this_team[["team_h", "team_a"]].apply(
+                lambda x: True if x[0] == this_team else False, axis=1)
             df_this_team["effective_gw_id"] = [i + 1 for i in range(len(df_this_team))]
-            df_this_team = df_this_team[["own_team_id", "gw_id", "effective_gw_id", "fixture_opp_team_id"]].copy()
+            df_this_team = df_this_team[
+                ["own_team_id", "gw_id", "effective_gw_id", "fixture_opp_team_id", "home_flag"]].copy()
             dfs.append(df_this_team)
         df_map = pd.concat(dfs)
         return df_map
 
-    def make_base_data(self):
+    def make_scoring_base(self):
+        player_id_team_id_map = self.get_player_id_team_id_map()
+        all_players = list(player_id_team_id_map.keys())
+        df_map = self.get_effective_gameweek_map()
+        try:
+            scoring_gw = int(self.config["scoring_gw"])
+        except:
+            print("No Valid Scoring GW provided")
+            return pd.DataFrame()
+        print("=="*20)
+        print("getting scoring df...")
+        df_scoring = pd.DataFrame()
+        df_scoring["player_id"] = all_players
+        df_scoring["own_team_id"] = df_scoring["player_id"].apply(lambda x: player_id_team_id_map.get(x, -1))
+        df_scoring["gw_id"] = scoring_gw
+        df_scoring = pd.merge(df_scoring, df_map, how="left", on=["own_team_id", "gw_id"])
+        df_scoring["opp_team_id"] = df_scoring["fixture_opp_team_id"]
+        df_scoring["is_home"] = df_scoring["home_flag"]
+        # player_id_player_position_map = self.get_player_id_player_position_map()
+        # df_scoring["element_type"] = df_scoring["player_id"].apply(lambda x: player_id_player_position_map[x])
+        print("shape of scoring df: {}".format(df_scoring.shape))
+        return df_scoring
 
+    def make_base_data(self):
         df_teams = self.get_teams_data()
         df_gw = self.get_gw_data()
         df_players = self.get_players_data()
@@ -179,11 +210,23 @@ class ModelDataMaker(object):
         df_gw["opp_team_id"] = df_gw["opponent_team"].astype(int)
         player_id_team_id_map = self.get_player_id_team_id_map()
         df_gw["own_team_id"] = df_gw["player_id"].apply(lambda x: player_id_team_id_map[x])
+        df_gw["is_home"] = df_gw["was_home"]
 
         id_cols = ["player_id", "gw_id", "opp_team_id", "own_team_id"]
         remove_cols = ['name', 'kickoff_time', 'gw', 'element', 'opponent_team'] + id_cols
         keep_cols = id_cols + [col for col in df_gw.columns if col not in remove_cols]
         df_gw = df_gw[keep_cols].copy()
+
+        # get effective GW map
+        df_map = self.get_effective_gameweek_map()
+        # df_gw = pd.merge(df_gw, df_map, how='left', on=['own_team_id', 'gw_id'])
+        df_gw = pd.merge(df_gw, df_map, how='left', left_on=['own_team_id', 'opp_team_id', 'gw_id'],
+                         right_on=['own_team_id', 'fixture_opp_team_id', 'gw_id'])
+
+        # concat scoring dataframe
+        df_scoring = self.make_scoring_base()
+        if len(df_scoring) > 0:
+            df_gw = pd.concat([df_gw, df_scoring])
 
         df_teams = df_teams[["id", "name", "strength", "strength_attack_away",
                              "strength_attack_home", "strength_defence_away",
@@ -200,22 +243,26 @@ class ModelDataMaker(object):
         df_gw = pd.merge(df_gw, df_teams_opp, left_on="opp_team_id", right_on="opp_id", how="left")
 
         player_id_player_position_map = self.get_player_id_player_position_map()
-        df_gw["element_type"] = df_gw["player_id"].apply(lambda x: player_id_player_position_map[x])
-        df_map = self.get_effective_gameweek_map()
-        # df_gw = pd.merge(df_gw, df_map, how='left', on=['own_team_id', 'gw_id'])
-        df_gw = pd.merge(df_gw, df_map, how='left', left_on=['own_team_id', 'opp_team_id', 'gw_id'], 
-        right_on=['own_team_id', 'fixture_opp_team_id', 'gw_id'])
+        df_gw["position"] = df_gw["player_id"].apply(lambda x: player_id_player_position_map[x])
+
+        # print(df_gw.head().T)
+        # print(df_gw.tail().T)
+
         return df_gw
 
 
 if __name__ == "__main__":
+    scraper_config = {"season": "2020_21", "source_dir": "./data/raw/"}
+    data_scraper = DataScraper(scraper_config)
+    scoring_gw = data_scraper.get_next_gameweek_id()
     config_2020 = {
         "data_dir": "./data/model_data/2020_21/",
         "file_fixture": "fixtures.csv",
         "file_team": "teams.csv",
         "file_gw": "merged_gw.csv",
         "file_player": "players_raw.csv",
-        "file_understat_team": "understat_team_data.pkl"
+        "file_understat_team": "understat_team_data.pkl",
+        "scoring_gw": scoring_gw
     }
 
     config_2019 = {
@@ -224,7 +271,8 @@ if __name__ == "__main__":
         "file_team": "teams.csv",
         "file_gw": "merged_gw.csv",
         "file_player": "players_raw.csv",
-        "file_understat_team": "understat_team_data.pkl"
+        "file_understat_team": "understat_team_data.pkl",
+        "scoring_gw": "NA"
     }
 
     config_2018 = {
@@ -233,7 +281,8 @@ if __name__ == "__main__":
         "file_team": "teams.csv",
         "file_gw": "merged_gw.csv",
         "file_player": "players_raw.csv",
-        "file_understat_team": "understat_team_data.pkl"
+        "file_understat_team": "understat_team_data.pkl",
+        "scoring_gw": "NA"
     }
     # import json
 
@@ -254,11 +303,13 @@ if __name__ == "__main__":
     # team_id_team_name_map = data_maker.get_team_id_team_name_map() 
 
     df = data_maker.make_base_data()
-    print(df.sample(5))
-    df_understat_tmp = data_maker.prepare_understat_data()
-    print(df_understat_tmp.sample(5).T)
+    # print(df.sample(5))
+    # df_understat_tmp = data_maker.prepare_understat_data()
+    # print(df_understat_tmp.sample(5).T)
 
-    df_map_tmp = data_maker.get_effective_gameweek_map()
-    print(df_map_tmp.sample(10))
+    # df_map_tmp = data_maker.get_effective_gameweek_map()
+    # print(df_map_tmp.sample(10))
+
+    data_maker.make_scoring_base()
 
     # pdb.set_trace()
