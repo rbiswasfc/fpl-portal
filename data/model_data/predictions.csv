@@ -1,0 +1,591 @@
+player_id,name,team,next_opponent,position,chance_of_play,cost,selection_pct,ave_pts,lgbm_pred
+1,Mesut Özil,Arsenal,Man Utd,MID,0.0,68,0.7,0.0,0.627162516117096
+2,Sokratis Papastathopoulos,Arsenal,Man Utd,DEF,0.0,49,0.1,0.0,0.4877350628376007
+3,David Luiz Moreira Marinho,Arsenal,Man Utd,DEF,75.0,55,1.1,1.4,2.911679267883301
+4,Pierre-Emerick Aubameyang,Arsenal,Man Utd,MID,100.0,117,15.1,3.3,5.438154697418213
+5,Cédric Soares,Arsenal,Man Utd,DEF,100.0,47,0.2,0.0,0.5083439350128174
+6,Alexandre Lacazette,Arsenal,Man Utd,FWD,,84,3.7,4.6,3.353015661239624
+7,Shkodran Mustafi,Arsenal,Man Utd,DEF,100.0,50,0.0,1.0,1.4090849161148071
+8,Bernd Leno,Arsenal,Man Utd,GK,,50,9.3,3.2,4.109250068664551
+9,Granit Xhaka,Arsenal,Man Utd,MID,,54,0.6,1.7,2.8381192684173584
+10,Pablo Marí,Arsenal,Man Utd,DEF,0.0,44,0.0,0.0,0.47998470067977905
+11,Héctor Bellerín,Arsenal,Man Utd,DEF,,50,5.9,3.5,3.317326068878174
+13,Calum Chambers,Arsenal,Man Utd,DEF,25.0,45,0.0,0.0,0.4805574119091034
+14,Sead Kolasinac,Arsenal,Man Utd,DEF,,48,0.2,2.0,0.5029299259185791
+15,Ainsley Maitland-Niles,Arsenal,Man Utd,DEF,,49,1.3,2.7,0.6804934740066528
+16,Rob Holding,Arsenal,Man Utd,DEF,0.0,45,1.5,3.0,0.5534959435462952
+17,Kieran Tierney,Arsenal,Man Utd,DEF,100.0,54,5.4,2.6,3.4290549755096436
+18,Nicolas Pépé,Arsenal,Man Utd,MID,,77,0.9,2.0,2.38356614112854
+19,Lucas Torreira,Arsenal,Man Utd,MID,0.0,47,0.1,0.0,0.5736197829246521
+20,Joseph Willock,Arsenal,Man Utd,MID,,48,0.1,0.0,0.5639374852180481
+21,Reiss Nelson,Arsenal,Man Utd,MID,100.0,52,0.1,0.0,0.5616641640663147
+22,Edward Nketiah,Arsenal,Man Utd,FWD,,57,0.7,2.2,1.4120872020721436
+23,Emile Smith Rowe,Arsenal,Man Utd,MID,100.0,44,0.2,0.0,0.568526566028595
+24,Bukayo Saka,Arsenal,Man Utd,MID,75.0,53,2.9,3.8,3.333752155303955
+25,Matteo Guendouzi,Arsenal,Man Utd,MID,0.0,47,0.1,0.0,0.5694223642349243
+26,Gabriel Teodoro Martinelli Silva,Arsenal,Man Utd,MID,0.0,49,0.0,0.0,0.557280421257019
+27,William Saliba,Arsenal,Man Utd,DEF,,42,0.9,0.0,0.642532229423523
+478,Willian Borges Da Silva,Arsenal,Man Utd,MID,75.0,78,5.9,4.4,3.619565010070801
+494,Gabriel Magalhães,Arsenal,Man Utd,DEF,,51,11.7,4.6,3.858205795288086
+501,Daniel Ceballos Fernández,Arsenal,Man Utd,MID,100.0,50,1.6,2.7,3.2279529571533203
+526,Mohamed Naser El Sayed Elneny,Arsenal,Man Utd,MID,,44,1.5,2.3,1.2423795461654663
+527,Matt Macey,Arsenal,Man Utd,GK,,40,1.2,0.0,0.5838707685470581
+547,Rúnar Alex Rúnarsson,Arsenal,Man Utd,GK,,45,0.0,0.0,0.5251915454864502
+567,Thomas Partey,Arsenal,Man Utd,MID,,50,0.8,1.0,2.2682414054870605
+12,Emiliano Martínez,Aston Villa,Southampton,GK,,48,26.5,6.8,3.3662004470825195
+28,Tom Heaton,Aston Villa,Southampton,GK,0.0,45,0.0,0.0,0.5210614204406738
+29,Ahmed El Mohamady,Aston Villa,Southampton,DEF,,44,0.3,1.0,0.7452524900436401
+30,Henri Lansbury,Aston Villa,Southampton,MID,0.0,44,0.2,0.0,0.5369712710380554
+31,Neil Taylor,Aston Villa,Southampton,DEF,,44,0.2,0.0,0.4887058734893799
+32,Jed Steer,Aston Villa,Southampton,GK,,40,5.6,0.0,0.674953043460846
+33,Conor Hourihane,Aston Villa,Southampton,MID,,60,0.2,8.5,0.5682317614555359
+34,José Ignacio Peleteiro Romallo,Aston Villa,Southampton,MID,0.0,59,0.1,0.0,0.5360256433486938
+35,Ørjan Nyland,Aston Villa,Southampton,GK,0.0,40,9.8,0.0,0.7474558353424072
+36,Bjorn Engels,Aston Villa,Southampton,DEF,100.0,44,0.1,0.0,0.48888376355171204
+37,Jack Grealish,Aston Villa,Southampton,MID,,73,28.0,7.8,3.536540985107422
+38,John McGinn,Aston Villa,Southampton,MID,,55,2.7,5.8,2.2800865173339844
+39,Kortney Hause,Aston Villa,Southampton,DEF,0.0,44,0.0,0.0,0.4870867133140564
+40,Mahmoud Ahmed Ibrahim Hassan,Aston Villa,Southampton,MID,,54,1.0,3.2,2.0837600231170654
+41,Tyrone Mings,Aston Villa,Southampton,DEF,,52,10.1,6.0,2.0209779739379883
+42,Matt Targett,Aston Villa,Southampton,DEF,,45,1.8,3.6,2.4816510677337646
+43,James Bree,Aston Villa,Southampton,DEF,0.0,45,0.0,0.0,0.48829135298728943
+44,Marvelous Nakamba,Aston Villa,Southampton,MID,,44,0.4,0.5,0.5381554961204529
+45,Anwar El Ghazi,Aston Villa,Southampton,MID,,58,0.1,0.0,0.536618709564209
+46,Ezri Konsa Ngoyo,Aston Villa,Southampton,DEF,,47,8.0,5.8,3.1993751525878906
+47,Frédéric Guilbert,Aston Villa,Southampton,DEF,,44,0.1,0.0,0.48855823278427124
+48,Wesley Moraes,Aston Villa,Southampton,FWD,0.0,60,0.0,0.0,0.55183345079422
+49,Mbwana Samatta,Aston Villa,Southampton,FWD,0.0,59,0.0,0.0,0.547914445400238
+50,Keinan Davis,Aston Villa,Southampton,FWD,100.0,44,9.1,1.0,0.7930715084075928
+51,Indiana Vassilev,Aston Villa,Southampton,FWD,0.0,44,0.9,0.0,0.530704140663147
+52,Douglas Luiz Soares de Paulo,Aston Villa,Southampton,MID,,50,0.3,2.2,2.359734058380127
+106,Ross Barkley,Aston Villa,Southampton,MID,,60,4.3,4.4,3.88389253616333
+496,Matthew Cash,Aston Villa,Southampton,DEF,,50,0.7,3.8,1.9728856086730957
+514,Ollie Watkins,Aston Villa,Southampton,FWD,,60,4.8,5.4,4.451563835144043
+540,Bertrand Traoré,Aston Villa,Southampton,MID,100.0,59,0.0,1.0,1.2728198766708374
+554,Jacob Ramsey,Aston Villa,Southampton,MID,,45,0.1,1.0,0.5475486516952515
+53,Glenn Murray,Brighton,Spurs,FWD,0.0,49,0.1,0.0,0.01757810264825821
+54,Adam Lallana,Brighton,Spurs,MID,100.0,63,0.5,1.7,1.491115927696228
+57,Pascal Groß,Brighton,Spurs,MID,,58,0.1,1.0,0.6462938785552979
+58,Shane Duffy,Brighton,Spurs,DEF,0.0,44,0.0,0.0,-0.05044405534863472
+59,Davy Pröpper,Brighton,Spurs,MID,100.0,48,0.0,0.0,-0.001707378774881363
+60,Aaron Mooy,Brighton,Spurs,MID,0.0,50,0.0,0.0,-0.0055151768028736115
+61,Dan Burn,Brighton,Spurs,DEF,,44,0.4,1.7,1.3442151546478271
+62,Lewis Dunk,Brighton,Spurs,DEF,0.0,49,3.7,1.0,0.9296700954437256
+63,Martín Montoya,Brighton,Spurs,DEF,0.0,45,0.0,0.0,-0.05383037403225899
+64,Florin Andone,Brighton,Spurs,FWD,0.0,48,0.1,0.0,0.012985020875930786
+65,Solomon March,Brighton,Spurs,MID,,50,1.2,4.0,1.392518401145935
+66,Adam Webster,Brighton,Spurs,DEF,,45,2.0,1.8,1.3704540729522705
+67,Joël Veltman,Brighton,Spurs,DEF,,43,0.2,1.0,1.0364329814910889
+68,Neal Maupay,Brighton,Spurs,FWD,,66,6.3,6.0,2.6046018600463867
+69,Leandro Trossard,Brighton,Spurs,MID,,60,2.2,4.2,1.404485821723938
+70,Mathew Ryan,Brighton,Spurs,GK,,45,15.2,1.8,2.0976665019989014
+71,Alireza Jahanbakhsh,Brighton,Spurs,MID,25.0,54,0.0,1.7,-0.0023286305367946625
+72,José Izquierdo,Brighton,Spurs,MID,0.0,55,0.0,0.0,-0.006474893540143967
+73,Matthew Clarke,Brighton,Spurs,DEF,0.0,44,0.0,0.0,-0.05414726212620735
+74,Ben White,Brighton,Spurs,DEF,100.0,45,1.4,1.8,1.3769211769104004
+75,Bernardo Fernandes da Silva Junior,Brighton,Spurs,DEF,,40,8.4,0.0,0.5302075743675232
+76,Yves Bissouma,Brighton,Spurs,MID,100.0,45,3.8,2.8,1.7219622135162354
+77,Tariq Lamptey,Brighton,Spurs,DEF,100.0,47,11.3,2.3,1.319516658782959
+78,Aaron Connolly,Brighton,Spurs,FWD,100.0,55,0.6,3.4,0.3229355812072754
+79,Steven Alzate,Brighton,Spurs,MID,,45,1.1,1.8,0.7905490398406982
+80,Alexis Mac Allister,Brighton,Spurs,MID,100.0,53,0.1,5.0,0.6151162385940552
+503,Christian Walton,Brighton,Spurs,GK,75.0,40,1.2,0.0,0.09025469422340393
+528,Jason Steele,Brighton,Spurs,GK,,40,0.8,0.0,0.12089711427688599
+550,Jayson Molumby,Brighton,Spurs,MID,,45,0.0,0.0,-0.003666665405035019
+574,Andi Zeqiri,Brighton,Spurs,FWD,,50,0.0,0.0,-0.028719309717416763
+588,Danny Welbeck,Brighton,Spurs,FWD,100.0,55,0.0,0.0,0.1606631875038147
+55,Dale Stephens,Burnley,Chelsea,MID,100.0,44,7.8,2.0,0.6845279932022095
+81,James Tarkowski,Burnley,Chelsea,DEF,100.0,54,2.7,2.7,2.533329963684082
+82,Phil Bardsley,Burnley,Chelsea,DEF,50.0,45,0.3,0.3,0.24964874982833862
+83,Erik Pieters,Burnley,Chelsea,DEF,50.0,44,0.6,2.0,0.8135658502578735
+84,Jack Cork,Burnley,Chelsea,MID,0.0,50,0.0,0.0,0.32203948497772217
+85,Kevin Long,Burnley,Chelsea,DEF,100.0,45,0.2,2.2,1.777449607849121
+86,Jay Rodriguez,Burnley,Chelsea,FWD,100.0,59,0.3,1.0,0.5493183732032776
+87,Ashley Barnes,Burnley,Chelsea,FWD,100.0,60,0.1,1.7,3.018935203552246
+88,Ben Mee,Burnley,Chelsea,DEF,0.0,49,0.1,0.0,0.24097217619419098
+89,Ashley Westwood,Burnley,Chelsea,MID,,54,0.5,3.2,2.31417179107666
+90,Johann Berg Gudmundsson,Burnley,Chelsea,MID,100.0,54,0.0,2.0,2.0293445587158203
+91,Chris Wood,Burnley,Chelsea,FWD,,63,1.3,2.8,2.6246962547302246
+92,Matthew Lowton,Burnley,Chelsea,DEF,100.0,44,0.1,2.0,1.4082762002944946
+93,Matej Vydra,Burnley,Chelsea,FWD,,50,0.8,1.2,0.4980749487876892
+94,Ben Gibson,Burnley,Chelsea,DEF,0.0,40,0.2,0.0,0.24734948575496674
+95,Robbie Brady,Burnley,Chelsea,MID,100.0,50,0.0,1.0,0.4520205557346344
+96,Nick Pope,Burnley,Chelsea,GK,,55,11.5,3.4,2.45139217376709
+97,Charlie Taylor,Burnley,Chelsea,DEF,,45,3.5,2.6,1.6402571201324463
+98,Josh Brownhill,Burnley,Chelsea,MID,,50,0.0,2.0,1.7282578945159912
+99,Bailey Peacock-Farrell,Burnley,Chelsea,GK,100.0,40,1.4,0.0,0.30059894919395447
+100,Dwight McNeil,Burnley,Chelsea,MID,,59,0.5,2.6,2.2226455211639404
+519,Jimmy Dunne,Burnley,Chelsea,DEF,,41,7.8,4.0,-0.053346458822488785
+520,Bobby Thomas,Burnley,Chelsea,DEF,,40,0.6,0.0,0.246088907122612
+535,Josh Benson,Burnley,Chelsea,MID,,45,0.0,0.0,0.32281312346458435
+536,Anthony Driscoll-Glennon,Burnley,Chelsea,DEF,,40,0.1,0.0,0.24358151853084564
+551,Mace Goodridge,Burnley,Chelsea,MID,,45,0.0,0.0,0.3225380480289459
+583,Will Norris,Burnley,Chelsea,GK,,40,0.0,0.0,0.3671668767929077
+101,Willy Caballero,Chelsea,Burnley,GK,,48,0.3,1.0,0.38519397377967834
+102,César Azpilicueta,Chelsea,Burnley,DEF,,59,4.2,3.4,3.8907527923583984
+103,Olivier Giroud,Chelsea,Burnley,FWD,,67,0.7,1.0,0.5394134521484375
+104,Marcos Alonso,Chelsea,Burnley,DEF,,58,2.0,0.7,0.7986013889312744
+105,Jorge Luiz Frello Filho,Chelsea,Burnley,MID,100.0,53,13.4,7.0,4.860100269317627
+107,Mateo Kovacic,Chelsea,Burnley,MID,100.0,54,0.3,1.3,0.47687602043151855
+109,Antonio Rüdiger,Chelsea,Burnley,DEF,,46,0.8,0.0,0.5673419237136841
+110,Kurt Zouma,Chelsea,Burnley,DEF,,51,5.6,6.4,4.341002941131592
+111,Emerson Palmieri dos Santos,Chelsea,Burnley,DEF,,48,0.2,0.0,0.3378179967403412
+112,Kepa Arrizabalaga,Chelsea,Burnley,GK,0.0,48,0.9,2.0,1.8451721668243408
+113,N'Golo Kanté,Chelsea,Burnley,MID,100.0,49,3.3,2.2,3.9629905223846436
+114,Hakim Ziyech,Chelsea,Burnley,MID,100.0,79,1.2,1.0,1.206844449043274
+116,Andreas Christensen,Chelsea,Burnley,DEF,,49,0.3,0.0,1.6535184383392334
+117,Timo Werner,Chelsea,Burnley,FWD,100.0,93,20.7,4.8,5.780763626098633
+118,Tammy Abraham,Chelsea,Burnley,FWD,,72,2.2,2.8,2.7157435417175293
+119,Christian Pulisic,Chelsea,Burnley,MID,100.0,83,3.9,2.0,3.989158868789673
+120,Mason Mount,Chelsea,Burnley,MID,,69,5.2,3.8,3.6546125411987305
+121,Fikayo Tomori,Chelsea,Burnley,DEF,,48,0.3,0.0,0.36454421281814575
+122,Callum Hudson-Odoi,Chelsea,Burnley,MID,,58,0.3,3.3,1.3181899785995483
+123,Reece James,Chelsea,Burnley,DEF,,50,11.1,5.0,5.252274990081787
+124,Billy Gilmour,Chelsea,Burnley,MID,0.0,44,0.1,0.0,0.3864126205444336
+232,Benjamin Chilwell,Chelsea,Burnley,DEF,100.0,58,17.2,9.0,5.122155666351318
+490,Thiago Thiago,Chelsea,Burnley,DEF,100.0,55,2.3,4.7,3.421299934387207
+500,Kai Havertz,Chelsea,Burnley,MID,,84,8.4,3.8,4.730910778045654
+548,Edouard Mendy,Chelsea,Burnley,GK,100.0,50,2.2,6.5,3.0748066902160645
+108,Michy Batshuayi,Crystal Palace,Wolves,FWD,100.0,58,0.8,3.0,2.081272840499878
+125,Gary Cahill,Crystal Palace,Wolves,DEF,0.0,45,0.1,2.0,0.3923425078392029
+126,Wayne Hennessey,Crystal Palace,Wolves,GK,0.0,44,0.5,0.0,0.01683376356959343
+127,Mamadou Sakho,Crystal Palace,Wolves,DEF,100.0,45,0.3,1.0,0.2783518135547638
+128,Vicente Guaita,Crystal Palace,Wolves,GK,,50,4.5,2.8,1.8223861455917358
+129,James Tomkins,Crystal Palace,Wolves,DEF,100.0,45,0.0,0.0,-0.03335188701748848
+130,James McArthur,Crystal Palace,Wolves,MID,,54,0.1,1.8,0.3925216794013977
+131,James McCarthy,Crystal Palace,Wolves,MID,0.0,45,1.7,2.0,0.20767813920974731
+132,Christian Benteke,Crystal Palace,Wolves,FWD,100.0,55,0.2,1.0,0.13073313236236572
+133,Cheikhou Kouyaté,Crystal Palace,Wolves,MID,,50,0.7,3.3,1.3779098987579346
+134,Joel Ward,Crystal Palace,Wolves,DEF,,45,1.6,1.8,0.40377873182296753
+135,Martin Kelly,Crystal Palace,Wolves,DEF,,43,0.5,0.0,0.011294420808553696
+136,Connor Wickham,Crystal Palace,Wolves,FWD,0.0,45,0.7,0.0,0.09982913732528687
+137,Andros Townsend,Crystal Palace,Wolves,MID,,60,3.2,4.7,1.7934198379516602
+138,Luka Milivojevic,Crystal Palace,Wolves,MID,,57,0.4,1.2,1.2492564916610718
+139,Patrick van Aanholt,Crystal Palace,Wolves,DEF,100.0,54,0.2,1.0,0.4713078439235687
+140,Jordan Ayew,Crystal Palace,Wolves,FWD,0.0,57,2.0,2.8,0.454481303691864
+141,Wilfried Zaha,Crystal Palace,Wolves,MID,100.0,73,24.2,8.0,2.738025426864624
+142,Jeffrey Schlupp,Crystal Palace,Wolves,MID,100.0,55,0.1,3.8,1.3190184831619263
+143,Max Meyer,Crystal Palace,Wolves,MID,,48,0.0,0.0,0.008453886955976486
+144,Jairo Riedewald,Crystal Palace,Wolves,MID,75.0,44,0.7,3.2,1.6535191535949707
+145,Nathan Ferguson,Crystal Palace,Wolves,DEF,0.0,40,0.9,0.0,0.04928560182452202
+146,Tyrick Mitchell,Crystal Palace,Wolves,DEF,,42,26.5,2.5,2.1027400493621826
+147,Brandon Pierrick,Crystal Palace,Wolves,MID,,44,0.1,0.0,0.018922429531812668
+486,Scott Dann,Crystal Palace,Wolves,DEF,100.0,45,0.7,4.5,1.2476060390472412
+489,Eberechi Eze,Crystal Palace,Wolves,MID,100.0,58,0.4,1.4,0.727206289768219
+522,Sam Woods,Crystal Palace,Wolves,DEF,100.0,40,0.7,0.0,0.08208180963993073
+534,Ryan Inniss,Crystal Palace,Wolves,DEF,0.0,40,0.1,0.0,-0.027969885617494583
+577,Nathaniel Clyne,Crystal Palace,Wolves,DEF,,45,0.1,6.0,1.0035723447799683
+578,Stephen Henderson,Crystal Palace,Wolves,GK,,40,0.2,0.0,0.034356992691755295
+586,Jack Butland,Crystal Palace,Wolves,GK,0.0,45,0.0,0.0,0.06555141508579254
+149,Fabian Delph,Everton,Newcastle,MID,100.0,49,0.0,1.0,1.7255067825317383
+150,Gylfi Sigurdsson,Everton,Newcastle,MID,,68,1.0,1.7,2.224198579788208
+151,Jonas Lössl,Everton,Newcastle,GK,,44,0.1,0.0,1.0435205698013306
+152,Seamus Coleman,Everton,Newcastle,DEF,0.0,50,1.3,3.0,1.7979624271392822
+153,Cenk Tosun,Everton,Newcastle,FWD,0.0,60,0.0,0.0,1.0708043575286865
+154,Bernard Anício Caldeira Duarte,Everton,Newcastle,MID,,58,0.1,0.0,2.0551364421844482
+155,Lucas Digne,Everton,Newcastle,DEF,0.0,62,14.9,4.2,2.2165470123291016
+156,Michael Keane,Everton,Newcastle,DEF,,51,6.1,4.2,2.6569154262542725
+157,Jordan Pickford,Everton,Newcastle,GK,,50,8.3,2.8,3.781905174255371
+158,André Filipe Tavares Gomes,Everton,Newcastle,MID,100.0,55,0.3,2.0,1.4815301895141602
+159,Alex Iwobi,Everton,Newcastle,MID,,59,0.2,1.8,2.490598678588867
+160,Jonjoe Kenny,Everton,Newcastle,DEF,0.0,43,0.1,0.0,1.0167438983917236
+161,Jean-Philippe Gbamin,Everton,Newcastle,MID,0.0,50,0.0,0.0,1.0484280586242676
+162,Yerry Mina,Everton,Newcastle,DEF,100.0,55,2.3,3.2,3.5761759281158447
+163,Tom Davies,Everton,Newcastle,MID,,54,0.1,1.3,1.2119381427764893
+164,Dominic Calvert-Lewin,Everton,Newcastle,FWD,,77,56.6,7.3,5.170950412750244
+165,Mason Holgate,Everton,Newcastle,DEF,0.0,48,0.0,0.0,0.9992808103561401
+166,Richarlison de Andrade,Everton,Newcastle,FWD,0.0,78,4.4,4.4,2.393014430999756
+167,João Virgínia,Everton,Newcastle,GK,,44,0.1,0.0,1.035605788230896
+168,Anthony Gordon,Everton,Newcastle,MID,,44,0.4,1.0,1.693136215209961
+169,Moise Kean,Everton,Newcastle,FWD,0.0,58,0.2,1.0,1.1276601552963257
+170,Jarrad Branthwaite,Everton,Newcastle,DEF,0.0,39,2.2,0.0,1.4395780563354492
+502,Allan Marques Loureiro,Everton,Newcastle,MID,100.0,54,1.1,2.0,3.084540605545044
+508,James Rodríguez,Everton,Newcastle,MID,75.0,80,38.3,6.8,5.247791290283203
+512,Abdoulaye Doucouré,Everton,Newcastle,MID,,54,1.3,2.3,2.6232314109802246
+559,Niels Nkounkou,Everton,Newcastle,DEF,,40,0.1,0.0,1.029068112373352
+566,Ben Godfrey,Everton,Newcastle,DEF,,50,0.1,1.0,2.308516025543213
+573,Robin Olsen,Everton,Newcastle,GK,,45,0.0,0.0,1.074027419090271
+115,Ruben Loftus-Cheek,Fulham,West Brom,MID,,59,0.2,2.3,2.2376883029937744
+171,Fabricio Agosto Ramírez,Fulham,West Brom,GK,,40,1.8,0.0,0.4100618064403534
+172,Kevin McDonald,Fulham,West Brom,MID,0.0,48,0.0,0.0,0.31936031579971313
+173,Maxime Le Marchand,Fulham,West Brom,DEF,,43,0.1,0.5,0.48378807306289673
+174,Stefan Johansen,Fulham,West Brom,MID,0.0,48,0.0,0.0,0.3165217638015747
+175,Tom Cairney,Fulham,West Brom,MID,,53,0.1,3.0,3.088991641998291
+176,Tim Ream,Fulham,West Brom,DEF,,44,0.2,1.4,2.139864206314087
+177,Anthony Knockaert,Fulham,West Brom,MID,0.0,52,0.1,0.0,0.3287046551704407
+178,Michael Hector,Fulham,West Brom,DEF,,43,0.2,0.0,0.2704063057899475
+179,Cyrus Christie,Fulham,West Brom,DEF,0.0,43,0.0,0.0,0.2521388530731201
+180,Neeskens Kebano,Fulham,West Brom,MID,,48,0.1,1.2,0.8311808109283447
+181,Bobby Decordova-Reid,Fulham,West Brom,FWD,,54,0.1,2.0,0.898635983467102
+182,Joe Bryan,Fulham,West Brom,DEF,,48,0.5,1.5,0.9231716394424438
+183,Marcus Bettinelli,Fulham,West Brom,GK,0.0,44,0.0,0.0,0.29238027334213257
+184,Aleksandar Mitrović,Fulham,West Brom,FWD,,58,9.4,3.2,4.998476505279541
+185,Alfie Mawson,Fulham,West Brom,DEF,0.0,44,0.0,0.0,0.24113626778125763
+186,Marek Rodák,Fulham,West Brom,GK,,44,0.4,1.0,0.3326645493507385
+187,Ivan Ricardo Neves Abreu Cavaleiro,Fulham,West Brom,MID,,54,0.1,1.8,1.4009302854537964
+188,Josh Onomah,Fulham,West Brom,MID,0.0,48,0.1,1.5,0.33285093307495117
+189,Jean Michaël Seri,Fulham,West Brom,MID,0.0,47,0.1,0.0,0.32661038637161255
+190,Aboubakar Kamara,Fulham,West Brom,MID,0.0,49,0.1,0.4,0.6874339580535889
+191,André-Frank Zambo Anguissa,Fulham,West Brom,MID,,45,2.2,2.2,2.75844669342041
+192,Zeze Steven Sessegnon,Fulham,West Brom,DEF,0.0,44,0.1,0.0,0.24870987236499786
+373,Harrison Reed,Fulham,West Brom,MID,100.0,45,0.7,2.7,1.1687567234039307
+484,Antonee Robinson,Fulham,West Brom,DEF,,44,0.1,1.7,2.6863081455230713
+493,Mario Lemina,Fulham,West Brom,MID,100.0,45,0.5,1.3,1.7336676120758057
+516,Alphonse Areola,Fulham,West Brom,GK,,45,1.3,2.2,3.276508331298828
+517,Kenny Tete,Fulham,West Brom,DEF,0.0,44,0.1,1.0,0.2668316066265106
+525,Denis Odoi,Fulham,West Brom,DEF,,44,0.1,0.3,0.2528192102909088
+557,Ademola Lookman,Fulham,West Brom,MID,,50,0.4,4.3,2.8511149883270264
+562,Ola Aina,Fulham,West Brom,DEF,,45,0.0,1.7,2.4247937202453613
+571,Joachim Andersen,Fulham,West Brom,DEF,0.0,45,0.0,0.0,0.30958306789398193
+572,Tosin Adarabioyo,Fulham,West Brom,DEF,,45,0.0,1.5,1.94239342212677
+585,Terence Kongolo,Fulham,West Brom,DEF,0.0,45,0.0,0.0,0.3187224864959717
+216,Wes Morgan,Leicester,Leeds,DEF,100.0,44,0.1,1.0,0.4196111559867859
+217,Kasper Schmeichel,Leicester,Leeds,GK,,55,12.0,4.2,2.804704189300537
+218,Christian Fuchs,Leicester,Leeds,DEF,100.0,45,0.1,3.5,1.9601144790649414
+219,Jonny Evans,Leicester,Leeds,DEF,100.0,55,0.2,2.0,2.1024441719055176
+220,Adrien Silva,Leicester,Leeds,MID,0.0,44,0.4,0.0,0.4750704765319824
+221,Marc Albrighton,Leicester,Leeds,MID,,53,0.1,1.0,1.0831423997879028
+222,Matty James,Leicester,Leeds,MID,0.0,44,0.3,0.0,0.44276052713394165
+223,Danny Ward,Leicester,Leeds,GK,,44,0.2,0.0,0.4542887806892395
+224,Jamie Vardy,Leicester,Leeds,FWD,100.0,100,17.3,8.2,4.601914882659912
+225,Dennis Praet,Leicester,Leeds,MID,100.0,55,0.4,4.0,1.6736795902252197
+226,Ricardo Domingos Barbosa Pereira,Leicester,Leeds,DEF,0.0,59,0.1,0.0,0.4186013340950012
+227,Daniel Amartey,Leicester,Leeds,DEF,0.0,40,1.1,0.0,0.4791486859321594
+228,Youri Tielemans,Leicester,Leeds,MID,,64,1.7,2.7,2.274965286254883
+229,Ayoze Pérez,Leicester,Leeds,MID,,62,1.1,2.0,2.5223636627197266
+230,Demarai Gray,Leicester,Leeds,MID,100.0,53,0.1,0.0,0.4880622327327728
+231,James Maddison,Leicester,Leeds,MID,100.0,70,2.4,3.0,2.0264499187469482
+233,Kelechi Iheanacho,Leicester,Leeds,FWD,,57,0.3,1.3,1.5230588912963867
+234,Hamza Choudhury,Leicester,Leeds,MID,,48,0.1,1.0,0.6339185237884521
+235,Harvey Barnes,Leicester,Leeds,MID,,70,4.7,4.2,3.3184356689453125
+236,Wilfred Ndidi,Leicester,Leeds,MID,0.0,48,0.7,2.5,0.5100603103637695
+237,Filip Benkovic,Leicester,Leeds,DEF,0.0,43,0.0,0.0,0.41839563846588135
+238,Çaglar Söyüncü,Leicester,Leeds,DEF,0.0,54,4.9,2.0,0.5252355933189392
+239,James Justin,Leicester,Leeds,DEF,,48,21.6,4.3,3.078739643096924
+240,Luke Thomas,Leicester,Leeds,DEF,,43,0.2,0.0,0.4157695472240448
+498,Timothy Castagne,Leicester,Leeds,DEF,,58,21.3,5.8,4.565479755401611
+518,Nampalys Mendy,Leicester,Leeds,MID,,45,3.1,2.7,2.4594290256500244
+541,Cengiz Ünder,Leicester,Leeds,MID,,59,0.1,2.5,1.6596349477767944
+561,Wesley Fofana,Leicester,Leeds,DEF,,50,0.1,3.5,2.519052028656006
+579,Islam Slimani,Leicester,Leeds,FWD,,50,0.1,1.0,0.9951772093772888
+193,Pablo Hernández Domínguez,Leeds,Leicester,MID,100.0,58,0.4,1.3,2.2942309379577637
+194,Francisco Casilla Cortés,Leeds,Leicester,GK,100.0,43,1.2,0.0,0.9268213510513306
+195,Liam Cooper,Leeds,Leicester,DEF,75.0,44,0.6,3.3,0.9857876896858215
+196,Barry Douglas,Leeds,Leicester,DEF,0.0,39,6.9,0.0,0.4372045695781708
+197,Luke Ayling,Leeds,Leicester,DEF,,45,4.3,2.8,4.126982688903809
+198,Mateusz Klich,Leeds,Leicester,MID,,56,7.0,5.0,4.21261739730835
+199,Adam Forshaw,Leeds,Leicester,MID,0.0,48,0.0,0.0,0.8344730734825134
+200,Stuart Dallas,Leeds,Leicester,DEF,,45,5.7,3.2,3.702183246612549
+201,Ezgjan Alioski,Leeds,Leicester,DEF,,44,0.4,2.5,3.9847302436828613
+202,Patrick Bamford,Leeds,Leicester,FWD,,59,28.9,8.2,5.806128978729248
+203,Jack Harrison,Leeds,Leicester,MID,100.0,55,1.9,4.2,4.89707612991333
+204,Kalvin Phillips,Leeds,Leicester,MID,0.0,50,1.9,2.4,1.584270715713501
+205,Hélder Wander Sousa de Azevedo e Costa,Leeds,Leicester,MID,,57,9.5,5.3,4.6908979415893555
+206,Tyler Roberts,Leeds,Leicester,MID,,49,0.1,1.0,0.9784989356994629
+207,Jay-Roy Grot,Leeds,Leicester,MID,0.0,48,0.0,0.0,0.8371790051460266
+208,Kamil Miazek,Leeds,Leicester,GK,0.0,40,1.6,0.0,0.8911455273628235
+209,Ian Carlo Poveda-Ocampo,Leeds,Leicester,MID,,44,0.5,1.0,1.5371581315994263
+210,Jamie Shackleton,Leeds,Leicester,MID,,48,0.0,2.0,2.810253620147705
+211,Pascal Struijk,Leeds,Leicester,DEF,,40,2.4,0.7,1.5665082931518555
+212,Jordan Stevens,Leeds,Leicester,MID,0.0,44,0.7,0.0,0.9586637616157532
+213,Illan Meslier,Leeds,Leicester,GK,,45,3.9,4.0,4.183816432952881
+214,Leif Davis,Leeds,Leicester,DEF,,40,1.4,1.0,0.9593937397003174
+215,Oliver Casey,Leeds,Leicester,DEF,,39,0.9,0.0,0.8307183384895325
+491,Robin Koch,Leeds,Leicester,DEF,,45,0.8,3.2,3.3990859985351562
+492,Rodrigo Moreno,Leeds,Leicester,FWD,,58,3.1,3.0,4.994446754455566
+532,Elia Caprile,Leeds,Leicester,GK,,40,0.3,0.0,0.8515123128890991
+533,Mateusz Bogusz,Leeds,Leicester,MID,0.0,44,0.0,0.0,0.8339483737945557
+549,Diego Llorente,Leeds,Leicester,DEF,0.0,44,0.0,0.0,0.7621203064918518
+570,Raphael Dias Belloli,Leeds,Leicester,MID,,55,0.0,1.0,1.467817783355713
+241,James Milner,Liverpool,West Ham,MID,100.0,53,0.1,1.0,0.021663200110197067
+242,Konstantinos Tsimikas,Liverpool,West Ham,DEF,0.0,49,0.0,0.0,-0.22897614538669586
+243,Georginio Wijnaldum,Liverpool,West Ham,MID,,53,1.3,2.0,1.491856336593628
+244,Jordan Henderson,Liverpool,West Ham,MID,100.0,54,1.2,1.8,1.841501235961914
+245,Adrián San Miguel del Castillo,Liverpool,West Ham,GK,,45,0.6,1.0,0.8503474593162537
+246,Joel Matip,Liverpool,West Ham,DEF,75.0,54,0.3,1.0,0.6170971393585205
+247,Xherdan Shaqiri,Liverpool,West Ham,MID,100.0,64,0.1,0.0,-0.15858380496501923
+248,Alex Oxlade-Chamberlain,Liverpool,West Ham,MID,0.0,64,0.0,0.0,-0.1625480055809021
+249,Roberto Firmino,Liverpool,West Ham,FWD,,93,2.6,4.0,2.643115520477295
+250,Virgil van Dijk,Liverpool,West Ham,DEF,0.0,64,11.6,3.0,0.866548478603363
+251,Sadio Mané,Liverpool,West Ham,MID,100.0,120,9.5,7.8,3.0803475379943848
+252,Alisson Ramses Becker,Liverpool,West Ham,GK,100.0,59,7.4,4.8,2.8694396018981934
+253,Fabio Henrique Tavares,Liverpool,West Ham,MID,50.0,55,1.5,2.3,1.5529651641845703
+254,Mohamed Salah,Liverpool,West Ham,MID,,124,47.6,8.3,5.02367639541626
+255,Andrew Robertson,Liverpool,West Ham,DEF,,71,19.3,4.5,3.479691505432129
+256,Divock Origi,Liverpool,West Ham,FWD,,53,0.7,0.0,0.053725432604551315
+257,Harry Wilson,Liverpool,West Ham,MID,0.0,52,0.0,0.0,-0.15517602860927582
+258,Takumi Minamino,Liverpool,West Ham,MID,,61,0.2,1.0,0.3126674294471741
+259,Trent Alexander-Arnold,Liverpool,West Ham,DEF,,74,34.3,2.8,3.4193665981292725
+260,Joseph Gomez,Liverpool,West Ham,DEF,100.0,54,2.8,1.2,1.7043074369430542
+261,Naby Keita,Liverpool,West Ham,MID,75.0,53,0.3,1.8,0.5234066843986511
+263,Curtis Jones,Liverpool,West Ham,MID,,44,0.5,1.0,0.025449614971876144
+264,Neco Williams,Liverpool,West Ham,DEF,,40,3.2,0.0,0.4048648774623871
+265,Harvey Elliott,Liverpool,West Ham,MID,0.0,44,0.2,0.0,-0.11066614091396332
+468,Diogo Jota,Liverpool,West Ham,MID,,63,2.0,4.5,1.9439568519592285
+531,Thiago Alcántara do Nascimento,Liverpool,West Ham,MID,75.0,60,1.7,1.5,1.5317962169647217
+560,Caoimhin Kelleher,Liverpool,West Ham,GK,,45,0.0,0.0,-0.19872333109378815
+589,Nathaniel Phillips,Liverpool,West Ham,DEF,,40,0.0,0.0,-0.17390857636928558
+266,Fernando Luiz Rosa,Man City,Sheffield Utd,DEF,0.0,55,0.9,1.2,0.7081060409545898
+267,Claudio Bravo,Man City,Sheffield Utd,GK,0.0,45,0.0,0.0,0.37987422943115234
+268,Sergio Agüero,Man City,Sheffield Utd,FWD,0.0,104,2.2,1.5,2.5466482639312744
+269,Nicolás Otamendi,Man City,Sheffield Utd,DEF,0.0,49,0.3,0.0,0.45181578397750854
+270,Kyle Walker,Man City,Sheffield Utd,DEF,,60,6.2,2.6,3.809093713760376
+271,Ilkay Gündogan,Man City,Sheffield Utd,MID,100.0,54,0.3,1.5,1.8117717504501343
+272,Kevin De Bruyne,Man City,Sheffield Utd,MID,100.0,115,15.2,4.5,7.550103664398193
+273,John Stones,Man City,Sheffield Utd,DEF,,49,0.4,2.0,0.4418327510356903
+274,Benjamin Mendy,Man City,Sheffield Utd,DEF,0.0,59,1.2,0.7,0.8954038023948669
+275,Riyad Mahrez,Man City,Sheffield Utd,MID,,84,3.6,4.8,3.682706594467163
+276,Raheem Sterling,Man City,Sheffield Utd,MID,100.0,116,7.4,5.8,4.427980899810791
+277,João Pedro Cavaco Cancelo,Man City,Sheffield Utd,DEF,100.0,54,0.8,6.5,1.981553316116333
+278,Ederson Santana de Moraes,Man City,Sheffield Utd,GK,,60,6.0,3.0,4.626634120941162
+279,Nathan Aké,Man City,Sheffield Utd,DEF,75.0,55,6.4,3.2,2.1807589530944824
+280,Aymeric Laporte,Man City,Sheffield Utd,DEF,100.0,60,2.5,2.0,1.355496883392334
+281,Bernardo Mota Veiga de Carvalho e Silva,Man City,Sheffield Utd,MID,100.0,74,0.6,2.0,2.5369815826416016
+282,Gabriel Fernando de Jesus,Man City,Sheffield Utd,FWD,0.0,93,0.7,6.0,0.7918238043785095
+283,Oleksandr Zinchenko,Man City,Sheffield Utd,DEF,100.0,55,0.2,1.0,0.5726004838943481
+284,Phil Foden,Man City,Sheffield Utd,MID,,66,8.4,5.0,3.3911869525909424
+285,Tommy Doyle,Man City,Sheffield Utd,MID,,44,0.1,0.0,0.41739732027053833
+286,Rodrigo Hernandez,Man City,Sheffield Utd,MID,,54,0.5,1.8,2.417664051055908
+287,Ferran Torres,Man City,Sheffield Utd,MID,,69,0.8,2.3,2.0066044330596924
+288,Eric Garcia,Man City,Sheffield Utd,DEF,100.0,48,0.2,1.0,1.440034031867981
+537,Adrián Bernabé,Man City,Sheffield Utd,MID,100.0,45,0.0,0.0,0.40198326110839844
+538,Zack Steffen,Man City,Sheffield Utd,GK,,45,0.0,0.0,0.37831538915634155
+539,Liam Delap,Man City,Sheffield Utd,FWD,,45,0.9,1.0,0.7146961688995361
+552,Cole Palmer,Man City,Sheffield Utd,MID,,45,0.0,0.0,0.402797669172287
+556,Rúben Santos Gato Alves Dias,Man City,Sheffield Utd,DEF,,55,1.4,3.0,3.398587703704834
+289,Sergio Romero,Man Utd,Arsenal,GK,0.0,49,0.1,0.0,0.7221315503120422
+290,Juan Mata,Man Utd,Arsenal,MID,,59,0.1,3.0,3.5108795166015625
+291,David de Gea,Man Utd,Arsenal,GK,,54,3.8,2.2,4.7485575675964355
+292,Chris Smalling,Man Utd,Arsenal,DEF,0.0,49,0.1,0.0,0.706167459487915
+293,Odion Ighalo,Man Utd,Arsenal,FWD,,62,0.2,1.0,0.7959736585617065
+294,Marcos Rojo,Man Utd,Arsenal,DEF,,49,0.1,0.0,0.6891780495643616
+295,Nemanja Matic,Man Utd,Arsenal,MID,,49,0.2,2.0,1.1761341094970703
+296,Paul Pogba,Man Utd,Arsenal,MID,,78,1.4,1.6,2.8772225379943848
+297,Phil Jones,Man Utd,Arsenal,DEF,0.0,49,0.0,0.0,0.687690019607544
+298,Harry Maguire,Man Utd,Arsenal,DEF,100.0,54,2.9,3.6,4.47784948348999
+299,Frederico Rodrigues de Paula Santos,Man Utd,Arsenal,MID,,53,0.1,1.5,3.239755392074585
+300,Luke Shaw,Man Utd,Arsenal,DEF,,49,1.0,1.0,3.3093202114105225
+301,Jesse Lingard,Man Utd,Arsenal,MID,0.0,59,0.2,0.0,0.7611201405525208
+302,Bruno Miguel Borges Fernandes,Man Utd,Arsenal,MID,,105,22.0,6.8,3.754319906234741
+303,Anthony Martial,Man Utd,Arsenal,FWD,0.0,88,3.8,1.7,2.4482710361480713
+304,Andreas Pereira,Man Utd,Arsenal,MID,0.0,48,0.0,0.0,0.743820309638977
+305,Dean Henderson,Man Utd,Arsenal,GK,,53,1.7,0.0,0.9688392877578735
+306,Marcus Rashford,Man Utd,Arsenal,MID,,95,7.2,5.6,5.303173542022705
+307,Axel Tuanzebe,Man Utd,Arsenal,DEF,100.0,45,0.1,0.0,0.6994380354881287
+308,Victor Lindelöf,Man Utd,Arsenal,DEF,,49,1.3,2.5,3.223731517791748
+309,Scott McTominay,Man Utd,Arsenal,MID,,49,0.3,2.0,3.406914710998535
+310,Eric Bailly,Man Utd,Arsenal,DEF,0.0,49,0.2,-0.5,1.4380273818969727
+311,Daniel James,Man Utd,Arsenal,MID,,63,0.3,1.0,2.8052072525024414
+312,Timothy Fosu-Mensah,Man Utd,Arsenal,DEF,,44,0.1,0.0,0.6977611780166626
+313,Aaron Wan-Bissaka,Man Utd,Arsenal,DEF,,54,8.6,3.5,4.078832149505615
+314,José Diogo Dalot Teixeira,Man Utd,Arsenal,DEF,0.0,49,0.0,0.0,0.6887551546096802
+315,Mason Greenwood,Man Utd,Arsenal,MID,100.0,72,3.2,1.5,2.6621015071868896
+316,Tahith Chong,Man Utd,Arsenal,MID,0.0,45,0.0,0.0,0.7350425720214844
+317,James Garner,Man Utd,Arsenal,MID,0.0,44,0.1,0.0,0.7459452152252197
+318,Brandon Williams,Man Utd,Arsenal,DEF,,43,0.9,0.0,0.8508362770080566
+319,Teden Mengi,Man Utd,Arsenal,DEF,,40,0.6,0.0,0.7644432783126831
+495,Donny van de Beek,Man Utd,Arsenal,MID,,68,2.3,2.2,1.692988634109497
+568,Alex Nicolao Telles,Man Utd,Arsenal,DEF,,55,1.2,0.0,0.8921715021133423
+569,Edinson Cavani,Man Utd,Arsenal,FWD,100.0,80,0.6,1.0,1.6959538459777832
+575,Facundo Pellistri,Man Utd,Arsenal,MID,,55,0.0,0.0,0.6455302238464355
+320,Andy Carroll,Newcastle,Everton,FWD,,53,0.4,2.0,0.37855270504951477
+321,Jonjo Shelvey,Newcastle,Everton,MID,0.0,54,0.2,1.8,1.4116389751434326
+322,Matt Ritchie,Newcastle,Everton,MID,0.0,49,0.0,2.0,0.2057982236146927
+323,Federico Fernández,Newcastle,Everton,DEF,,49,1.0,2.2,2.0746800899505615
+324,Ciaran Clark,Newcastle,Everton,DEF,75.0,45,0.0,0.0,0.13641779124736786
+325,Karl Darlow,Newcastle,Everton,GK,100.0,50,1.6,5.0,2.728080987930298
+326,Martin Dubravka,Newcastle,Everton,GK,0.0,49,0.2,0.0,0.1935979127883911
+327,Florian Lejeune,Newcastle,Everton,DEF,0.0,43,0.0,0.0,0.13239686191082
+328,Jamaal Lascelles,Newcastle,Everton,DEF,100.0,44,2.1,2.0,2.2475013732910156
+329,Dwight Gayle,Newcastle,Everton,FWD,0.0,59,0.0,0.0,0.2210671603679657
+330,Christian Atsu,Newcastle,Everton,MID,0.0,53,0.0,0.0,0.2034590244293213
+331,Paul Dummett,Newcastle,Everton,DEF,75.0,44,0.0,0.0,0.13185371458530426
+332,Javier Manquillo,Newcastle,Everton,DEF,,45,0.3,2.2,0.3539891839027405
+333,Emil Krafth,Newcastle,Everton,DEF,100.0,44,0.1,2.0,0.808645486831665
+334,Fabian Schär,Newcastle,Everton,DEF,100.0,49,0.0,1.0,1.5025519132614136
+335,DeAndre Yedlin,Newcastle,Everton,DEF,75.0,43,0.2,0.0,0.16298207640647888
+336,Isaac Hayden,Newcastle,Everton,MID,100.0,48,0.1,1.6,0.5205032229423523
+337,Rolando Aarons,Newcastle,Everton,MID,0.0,49,0.0,0.0,0.20400427281856537
+338,Allan Saint-Maximin,Newcastle,Everton,MID,100.0,53,7.1,4.2,2.9356114864349365
+339,Miguel Almirón,Newcastle,Everton,MID,,57,0.5,1.8,1.8574193716049194
+340,Joelinton Cássio Apolinário de Lira,Newcastle,Everton,FWD,,58,0.2,1.2,1.116821050643921
+341,Yoshinori Muto,Newcastle,Everton,FWD,0.0,48,0.1,0.0,0.23799481987953186
+342,Kelland Watts,Newcastle,Everton,DEF,0.0,40,0.2,0.0,0.1538865715265274
+480,Sean Longstaff,Newcastle,Everton,MID,,48,0.1,1.0,0.42735597491264343
+485,Jeff Hendrick,Newcastle,Everton,MID,,50,3.5,4.0,2.691776990890503
+487,Matthew Longstaff,Newcastle,Everton,MID,75.0,49,0.0,0.0,0.1995968371629715
+488,Mark Gillespie,Newcastle,Everton,GK,,44,0.1,0.0,0.1796187162399292
+497,Jacob Murphy,Newcastle,Everton,MID,,49,0.0,5.0,1.5053462982177734
+506,Callum Wilson,Newcastle,Everton,FWD,,65,13.0,6.8,3.8318049907684326
+507,Ryan Fraser,Newcastle,Everton,MID,100.0,58,0.3,2.2,1.5100733041763306
+513,Jamal Lewis,Newcastle,Everton,DEF,100.0,44,2.2,1.7,1.6531703472137451
+262,Rhian Brewster,Sheffield Utd,Man City,FWD,,45,6.9,1.0,1.553688645362854
+343,Billy Sharp,Sheffield Utd,Man City,FWD,,57,0.2,2.8,0.7332193851470947
+344,David McGoldrick,Sheffield Utd,Man City,FWD,100.0,53,0.7,2.5,1.606790542602539
+345,Chris Basham,Sheffield Utd,Man City,DEF,,49,1.1,1.8,2.1344995498657227
+346,John Fleck,Sheffield Utd,Man City,MID,0.0,57,0.2,1.7,0.9873865842819214
+347,Enda Stevens,Sheffield Utd,Man City,DEF,,53,2.3,1.3,2.3537046909332275
+348,Simon Moore,Sheffield Utd,Man City,GK,0.0,44,0.2,0.0,0.5888324975967407
+349,Oliver Norwood,Sheffield Utd,Man City,MID,,48,0.2,1.7,0.8354344367980957
+350,Wes Foderingham,Sheffield Utd,Man City,GK,,44,0.1,0.0,0.5858113169670105
+351,George Baldock,Sheffield Utd,Man City,DEF,,54,2.3,1.8,2.684277057647705
+352,Jack Robinson,Sheffield Utd,Man City,DEF,,44,0.2,2.7,0.9273796677589417
+353,John Egan,Sheffield Utd,Man City,DEF,100.0,49,4.0,0.4,2.551809072494507
+354,Jack O'Connell,Sheffield Utd,Man City,DEF,0.0,48,0.2,1.5,0.5553852915763855
+355,John Lundstram,Sheffield Utd,Man City,MID,,52,4.0,1.3,3.0370819568634033
+356,Ben Osborn,Sheffield Utd,Man City,MID,,49,0.0,1.8,2.5032684803009033
+357,Oliver McBurnie,Sheffield Utd,Man City,FWD,,57,0.3,1.8,3.1606695652008057
+359,Lys Mousset,Sheffield Utd,Man City,FWD,0.0,58,0.1,0.0,0.6499645709991455
+360,Sander Berge,Sheffield Utd,Man City,MID,100.0,50,0.2,2.5,2.4543046951293945
+424,Oliver Burke,Sheffield Utd,Man City,MID,100.0,45,1.0,1.8,1.5774281024932861
+477,Luke Freeman,Sheffield Utd,Man City,MID,0.0,50,0.0,0.0,0.615944504737854
+483,Aaron Ramsdale,Sheffield Utd,Man City,GK,,49,3.5,2.3,2.6071300506591797
+509,Ethan Ampadu,Sheffield Utd,Man City,DEF,,45,0.6,1.3,2.0832104682922363
+510,Jayden Bogle,Sheffield Utd,Man City,DEF,,44,0.1,0.0,0.5302175879478455
+511,Max Lowe,Sheffield Utd,Man City,DEF,75.0,44,0.1,1.0,0.6390959024429321
+529,Phil Jagielka,Sheffield Utd,Man City,DEF,,40,0.6,0.0,0.505668580532074
+580,Michael Verrips,Sheffield Utd,Man City,GK,,40,0.2,0.0,0.4973791241645813
+148,Theo Walcott,Southampton,Aston Villa,MID,100.0,58,0.2,3.0,0.6676807403564453
+361,Shane Long,Southampton,Aston Villa,FWD,,53,0.7,1.0,0.9175325632095337
+362,Ryan Bertrand,Southampton,Aston Villa,DEF,,50,1.4,3.7,2.9530725479125977
+363,Alex McCarthy,Southampton,Aston Villa,GK,,45,19.0,4.0,4.127100467681885
+364,Oriol Romeu Vidal,Southampton,Aston Villa,MID,,45,4.5,3.3,3.1776092052459717
+365,Nathan Redmond,Southampton,Aston Villa,MID,100.0,64,0.2,2.0,2.7164194583892822
+366,Danny Ings,Southampton,Aston Villa,FWD,,85,18.5,6.8,2.9991259574890137
+367,Jack Stephens,Southampton,Aston Villa,DEF,,48,0.2,0.5,0.7027980089187622
+368,Stuart Armstrong,Southampton,Aston Villa,MID,100.0,55,0.2,3.5,3.190784215927124
+369,Jannik Vestergaard,Southampton,Aston Villa,DEF,,45,2.3,5.4,2.90744948387146
+370,James Ward-Prowse,Southampton,Aston Villa,MID,,58,1.9,3.8,3.016383647918701
+371,Angus Gunn,Southampton,Aston Villa,GK,0.0,44,0.2,0.0,0.7345689535140991
+372,Sofiane Boufal,Southampton,Aston Villa,MID,0.0,54,0.0,0.0,0.7491689920425415
+374,Josh Sims,Southampton,Aston Villa,MID,0.0,44,0.1,0.0,0.7668860554695129
+375,Kyle Walker-Peters,Southampton,Aston Villa,DEF,,45,10.7,3.5,3.3337907791137695
+376,Jan Bednarek,Southampton,Aston Villa,DEF,,45,2.1,3.7,2.3845555782318115
+377,Che Adams,Southampton,Aston Villa,FWD,,58,1.9,4.8,3.099330425262451
+378,Yan Valery,Southampton,Aston Villa,DEF,,48,0.1,0.0,0.6814054846763611
+379,William Smallbone,Southampton,Aston Villa,MID,0.0,45,0.4,1.5,0.7893995046615601
+380,Jake Vokins,Southampton,Aston Villa,DEF,,40,1.3,0.0,0.7901361584663391
+381,Michael Obafemi,Southampton,Aston Villa,FWD,,48,1.3,1.0,0.8909893035888672
+382,Moussa Djenepo,Southampton,Aston Villa,MID,0.0,55,0.1,3.5,1.3121768236160278
+479,Mohammed Salisu,Southampton,Aston Villa,DEF,0.0,43,0.1,0.0,0.690762996673584
+523,Fraser Forster,Southampton,Aston Villa,GK,,40,3.2,0.0,0.974269688129425
+524,Nathan Tella,Southampton,Aston Villa,MID,,44,0.4,1.0,0.8396333456039429
+565,Ibrahima Diallo,Southampton,Aston Villa,MID,,45,0.0,1.0,0.8519880771636963
+590,Daniel N'Lundulu,Southampton,Aston Villa,FWD,,45,0.0,1.0,1.0422300100326538
+383,Hugo Lloris,Spurs,Brighton,GK,,55,5.7,3.2,3.287179470062256
+384,Danny Rose,Spurs,Brighton,DEF,0.0,48,0.2,0.0,-0.5056909918785095
+385,Moussa Sissoko,Spurs,Brighton,MID,100.0,48,0.4,2.0,1.7253994941711426
+386,Toby Alderweireld,Spurs,Brighton,DEF,,54,1.7,3.7,2.101144313812256
+387,Erik Lamela,Spurs,Brighton,MID,100.0,59,0.2,1.5,1.819334626197815
+388,Harry Kane,Spurs,Brighton,FWD,,109,41.1,10.8,4.352409362792969
+389,Serge Aurier,Spurs,Brighton,DEF,100.0,52,2.6,6.5,1.9285999536514282
+390,Heung-Min Son,Spurs,Brighton,MID,100.0,95,56.0,11.5,11.60214900970459
+391,Eric Dier,Spurs,Brighton,DEF,100.0,49,1.1,2.6,1.8631162643432617
+392,Lucas Rodrigues Moura da Silva,Spurs,Brighton,MID,,69,1.6,2.7,0.7362076044082642
+393,Paulo Gazzaniga,Spurs,Brighton,GK,,44,0.3,0.0,-0.48407548666000366
+394,Bamidele Alli,Spurs,Brighton,MID,,75,0.6,1.0,-0.24767909944057465
+395,Ben Davies,Spurs,Brighton,DEF,,48,1.2,3.0,1.8076114654541016
+396,Pierre-Emile Højbjerg,Spurs,Brighton,MID,,49,0.8,2.5,1.9374933242797852
+397,Harry Winks,Spurs,Brighton,MID,,54,0.1,1.2,-0.338064044713974
+398,Davinson Sánchez,Spurs,Brighton,DEF,,54,0.9,1.0,0.6958490610122681
+399,Ryan Sessegnon,Spurs,Brighton,DEF,0.0,48,0.1,0.0,-0.510479211807251
+400,Steven Bergwijn,Spurs,Brighton,MID,100.0,71,0.4,1.5,0.1524762064218521
+401,Gedson Carvalho Fernandes,Spurs,Brighton,MID,,48,0.1,0.0,-0.4851222634315491
+402,Japhet Tanganga,Spurs,Brighton,DEF,0.0,49,0.0,0.0,-0.5266294479370117
+403,Giovani Lo Celso,Spurs,Brighton,MID,100.0,69,0.5,1.3,0.7352939248085022
+404,Oliver Skipp,Spurs,Brighton,MID,0.0,45,0.0,0.0,-0.49180251359939575
+405,Tanguy Ndombele,Spurs,Brighton,MID,,59,0.4,2.5,2.602447271347046
+406,Juan Foyth,Spurs,Brighton,DEF,0.0,43,0.1,0.0,-0.5189741849899292
+457,Matt Doherty,Spurs,Brighton,DEF,,58,9.0,2.5,2.6845171451568604
+482,Joe Hart,Spurs,Brighton,GK,100.0,44,0.7,0.0,-0.4385828971862793
+521,Cameron Carter-Vickers,Spurs,Brighton,DEF,0.0,40,0.3,0.0,-0.49861425161361694
+542,Sergio Reguilón,Spurs,Brighton,DEF,100.0,56,3.8,3.0,1.6665197610855103
+543,Gareth Bale,Spurs,Brighton,MID,100.0,95,1.2,1.0,0.07711590826511383
+564,Carlos Vinicius Alves Morais,Spurs,Brighton,FWD,,70,0.0,0.0,-0.5166687965393066
+584,Joe Rodon,Spurs,Brighton,DEF,,50,0.0,1.0,-0.28941479325294495
+56,David Button,West Brom,Fulham,GK,,40,4.7,0.0,0.5662323832511902
+358,Callum Robinson,West Brom,Fulham,FWD,100.0,55,0.8,3.7,1.6842162609100342
+407,Kieran Gibbs,West Brom,Fulham,DEF,100.0,44,0.3,-1.5,0.19435368478298187
+408,Hal Robson-Kanu,West Brom,Fulham,FWD,0.0,53,0.1,1.0,0.2701338529586792
+409,Jake Livermore,West Brom,Fulham,MID,,48,0.1,1.5,2.1450982093811035
+410,Kamil Grosicki,West Brom,Fulham,MID,0.0,53,0.0,0.0,0.1944597214460373
+411,Matt Phillips,West Brom,Fulham,MID,100.0,52,0.1,0.8,0.3206290006637573
+412,Kyle Bartley,West Brom,Fulham,DEF,,45,0.2,2.2,0.3759843707084656
+413,Romaine Sawyers,West Brom,Fulham,MID,,49,0.0,1.8,0.5317401885986328
+414,Ahmed El-Sayed Hegazy,West Brom,Fulham,DEF,0.0,43,0.4,6.0,1.2199888229370117
+415,Charlie Austin,West Brom,Fulham,FWD,,52,0.3,0.0,0.2714436650276184
+416,Kenneth Zohore,West Brom,Fulham,FWD,0.0,49,0.0,0.0,0.20949898660182953
+417,Sam Johnstone,West Brom,Fulham,GK,,45,0.9,3.7,3.607884168624878
+418,Conor Townsend,West Brom,Fulham,DEF,100.0,45,0.1,3.2,2.7103946208953857
+419,Oluwasemilogo Adesewo Ibidapo Ajayi,West Brom,Fulham,DEF,,48,0.2,0.8,1.9307805299758911
+420,Jonathan Leko,West Brom,Fulham,MID,0.0,45,0.0,0.0,0.19162677228450775
+421,Kyle Edwards,West Brom,Fulham,MID,,49,0.0,1.0,1.0576584339141846
+422,Darnell Furlong,West Brom,Fulham,DEF,,45,0.1,2.8,2.7505335807800293
+423,Sam Field,West Brom,Fulham,MID,0.0,48,0.0,1.0,0.26415693759918213
+425,Dara O'Shea,West Brom,Fulham,DEF,,44,0.2,0.8,0.44535261392593384
+426,Rekeem Harper,West Brom,Fulham,MID,,44,0.5,1.0,0.23629646003246307
+446,Grady Diangana,West Brom,Fulham,MID,,55,0.6,3.0,2.1746397018432617
+481,Matheus Pereira,West Brom,Fulham,MID,,60,2.7,4.0,3.3063831329345703
+499,Cedric Kipre,West Brom,Fulham,DEF,,44,0.1,0.0,0.1544925719499588
+530,Branislav Ivanovic,West Brom,Fulham,DEF,100.0,45,0.1,4.0,3.1103591918945312
+544,Conor Gallagher,West Brom,Fulham,MID,100.0,55,0.0,2.5,2.543990135192871
+555,Filip Krovinovic,West Brom,Fulham,MID,,50,0.0,2.0,2.630354404449463
+582,Karlan Grant,West Brom,Fulham,FWD,,60,0.0,5.5,3.0502798557281494
+427,Mark Noble,West Ham,Liverpool,MID,100.0,48,0.7,1.3,0.8088690042495728
+428,Robert Snodgrass,West Ham,Liverpool,MID,100.0,58,0.1,1.0,0.6360083818435669
+429,David Martin,West Ham,Liverpool,GK,,40,7.4,0.0,0.9525331258773804
+430,Darren Randolph,West Ham,Liverpool,GK,,44,0.2,0.0,0.5777460336685181
+431,Lukasz Fabianski,West Ham,Liverpool,GK,,50,1.5,4.0,2.968419075012207
+432,Angelo Ogbonna,West Ham,Liverpool,DEF,,49,0.4,2.7,2.279275417327881
+433,Roberto Jimenez Gago,West Ham,Liverpool,GK,0.0,45,0.0,0.0,0.5584519505500793
+434,Jack Wilshere,West Ham,Liverpool,MID,0.0,49,0.1,0.0,0.6097843647003174
+435,Aaron Cresswell,West Ham,Liverpool,DEF,,50,6.3,5.2,2.6800639629364014
+436,Andriy Yarmolenko,West Ham,Liverpool,MID,,57,0.1,0.8,1.388289451599121
+437,Michail Antonio,West Ham,Liverpool,FWD,75.0,63,3.9,4.5,3.5409064292907715
+438,Ryan Fredericks,West Ham,Liverpool,DEF,100.0,44,0.3,1.3,0.6048589944839478
+439,Manuel Lanzini,West Ham,Liverpool,MID,100.0,64,0.1,5.0,0.9110322594642639
+440,Felipe Anderson Pereira Gomes,West Ham,Liverpool,MID,0.0,62,0.2,1.0,0.677169144153595
+441,Sébastien Haller,West Ham,Liverpool,FWD,100.0,61,0.2,1.8,0.9774311184883118
+442,Arthur Masuaku,West Ham,Liverpool,DEF,100.0,45,1.3,4.2,2.6694741249084473
+443,Fabián Balbuena,West Ham,Liverpool,DEF,,44,0.9,5.0,2.3216090202331543
+444,Jordan Hugill,West Ham,Liverpool,FWD,0.0,55,0.0,0.0,0.6112329959869385
+445,Jarrod Bowen,West Ham,Liverpool,MID,,63,2.2,5.2,2.793825149536133
+447,Albian Ajeti,West Ham,Liverpool,FWD,0.0,55,0.0,0.0,0.6112295985221863
+448,Declan Rice,West Ham,Liverpool,MID,,49,2.8,2.3,3.0147485733032227
+449,Tomas Soucek,West Ham,Liverpool,MID,,49,2.8,2.7,3.2719223499298096
+450,Pablo Fornals,West Ham,Liverpool,MID,,64,0.4,4.8,3.4484379291534424
+451,Issa Diop,West Ham,Liverpool,DEF,100.0,45,0.7,1.0,0.6356103420257568
+452,Ben Johnson,West Ham,Liverpool,DEF,,40,2.2,1.0,0.7463492155075073
+558,Vladimir Coufal,West Ham,Liverpool,DEF,,45,0.3,5.3,2.9727725982666016
+576,Craig Dawson,West Ham,Liverpool,DEF,,45,0.0,0.0,0.5783347487449646
+587,Saïd Benrahma,West Ham,Liverpool,MID,,60,0.1,0.0,1.0130666494369507
+453,John Ruddy,Wolves,Crystal Palace,GK,,44,0.3,0.0,0.9713290929794312
+454,João Filipe Iria Santos Moutinho,Wolves,Crystal Palace,MID,,54,1.7,1.8,2.4959189891815186
+455,Rui Pedro dos Santos Patrício,Wolves,Crystal Palace,GK,,55,7.6,4.0,4.8373637199401855
+456,Ryan Bennett,Wolves,Crystal Palace,DEF,0.0,44,0.2,0.0,0.9546042680740356
+458,Willy Boly,Wolves,Crystal Palace,DEF,,55,2.5,3.8,4.190154552459717
+459,Conor Coady,Wolves,Crystal Palace,DEF,,50,8.8,3.7,4.3977508544921875
+460,Raúl Jiménez,Wolves,Crystal Palace,FWD,,85,19.4,5.5,5.5747270584106445
+461,Romain Saïss,Wolves,Crystal Palace,DEF,,53,20.3,6.3,4.10764217376709
+462,Jonathan Castro Otto,Wolves,Crystal Palace,DEF,0.0,54,0.0,0.0,0.9420193433761597
+463,Léo Bonatini,Wolves,Crystal Palace,FWD,0.0,49,0.2,0.0,1.0168335437774658
+464,Leander Dendoncker,Wolves,Crystal Palace,MID,,49,1.2,3.0,4.1133856773376465
+465,Adama Traoré,Wolves,Crystal Palace,MID,,63,9.6,1.7,2.694247245788574
+466,Rúben Diogo da Silva Neves,Wolves,Crystal Palace,MID,,53,1.6,1.8,3.604572057723999
+467,Oskar Buur,Wolves,Crystal Palace,DEF,,40,2.5,1.0,1.1160733699798584
+469,Daniel Castelo Podence,Wolves,Crystal Palace,MID,100.0,55,3.8,4.0,4.057668685913086
+470,Max Kilman,Wolves,Crystal Palace,DEF,,42,9.6,7.7,2.680605411529541
+471,Rúben Gonçalo Silva Nascimento Vinagre,Wolves,Crystal Palace,DEF,0.0,42,1.8,0.5,1.5798929929733276
+472,Matija Sarkic,Wolves,Crystal Palace,GK,0.0,45,0.1,0.0,0.9643474817276001
+473,Morgan Gibbs-White,Wolves,Crystal Palace,MID,0.0,50,0.0,0.0,0.9756935834884644
+474,Pedro Lomba Neto,Wolves,Crystal Palace,MID,,55,1.5,3.8,4.658254146575928
+475,Bruno André Cavaco Jordao,Wolves,Crystal Palace,MID,0.0,44,0.3,0.0,1.0053162574768066
+476,Leonardo Campana,Wolves,Crystal Palace,FWD,,49,0.3,0.0,1.028032660484314
+504,Fabio Silva,Wolves,Crystal Palace,FWD,,53,0.6,1.0,1.0812008380889893
+505,Fernando Marçal,Wolves,Crystal Palace,DEF,100.0,49,0.2,2.0,1.7950372695922852
+515,Vitor Ferreira,Wolves,Crystal Palace,MID,,49,0.0,1.0,0.9780714511871338
+545,Ki-Jana Hoever,Wolves,Crystal Palace,DEF,,45,0.0,1.0,1.0924155712127686
+546,Nélson Cabral Semedo,Wolves,Crystal Palace,DEF,,55,2.3,3.8,4.3519110679626465
+553,Meritan Shabani,Wolves,Crystal Palace,MID,,45,0.0,0.0,0.9800269603729248
+563,Rayan Ait Nouri,Wolves,Crystal Palace,DEF,,50,0.0,0.0,0.9357550144195557
+581,Owen Otasowie,Wolves,Crystal Palace,MID,,45,0.0,0.0,0.9714257121086121

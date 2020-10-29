@@ -147,7 +147,7 @@ class ModelDataMaker(object):
         df = self.get_players_data()
         for idx, row in df.iterrows():
             player_id, ave_pts = int(row["id"]), row["points_per_game"]
-            player_id_selection_map[player_id] = ave_pts
+            player_id_ave_points_map[player_id] = ave_pts
         self.player_id_ave_points_map = player_id_ave_points_map
         return player_id_ave_points_map
 

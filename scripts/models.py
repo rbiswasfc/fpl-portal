@@ -195,15 +195,16 @@ def generate_leads():
     df_leads["ave_pts"] = df_leads["player_id"].apply(lambda x: player_id_ave_points_map.get(x, x))
 
     # Predictions
+    pdb.set_trace()
     lgbm_preds = lgbm_model.predict(XY_scoring, features)
     df_leads['lgbm_pred'] = lgbm_preds
 
     fastai_preds = fastai_model.predict(XY_scoring)
-    df_leads['lgbm_pred'] = fastai_preds
+    df_leads['fastai_pred'] = fastai_preds
 
     return df_leads
 
 
 if __name__ == "__main__":
     df_fpl = generate_leads()
-    pdb.set_trace()
+    df_fpl.to_csv("./data/model_data/predictions.csv", index=False)
