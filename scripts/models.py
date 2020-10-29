@@ -84,7 +84,7 @@ if __name__ == "__main__":
     }
 
     model = LgbModel(params)
-    model.train(XY_train, features, "star_target", cat_features=cat_features)
+    model.train(XY_train, features, "reg_target", cat_features=cat_features)
     df_imp = model.get_feature_importance()
     print(df_imp.head(40))
 
@@ -125,6 +125,7 @@ if __name__ == "__main__":
     df_leads["player_id"] = XY_scoring["player_id"].values
     df_leads["name"] = df_leads["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
     df_leads["team"] = df_leads["player_id"].apply(lambda x: team_id_team_name_map[player_id_team_id_map.get(x, x)])
+    df_leads["opponent"] = XY_scoring["opp_team_id"].apply(lambda x: team_id_team_name_map.get(x, x))
     df_leads["position"] = df_leads["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
     df_leads['y_true'] = XY_scoring["total_points"].values
     df_leads['y_pred'] = preds

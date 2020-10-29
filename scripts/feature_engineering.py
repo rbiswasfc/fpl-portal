@@ -85,8 +85,8 @@ class FeatureEngineering(object):
         opp_team_cat_features = ["opp_" + feat for feat in team_cat_features]
         opp_team_num_features = ["opp_" + feat for feat in team_num_features]
 
-        static_cat_features = static_cat_features + own_team_cat_features
-        static_num_features = static_num_features + own_team_num_features
+        static_cat_features = static_cat_features + own_team_cat_features + opp_team_cat_features
+        static_num_features = static_num_features + own_team_num_features + opp_team_num_features
 
         self.feature_dict["features"].extend(static_cat_features)
         self.feature_dict["features"].extend(static_num_features)
@@ -265,7 +265,7 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
             # print(feat)
             df_XY[feat] = df_XY[feat].astype('category').cat.codes
 
-    pts_clip = 8
+    pts_clip = 10
     star_clip = 5
     df_XY["reg_target"] = df_XY["total_points"].apply(lambda x: x if x <= pts_clip else pts_clip)
     df_XY["star_target"] = df_XY["total_points"].apply(lambda x: 1 if x >= star_clip else 0)
