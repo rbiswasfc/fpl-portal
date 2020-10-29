@@ -39,7 +39,7 @@ class LgbModel(object):
         self.params = params
         self.model = None
 
-    def train(self, xy_train, features, target, cat_features=[], pct_valid=0.2, n_trees=3000, esr=25):
+    def train(self, xy_train, features, target, cat_features=[], pct_valid=0.15, n_trees=3000, esr=25):
         X, y = xy_train[features].copy(), xy_train[target].values
         X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=pct_valid, random_state=42)
         train_data = lgbm.Dataset(X_train, label=y_train, feature_name=features)
@@ -87,8 +87,8 @@ class FastaiModel(object):
 
     def train(self, xy_train, xy_test):
         fast_data = self.prepare_data(xy_train, xy_test)
-        learn = tabular_learner(fast_data, layers=[512, 256], emb_drop=0.2, metrics=mae)
-        learn.fit_one_cycle(8, 1e-4, wd=0.2)
+        learn = tabular_learner(fast_data, layers=[256, 128], emb_drop=0.2, metrics=mae)
+        learn.fit_one_cycle(4, 1e-4)
         self.model = learn
 
         # get training results
@@ -99,8 +99,8 @@ class FastaiModel(object):
         print("The Validation Set Loss: {}".format(va))
 
         # get test set predictions
-        test_predictions = learn.get_preds(ds_type=DatasetType.Test)[0]
-        xy_test["fastai_pred"] = test_predictions
+        # test_predictions = learn.get_preds(ds_type=DatasetType.Test)[0]
+        # xy_test["fastai_pred"] = test_predictions
         return xy_test
 
     def predict(self, xy_scoring):
@@ -137,7 +137,7 @@ def train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, target="r
 
     print(df_imp.head(30))
 
-    return model, df_imp
+    return model
 
 
 def train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, target="reg_target"):
@@ -146,8 +146,8 @@ def train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, target="reg
     num_features = features_dict["num_features"]
 
     model = FastaiModel(cat_features, num_features, target)
-    XY_test = model.train(XY_train, XY_test)
-    return model, XY_test
+    model.train(XY_train, XY_test)
+    return model
 
 
 def train_potential_model():
@@ -160,8 +160,8 @@ def generate_leads():
     cat_features = features_dict["cat_features"]
     num_features = features_dict["num_features"]
 
-    lgbm_model, _ = train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
-    fastai_model, _ = train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
+    lgbm_model = train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
+    fastai_model = train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
 
     config_2020 = {
         "data_dir": "./data/model_data/2020_21/",
@@ -195,7 +195,7 @@ def generate_leads():
     df_leads["ave_pts"] = df_leads["player_id"].apply(lambda x: player_id_ave_points_map.get(x, x))
 
     # Predictions
-    pdb.set_trace()
+    # pdb.set_trace()
     lgbm_preds = lgbm_model.predict(XY_scoring, features)
     df_leads['lgbm_pred'] = lgbm_preds
 
