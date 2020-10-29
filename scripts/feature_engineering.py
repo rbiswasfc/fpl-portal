@@ -73,7 +73,7 @@ class FeatureEngineering(object):
         team_cat_features = ["strength"]
         team_num_features = ["strength_overall_home", "strength_overall_away", "strength_attack_home",
                              "strength_attack_away", "strength_defence_home", "strength_defence_away"]
-        understat_cat_features = ["pts"]
+        understat_cat_features = []
         understat_num_features = ["xg", "xga", "npxg", "npxga", "deep", "deep_allowed", "xpts", "npxgd",
                                   "ppda_att", "ppda_def", "ppda_allowed_att", "ppda_allowed_def"]
 
@@ -88,10 +88,10 @@ class FeatureEngineering(object):
         static_cat_features = static_cat_features + own_team_cat_features
         static_num_features = static_num_features + own_team_num_features
 
-        self.feature_dict["features"].append(static_cat_features)
-        self.feature_dict["features"].append(static_num_features)
-        self.feature_dict["cat_features"].append(static_cat_features)
-        self.feature_dict["num_features"].append(static_num_features)
+        self.feature_dict["features"].extend(static_cat_features)
+        self.feature_dict["features"].extend(static_num_features)
+        self.feature_dict["cat_features"].extend(static_cat_features)
+        self.feature_dict["num_features"].extend(static_num_features)
 
         data_maker = ModelDataMaker(config)
         df_base = data_maker.make_base_data()
@@ -197,7 +197,7 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     data_scraper = DataScraper(scraper_config)
     scoring_gw = data_scraper.get_next_gameweek_id()
 
-    fe = FeatureEngineering()
+    fe_2020 = FeatureEngineering()
 
     config_2020 = {
         "data_dir": "./data/model_data/2020_21/",
@@ -209,8 +209,9 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
         "scoring_gw": scoring_gw
     }
 
-    df_2020 = fe.execute_fe(config_2020)
+    df_2020 = fe_2020.execute_fe(config_2020)
 
+    fe_2019 = FeatureEngineering()
     config_2019 = {
         "data_dir": "./data/model_data/2019_20/",
         "file_fixture": "fixtures.csv",
@@ -220,8 +221,9 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
         "file_understat_team": "understat_team_data.pkl",
         "scoring_gw": "NA"
     }
-    df_2019 = fe.execute_fe(config_2019)
+    df_2019 = fe_2019.execute_fe(config_2019)
 
+    fe_2018 = FeatureEngineering()
     config_2018 = {
         "data_dir": "./data/model_data/2018_19/",
         "file_fixture": "fixtures.csv",
@@ -231,7 +233,7 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
         "file_understat_team": "understat_team_data.pkl",
         "scoring_gw": "NA"
     }
-    df_2018 = fe.execute_fe(config_2018)
+    df_2018 = fe_2018.execute_fe(config_2018)
 
     df_2018["season_id"] = 0
     df_2019["season_id"] = 1
@@ -239,6 +241,35 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
 
     df_XY = pd.concat([df_2018, df_2019, df_2020])
     df_XY["global_gw_id"] = df_XY[["season_id", "gw_id"]].apply(lambda x: x[0] * 100 + x[1], axis=1)
+
+    # FIX: was home
+    df_XY["was_home_lag_1"] = df_XY["was_home_lag_1"].astype(bool)
+    df_XY["was_home_lag_2"] = df_XY["was_home_lag_2"].astype(bool)
+    df_XY["was_home_lag_3"] = df_XY["was_home_lag_3"].astype(bool)
+
+    # cat cols
+    features_dict = fe_2020.feature_dict
+    cat_features = features_dict["cat_features"]
+
+    #
+    cat_list = []
+    type_dict = dict(df_XY.dtypes)
+    for k, v in type_dict.items():
+        if str(v) == 'object':
+            cat_list.append(k)
+
+    # print(cat_list)
+
+    for feat in cat_features:
+        if feat in cat_list:
+            # print(feat)
+            df_XY[feat] = df_XY[feat].astype('category').cat.codes
+
+    pts_clip = 8
+    star_clip = 5
+    df_XY["reg_target"] = df_XY["total_points"].apply(lambda x: x if x <= pts_clip else pts_clip)
+    df_XY["star_target"] = df_XY["total_points"].apply(lambda x: 1 if x >= star_clip else 0)
+
     df_XY["global_gw_id"] = df_XY["global_gw_id"].fillna(-1)
     df_XY["global_gw_id"] = df_XY["global_gw_id"].astype(int)
     global_scoring_gw = df_XY["global_gw_id"].max()
@@ -247,10 +278,7 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     df_XY_test = df_XY[df_XY["global_gw_id"] == global_test_gw].copy()
     df_XY_scoring = df_XY[df_XY["global_gw_id"] == global_scoring_gw].copy()
 
-    features_dict = fe.feature_dict
-
     # save XY data
-
     df_XY_train.to_csv(os.path.join(dataset_dir, "xy_train.csv"), index=False)
     df_XY_test.to_csv(os.path.join(dataset_dir, "xy_test.csv"), index=False)
     df_XY_scoring.to_csv(os.path.join(dataset_dir, "xy_scoring.csv"), index=False)
@@ -263,4 +291,3 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
 
 if __name__ == "__main__":
     make_XY_data()
-
