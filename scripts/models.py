@@ -6,6 +6,8 @@ import pdb
 import numpy as np
 import pandas as pd
 import pdb
+from tqdm import tqdm
+from fastai.tabular import *
 
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -63,11 +65,57 @@ class LgbModel(object):
         return df_imp
 
 
-if __name__ == "__main__":
-    XY_train, XY_test, XY_scoring, features_dict = load_data()
+class FastaiModel(object):
+    def __init__(self, cat_features, num_features, target):
+        self.cat_features = cat_features
+        self.num_features = num_features
+        self.target = target
+        self.model = None
+
+    def prepare_data(self, xy_train, xy_test, valid_pct=0.15):
+        procs = [FillMissing, Categorify, Normalize]
+        test_data = (
+            TabularList.from_df(xy_test, cat_names=self.cat_features, cont_names=self.num_features, procs=procs))
+
+        fast_data = (TabularList
+                     .from_df(xy_train, cat_names=self.cat_features, cont_names=self.num_features, procs=procs)
+                     .split_by_rand_pct(valid_pct=valid_pct, seed=42)
+                     .label_from_df(cols=self.target)
+                     .add_test(test_data)
+                     .databunch())
+        return fast_data
+
+    def train(self, xy_train, xy_test):
+        fast_data = self.prepare_data(xy_train, xy_test)
+        learn = tabular_learner(fast_data, layers=[512, 256], emb_drop=0.2, metrics=mae)
+        learn.fit_one_cycle(8, 1e-4, wd=0.2)
+        self.model = learn
+
+        # get training results
+        tr = learn.validate(learn.data.train_dl)
+        va = learn.validate(learn.data.valid_dl)
+        print("The Metrics used In Evaluating The Network: {}".format(learn.metrics))
+        print("The Training Set Loss: {}".format(tr))
+        print("The Validation Set Loss: {}".format(va))
+
+        # get test set predictions
+        test_predictions = learn.get_preds(ds_type=DatasetType.Test)[0]
+        xy_test["fastai_pred"] = test_predictions
+        return xy_test
+
+    def predict(self, xy_scoring):
+        n_ex = len(xy_scoring)
+        fast_scores = []
+        for idx in tqdm(range(n_ex)):
+            _, _, this_pred = self.model.predict(xy_scoring.iloc[idx])
+            fast_scores.append(this_pred.item())
+        # xy_scoring["fastai_pred"] = fast_scores
+        return fast_scores
+
+
+def train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, target="reg_target"):
     features = features_dict["features"]
     cat_features = features_dict["cat_features"]
-    print(cat_features)
 
     params = {
         'task': 'train',
@@ -84,13 +132,36 @@ if __name__ == "__main__":
     }
 
     model = LgbModel(params)
-    model.train(XY_train, features, "reg_target", cat_features=cat_features)
+    model.train(XY_train, features, target, cat_features=cat_features)
     df_imp = model.get_feature_importance()
-    print(df_imp.head(40))
+
+    print(df_imp.head(30))
+
+    return model, df_imp
 
 
+def train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, target="reg_target"):
+    features = features_dict["features"]
+    cat_features = features_dict["cat_features"]
+    num_features = features_dict["num_features"]
 
-    # scoring
+    model = FastaiModel(cat_features, num_features, target)
+    XY_test = model.train(XY_train, XY_test)
+    return model, XY_test
+
+
+def train_potential_model():
+    pass
+
+
+def generate_leads():
+    XY_train, XY_test, XY_scoring, features_dict = load_data()
+    features = features_dict["features"]
+    cat_features = features_dict["cat_features"]
+    num_features = features_dict["num_features"]
+
+    lgbm_model, _ = train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
+    fastai_model, _ = train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
 
     config_2020 = {
         "data_dir": "./data/model_data/2020_21/",
@@ -107,30 +178,32 @@ if __name__ == "__main__":
     player_id_player_name_map = data_maker.get_player_id_player_name_map()
     player_id_player_position_map = data_maker.get_player_id_player_position_map()
     team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    player_id_cost_map = data_maker.get_player_id_cost_map()
+    player_id_play_chance_map = data_maker.get_player_id_play_chance_map()
+    player_id_selection_map = data_maker.get_player_id_selection_map()
+    player_id_ave_points_map = data_maker.get_player_id_ave_points_map()
 
-    preds = model.predict(XY_test, features)
-    df_res = pd.DataFrame()
-    df_res["player_id"] = XY_test["player_id"].values
-    df_res["name"] = XY_test["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
-    df_res["team"] = XY_test["player_id"].apply(lambda x: team_id_team_name_map[player_id_team_id_map.get(x, x)])
-    df_res["position"] = XY_test["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
-    df_res['y_true'] = XY_test["total_points"].values
-    df_res['y_pred'] = preds
-    df_res = df_res.sort_values(by='y_pred', ascending=False)
-    print(df_res.head())
-
-    # scoring
-    preds = model.predict(XY_scoring, features)
     df_leads = pd.DataFrame()
     df_leads["player_id"] = XY_scoring["player_id"].values
     df_leads["name"] = df_leads["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
     df_leads["team"] = df_leads["player_id"].apply(lambda x: team_id_team_name_map[player_id_team_id_map.get(x, x)])
-    df_leads["opponent"] = XY_scoring["opp_team_id"].apply(lambda x: team_id_team_name_map.get(x, x))
+    df_leads["next_opponent"] = XY_scoring["opp_team_id"].apply(lambda x: team_id_team_name_map.get(x, x))
     df_leads["position"] = df_leads["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
-    df_leads['y_true'] = XY_scoring["total_points"].values
-    df_leads['y_pred'] = preds
-    df_leads = df_leads.sort_values(by='y_pred', ascending=False)
-    print(df_leads.head())
+    df_leads["chance_of_play"] = df_leads["player_id"].apply(lambda x: player_id_play_chance_map.get(x, x))
+    df_leads["cost"] = df_leads["player_id"].apply(lambda x: player_id_cost_map.get(x, x))
+    df_leads["selection_pct"] = df_leads["player_id"].apply(lambda x: player_id_selection_map.get(x, x))
+    df_leads["ave_pts"] = df_leads["player_id"].apply(lambda x: player_id_ave_points_map.get(x, x))
 
+    # Predictions
+    lgbm_preds = lgbm_model.predict(XY_scoring, features)
+    df_leads['lgbm_pred'] = lgbm_preds
+
+    fastai_preds = fastai_model.predict(XY_scoring)
+    df_leads['lgbm_pred'] = fastai_preds
+
+    return df_leads
+
+
+if __name__ == "__main__":
+    df_fpl = generate_leads()
     pdb.set_trace()
-

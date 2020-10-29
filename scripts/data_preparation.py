@@ -115,6 +115,42 @@ class ModelDataMaker(object):
         self.team_name_team_id_map = team_name_team_id_map
         return team_name_team_id_map
 
+    def get_player_id_cost_map(self):
+        player_id_cost_map = {}
+        df = self.get_players_data()
+        for idx, row in df.iterrows():
+            player_id, now_cost = int(row["id"]), row["now_cost"]
+            player_id_cost_map[player_id] = now_cost
+        self.player_id_cost_map = player_id_cost_map
+        return player_id_cost_map
+
+    def get_player_id_play_chance_map(self):
+        player_id_play_chance_map = {}
+        df = self.get_players_data()
+        for idx, row in df.iterrows():
+            player_id, chance = int(row["id"]), row["chance_of_playing_next_round"]
+            player_id_play_chance_map[player_id] = chance
+        self.player_id_play_chance_map = player_id_play_chance_map
+        return player_id_play_chance_map
+
+    def get_player_id_selection_map(self):
+        player_id_selection_map = {}
+        df = self.get_players_data()
+        for idx, row in df.iterrows():
+            player_id, pct = int(row["id"]), row["selected_by_percent"]
+            player_id_selection_map[player_id] = pct
+        self.player_id_selection_map = player_id_selection_map
+        return player_id_selection_map
+
+    def get_player_id_ave_points_map(self):
+        player_id_ave_points_map = {}
+        df = self.get_players_data()
+        for idx, row in df.iterrows():
+            player_id, ave_pts = int(row["id"]), row["points_per_game"]
+            player_id_selection_map[player_id] = ave_pts
+        self.player_id_ave_points_map = player_id_ave_points_map
+        return player_id_ave_points_map
+
     def prepare_understat_data(self):
         data = self.get_understat_team_data()
 
