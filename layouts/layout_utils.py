@@ -24,12 +24,13 @@ def make_table(df):
         style_cell={
             'backgroundColor': 'rgb(50, 50, 50)',
             'color': 'white',
-            'textAlign': 'left'
+            'textAlign': 'center'
         },
         sort_action='native',
         page_size=6
     )
-    return table
+    layout = html.Div(table, className='container', style={"width": "95%"})
+    return layout
 
 
 def make_dropdown(dropdown_id, dropdown_options, placeholder=None, multi_flag=False):
