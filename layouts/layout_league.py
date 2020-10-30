@@ -25,6 +25,7 @@ def make_left_layout_league():
         className="six columns",
         children=[
             header,
+            html.Div("League Summary", className='inline-header'),
             make_league_search_section(),
             html.Div(id="league-standing-table", style={"width": "100%"}),
             dcc.Store(id="league-standing-memory"),
@@ -43,6 +44,7 @@ def make_right_layout_league():
         className="six columns",
         children=[
             header,
+            html.Div("Team Picks", className='inline-header'),
             html.Div("This is standings")
         ],
     )

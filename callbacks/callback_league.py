@@ -73,7 +73,7 @@ def make_gw_history_plot(teams, league_id):
     data_processor = DataProcessor(config)
     data_loader = DataLoader(config)
 
-    # data_processor.save_classic_league_history(league_id)
+    data_processor.save_classic_league_history(league_id)
     df = data_loader.get_league_gw_history(league_id)
     start_gw = data_scraper.get_league_start_gameweek(league_id)
     current_gw = data_scraper.get_next_gameweek_id()-1

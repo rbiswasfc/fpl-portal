@@ -29,7 +29,7 @@ def make_table(df):
         sort_action='native',
         page_size=6
     )
-    layout = html.Div(table, className='container', style={"width": "95%"})
+    layout = html.Div(table, className='container', style={"width": "95.5%"})
     return layout
 
 
