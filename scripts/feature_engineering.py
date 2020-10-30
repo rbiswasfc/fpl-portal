@@ -123,6 +123,10 @@ class FeatureEngineering(object):
                                                  "effective_gw_id", opp_team_cat_features, 'cat')
         opp_num_lag_dfs = self.make_lag_features(df_base, ["player_id", "effective_gw_id"],
                                                  "effective_gw_id", opp_team_num_features, 'num')
+        opp_cat_next_dfs = self.make_next_features(df_base, ["player_id", "effective_gw_id"],
+                                                 "effective_gw_id", opp_team_cat_features, 'cat')
+        opp_num_next_dfs = self.make_next_features(df_base, ["player_id", "effective_gw_id"],
+                                                 "effective_gw_id", opp_team_num_features, 'num')
 
         gw_cat_lag_dfs = self.make_lag_features(df_base, ["player_id", "effective_gw_id"],
                                                 "effective_gw_id", gw_cat_features, 'cat')
@@ -171,6 +175,20 @@ class FeatureEngineering(object):
             df_base = pd.merge(df_base, df, how="left", on=["player_id", "effective_gw_id"])
         print("Shape after merge: {}".format(df_base.shape))
 
+        print("Merging Opp Cat Team Next Features")
+        print("Shape before merge: {}".format(df_base.shape))
+        for df in opp_cat_next_dfs:
+            df = df.drop_duplicates(subset=["player_id", "effective_gw_id"]).copy()
+            df_base = pd.merge(df_base, df, how="left", on=["player_id", "effective_gw_id"])
+        print("Shape after merge: {}".format(df_base.shape))
+
+        print("Merging Opp Num Team Next Features")
+        print("Shape before merge: {}".format(df_base.shape))
+        for df in opp_num_next_dfs:
+            df = df.drop_duplicates(subset=["player_id", "effective_gw_id"]).copy()
+            df_base = pd.merge(df_base, df, how="left", on=["player_id", "effective_gw_id"])
+        print("Shape after merge: {}".format(df_base.shape))
+
         # add understat data own team
         print("Merging understat own team data")
         for df in understat_own_num_lag_dfs:
@@ -210,6 +228,27 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     }
 
     df_2020 = fe_2020.execute_fe(config_2020)
+
+    # for imputing opponent next in scoring df
+    data_maker_2020 = ModelDataMaker(config_2020)
+    tbf_feats = ["strength", "strength_overall_home", "strength_overall_away", "strength_attack_home",
+                "strength_attack_away", "strength_defence_home", "strength_defence_away"]
+    tbf_feats = ["opp_"+feat for feat in tbf_feats]
+    tbf_feats_next_1_map = dict()
+    tbf_feats_next_2_map = dict()
+    for feat in tbf_feats:
+        tbf_feats_next_1_map[feat] = feat + "_next_1"
+        tbf_feats_next_2_map[feat] = feat + "_next_2"
+    
+    df_next_1_gw = data_maker_2020.make_nth_gw_scoring_base(scoring_gw+1)
+    df_next_2_gw = data_maker_2020.make_nth_gw_scoring_base(scoring_gw+2)
+    
+    df_next_1_gw = df_next_1_gw.rename(columns=tbf_feats_next_1_map)
+    df_next_2_gw = df_next_2_gw.rename(columns=tbf_feats_next_2_map)
+    df_next_1_gw = df_next_1_gw.drop(columns=["opp_id", "opp_name"])
+    df_next_2_gw = df_next_2_gw.drop(columns=["opp_id", "opp_name"])
+    # pdb.set_trace()
+
 
     fe_2019 = FeatureEngineering()
     config_2019 = {
@@ -267,8 +306,10 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
 
     pts_clip = 10
     star_clip = 5
-    df_XY["reg_target"] = df_XY["total_points"].apply(lambda x: x if x <= pts_clip else pts_clip)
+    pot_clip = 24
+    df_XY["reg_target"] = df_XY["total_points"].clip(upper=pts_clip)
     df_XY["star_target"] = df_XY["total_points"].apply(lambda x: 1 if x >= star_clip else 0)
+    df_XY["pot_target"] = df_XY["potential"].clip(upper=pot_clip)
 
     df_XY["global_gw_id"] = df_XY["global_gw_id"].fillna(-1)
     df_XY["global_gw_id"] = df_XY["global_gw_id"].astype(int)
@@ -278,10 +319,22 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     df_XY_test = df_XY[df_XY["global_gw_id"] == global_test_gw].copy()
     df_XY_scoring = df_XY[df_XY["global_gw_id"] == global_scoring_gw].copy()
 
+    # impute missing values in scoring df
+    tbf_feats_next_1 = [feat + "_next_1" for feat in tbf_feats]
+    tbf_feats_next_2 = [feat + "_next_2" for feat in tbf_feats]
+    impute_feats = tbf_feats_next_1 + tbf_feats_next_2
+    df_XY_scoring = df_XY_scoring.drop(columns=impute_feats)
+    df_next_1_gw["gw_id"] = scoring_gw
+    df_next_2_gw["gw_id"] = scoring_gw
+    df_XY_scoring = pd.merge(df_XY_scoring, df_next_1_gw, how='left', on=["player_id", "gw_id"])
+    df_XY_scoring = pd.merge(df_XY_scoring, df_next_2_gw, how='left', on=["player_id", "gw_id"])
+
     # save XY data
     df_XY_train.to_csv(os.path.join(dataset_dir, "xy_train.csv"), index=False)
     df_XY_test.to_csv(os.path.join(dataset_dir, "xy_test.csv"), index=False)
     df_XY_scoring.to_csv(os.path.join(dataset_dir, "xy_scoring.csv"), index=False)
+
+
 
     with open(os.path.join(dataset_dir, "features_after_fe.pkl"), 'wb') as f:
         pickle.dump(features_dict, f)

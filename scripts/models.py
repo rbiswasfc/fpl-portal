@@ -33,11 +33,16 @@ def load_data(dataset_dir="./data/model_data/xy_data/"):
         features_dict = pickle.load(f)
     return XY_train, XY_test, XY_scoring, features_dict
 
+def remove_next_features(feat_list):
+    cur_feats = [feat for feat in feat_list if 'next' not in feat]
+    return cur_feats
+
 
 class LgbModel(object):
     def __init__(self, params):
         self.params = params
         self.model = None
+        self.features = None
 
     def train(self, xy_train, features, target, cat_features=[], pct_valid=0.15, n_trees=3000, esr=25):
         X, y = xy_train[features].copy(), xy_train[target].values
@@ -52,10 +57,11 @@ class LgbModel(object):
                                 categorical_feature=cat_features,
                                 verbose_eval=100
                                 )
+        self.features = features
         print("Training Done ...")
 
-    def predict(self, df, features):
-        preds = self.model.predict(df[features], num_iteration=self.model.best_iteration)
+    def predict(self, df):
+        preds = self.model.predict(df[self.features], num_iteration=self.model.best_iteration)
         return preds
 
     def get_feature_importance(self):
@@ -81,7 +87,6 @@ class FastaiModel(object):
                      .from_df(xy_train, cat_names=self.cat_features, cont_names=self.num_features, procs=procs)
                      .split_by_rand_pct(valid_pct=valid_pct, seed=42)
                      .label_from_df(cols=self.target)
-                     .add_test(test_data)
                      .databunch())
         return fast_data
 
@@ -117,6 +122,13 @@ def train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, target="r
     features = features_dict["features"]
     cat_features = features_dict["cat_features"]
 
+    print("# features before removing next features = {}".format(len(features)))
+    print("# cat features before removing next features = {}".format(len(cat_features)))
+    features = remove_next_features(features)
+    cat_features = remove_next_features(cat_features)
+    print("# features after removing next features = {}".format(len(features)))
+    print("# cat features after removing next features = {}".format(len(cat_features)))
+
     params = {
         'task': 'train',
         'boosting_type': 'gbdt',
@@ -130,6 +142,9 @@ def train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, target="r
         "num_leaves": 31,
         "max_bin": 64
     }
+    print("Shape before removing null targets: {}".format(XY_train.shape))
+    XY_train = XY_train[~XY_train[target].isna()].copy()
+    print("Shape after removing null targets: {}".format(XY_train.shape))
 
     model = LgbModel(params)
     model.train(XY_train, features, target, cat_features=cat_features)
@@ -145,13 +160,58 @@ def train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, target="reg
     cat_features = features_dict["cat_features"]
     num_features = features_dict["num_features"]
 
+    if target != "pot_target":
+        print("# features before removing next features = {}".format(len(features)))
+        print("# cat features before removing next features = {}".format(len(cat_features)))
+        print("# num features before removing next features = {}".format(len(num_features)))
+        features = remove_next_features(features)
+        cat_features = remove_next_features(cat_features)
+        num_features = remove_next_features(num_features)
+        print("# features after removing next features = {}".format(len(features)))
+        print("# cat features after removing next features = {}".format(len(cat_features)))
+        print("# num features after removing next features = {}".format(len(num_features)))
+
+    print("Shape before removing null targets: {}".format(XY_train.shape))
+    XY_train = XY_train[~XY_train[target].isna()].copy()
+    print("Shape after removing null targets: {}".format(XY_train.shape))
+
     model = FastaiModel(cat_features, num_features, target)
     model.train(XY_train, XY_test)
     return model
 
 
-def train_potential_model():
-    pass
+def train_potential_model(XY_train, XY_test, XY_scoring, features_dict, target="pot_target"):
+    features = features_dict["features"]
+    cat_features = features_dict["cat_features"]
+
+    print("# features  = {}".format(len(features)))
+    print("# cat features = {}".format(len(cat_features)))
+
+    params = {
+        'task': 'train',
+        'boosting_type': 'gbdt',
+        'objective': 'regression',
+        'metric': 'l1',
+        'learning_rate': 0.005,
+        'feature_fraction': 0.8,
+        'bagging_fraction': 0.8,
+        'verbose': -1,
+        "max_depth": 7,
+        "num_leaves": 31,
+        "max_bin": 64
+    }
+    # 
+    print("Shape before removing null targets: {}".format(XY_train.shape))
+    XY_train = XY_train[~XY_train[target].isna()].copy()
+    print("Shape after removing null targets: {}".format(XY_train.shape))
+
+    model = LgbModel(params)
+    model.train(XY_train, features, target, cat_features=cat_features)
+    df_imp = model.get_feature_importance()
+
+    print(df_imp.head(30))
+
+    return model
 
 
 def generate_leads():
@@ -161,7 +221,12 @@ def generate_leads():
     num_features = features_dict["num_features"]
 
     lgbm_model = train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
+    star_model = train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, "star_target")
+    potential_model = train_potential_model(XY_train, XY_test, XY_scoring, features_dict, "pot_target")
+    
+    fastai_potential_model = train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, "pot_target")
     fastai_model = train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
+    
 
     config_2020 = {
         "data_dir": "./data/model_data/2020_21/",
@@ -196,11 +261,21 @@ def generate_leads():
 
     # Predictions
     # pdb.set_trace()
-    lgbm_preds = lgbm_model.predict(XY_scoring, features)
+    lgbm_preds = lgbm_model.predict(XY_scoring)
     df_leads['lgbm_pred'] = lgbm_preds
+
+    star_preds = star_model.predict(XY_scoring)
+    df_leads['star_pred'] = star_preds
+
+    pot_preds = potential_model.predict(XY_scoring)
+    df_leads['pot_pred'] = pot_preds
+    print(df_leads.sample(10))
 
     fastai_preds = fastai_model.predict(XY_scoring)
     df_leads['fastai_pred'] = fastai_preds
+
+    fastai_preds_pot = fastai_potential_model.predict(XY_scoring)
+    df_leads['fastai_pred_pot'] = fastai_preds_pot
 
     return df_leads
 

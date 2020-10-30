@@ -212,6 +212,33 @@ class ModelDataMaker(object):
         df_map = pd.concat(dfs)
         return df_map
 
+    def make_nth_gw_scoring_base(self, gw):
+        player_id_team_id_map = self.get_player_id_team_id_map()
+        all_players = list(player_id_team_id_map.keys())
+        df_map = self.get_effective_gameweek_map()
+
+        df = pd.DataFrame()
+        df["player_id"] = all_players
+        df["own_team_id"] = df["player_id"].apply(lambda x: player_id_team_id_map.get(x, -1))
+        df["gw_id"] = gw
+        df = pd.merge(df, df_map, how="left", on=["own_team_id", "gw_id"])
+        df["opp_team_id"] = df["fixture_opp_team_id"]
+        df = df.drop_duplicates(subset=["player_id", "gw_id"])
+        df = df[["player_id", "gw_id", "opp_team_id"]].copy()
+
+        df_teams = self.get_teams_data()
+        df_teams = df_teams[["id", "name", "strength", "strength_attack_away",
+                        "strength_attack_home", "strength_defence_away",
+                        "strength_defence_home", "strength_overall_away",
+                        "strength_overall_home"]].copy()
+        team_cols = list(df_teams.columns)
+        df_teams_opp = df_teams.copy()
+        df_teams_opp.columns = ['opp_' + col for col in team_cols]
+        df = pd.merge(df, df_teams_opp, how='left', left_on="opp_team_id", right_on="opp_id")
+        keep_cols = ["player_id", "gw_id"] + ['opp_' + col for col in team_cols]
+        df = df[keep_cols].copy()
+        return df
+
     def make_scoring_base(self):
         player_id_team_id_map = self.get_player_id_team_id_map()
         all_players = list(player_id_team_id_map.keys())
@@ -280,6 +307,19 @@ class ModelDataMaker(object):
 
         player_id_player_position_map = self.get_player_id_player_position_map()
         df_gw["position"] = df_gw["player_id"].apply(lambda x: player_id_player_position_map[x])
+
+        def get_future_points(n_future):
+            df_tmp = df_gw[["player_id", "effective_gw_id", "total_points"]].copy()
+            new_col = "total_points_next_{}".format(n_future)
+            df_tmp["effective_gw_id"] = df_tmp["effective_gw_id"] - n_future
+            df_tmp = df_tmp.rename(columns={"total_points":new_col})
+            df_tmp = df_tmp.drop_duplicates(subset=["player_id", "effective_gw_id"])
+            return df_tmp
+        df_next_1 = get_future_points(1)
+        df_next_2 = get_future_points(2)
+        df_gw = pd.merge(df_gw, df_next_1, how='left', on=["player_id", "effective_gw_id"])
+        df_gw = pd.merge(df_gw, df_next_2, how='left', on=["player_id", "effective_gw_id"])
+        df_gw["potential"] = df_gw["total_points"] + df_gw["total_points_next_1"] + df_gw["total_points_next_2"] 
 
         # print(df_gw.head().T)
         # print(df_gw.tail().T)
