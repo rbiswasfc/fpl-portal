@@ -67,3 +67,14 @@ class DataLoader(object):
         with open(file_path, 'rb') as f:
             data = pickle.load(f)
         return data
+
+    def get_next_gameweek_id(self):
+        file_path = os.path.join(self.data_dir_clean, "next_gw_id.pkl")
+        if check_cache_validity(file_path):
+            print("Valid cache found for {}".format(file_path))
+        else:
+            print("executing scrape ...")
+            self.data_processor.save_next_gw_id()
+        with open(file_path, 'rb') as f:
+            gw = pickle.load(f)
+        return gw

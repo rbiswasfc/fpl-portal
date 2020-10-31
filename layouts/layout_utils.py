@@ -58,7 +58,6 @@ def make_dropdown(dropdown_id, dropdown_options, placeholder=None, multi_flag=Fa
 
 
 def make_line_plot(data, xlabel=None, ylabel=None):
-
     layout = go.Layout(xaxis={'title': xlabel},
                        yaxis={'title': ylabel},
                        margin={'l': 5, 'b': 75, 't': 25, 'r': 5},
@@ -67,3 +66,8 @@ def make_line_plot(data, xlabel=None, ylabel=None):
     figure.layout.template = 'seaborn'
 
     return figure
+
+
+def make_button(button_text, button_id):
+    button = dbc.Button(button_text, id=button_id, color="secondary", block=True)
+    return button

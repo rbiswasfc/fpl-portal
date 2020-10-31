@@ -283,3 +283,8 @@ New Additions for FPL Portal
   padding-left: 30px;
   padding-right: 30px;
 }
+
+.dcc-loading-spin {
+  position: relative;
+  align-items: center;
+}

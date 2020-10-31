@@ -174,6 +174,12 @@ class DataProcessor(object):
         with open(filepath, 'wb') as f:
             pickle.dump(picks, f)
 
+    def save_next_gw_id(self):
+        next_gw = int(self.data_scraper.get_next_gameweek_id())
+        filepath = os.path.join(self.data_dir_clean, "next_gw_id.pkl")
+        with open(filepath, 'wb') as f:
+            pickle.dump(next_gw, f)
+
 
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data"}
