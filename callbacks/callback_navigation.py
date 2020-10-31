@@ -3,6 +3,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from app import app
 from layouts.layout_league import make_league_page
+from layouts.layout_leads import make_leads_page
 
 
 @app.callback(Output('current-tab-content', 'children'),
@@ -12,7 +13,7 @@ def render_content(tab):
     if tab == 'Home':
         return html.Div("This is HOME Page")
     elif tab == 'Leads':
-        return html.Div("This is LEADS Page")
+        return make_leads_page()
     elif tab == 'Squad':
         return html.Div("This is SQUADS Page")
     elif tab == 'League':

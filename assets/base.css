@@ -60,11 +60,13 @@
       width: 80%; }
     .column,
     .columns {
-      margin-left: 2%; }
+      margin-left: 1%;
+      margin-right: 1%;}
     .column:first-child,
     .columns:first-child {
-      margin-left: 2%; }
-  
+      margin-left: 1%;
+      margin-right: 1%;}
+
     .one.column,
     .one.columns                    { width: 4.66666666667%; }
     .two.columns                    { width: 13.3333333333%; }

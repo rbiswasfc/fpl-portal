@@ -19,17 +19,17 @@ def make_league_search_section():
 def make_left_layout_league():
     header = make_header("League Standing")
     dropdown_section = make_dropdown('team-selection-dropdown', None,
-                    placeholder="Select Teams For Comparison ...", multi_flag=True)
+                                     placeholder="Select Teams For Comparison ...", multi_flag=True)
     layout = html.Div(
         id='league-layout-left',
         className="six columns",
         children=[
             header,
-            html.Div("League Summary", className='inline-header'),
+            html.Div("League Summary", className='subtitle inline-header'),
             make_league_search_section(),
             html.Div(id="league-standing-table", style={"width": "100%"}),
             dcc.Store(id="league-standing-memory"),
-            html.Div("League Gameweek History", className='inline-header'),
+            html.Div("League Gameweek History", className='subtitle inline-header'),
             dropdown_section,
             html.Div(id="league-point-history", style={"width": "100%"})
         ],
@@ -39,12 +39,16 @@ def make_left_layout_league():
 
 def make_right_layout_league():
     header = make_header("League Analytics")
+    dropdown_section = make_dropdown('league-team-picks-dropdown', None,
+                                     placeholder="Select FPL Team ...", multi_flag=False)
     layout = html.Div(
         id='league-layout-left',
         className="six columns",
         children=[
             header,
-            html.Div("Team Picks", className='inline-header'),
+            html.Div("Team Picks", className='subtitle inline-header'),
+            dropdown_section,
+            html.Div(id="league-team-picks-display"),
             html.Div("This is standings")
         ],
     )

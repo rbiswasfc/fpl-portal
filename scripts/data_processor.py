@@ -1,5 +1,6 @@
 import os
 import sys
+import pdb
 import json
 import pickle
 import pandas as pd
@@ -145,18 +146,33 @@ class DataProcessor(object):
                                  index=False)
         # print(df_league_history.head())
 
-    def save_classic_league_picks(self, league_id="1457340"):
+    def save_classic_league_picks_history(self, league_id="1457340"):
 
         df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
         manager_ids = df_league["entry_id"].unique().tolist()
         this_gw = self.data_scraper.get_next_gameweek_id() - 1
-        manage_picks_dict = {}
+        manager_picks_dict = {}
+        # pdb.set_trace()
         for manager_id in manager_ids:
-            this_manager_picks = self.data_scraper.get_entry_gw_picks(manager_id, this_gw)
-            manage_picks_dict[manager_id] = this_manager_picks
+            manager_picks_dict[manager_id] = dict()
+            this_manager_picks = self.data_scraper.get_entry_gw_picks_history(manager_id, this_gw)
+            for this_pick in this_manager_picks:
+                gw_id = this_pick["entry_history"]['event']
+                peaked_team = this_pick["entry_history"]['picks']
+                manager_picks_dict[manager_id][gw_id] = peaked_team
 
-        with open(os.path.join(self.data_dir_clean, "league_{}_manager_picks.pkl".format(league_id)), 'wb') as f:
-            pickle.dump(manage_picks_dict, f)
+        with open(os.path.join(self.data_dir_clean, "league_{}_manager_picks_history.pkl".format(league_id)), 'wb') as f:
+            pickle.dump(manager_picks_dict, f)
+
+    def save_manager_current_gw_picks(self, manager_id):
+        current_gw = self.data_scraper.get_next_gameweek_id() - 1
+        current_picks_data = self.data_scraper.get_entry_current_gw_picks(manager_id)
+        assert int(current_picks_data["entry_history"]['event']) == int(current_gw), "gameweek mismatch in picks"
+        picks = current_picks_data["picks"]
+        # print(picks)
+        filepath = os.path.join(self.data_dir_clean, "manager_{}_picks_gw_{}.pkl".format(manager_id, current_gw))
+        with open(filepath, 'wb') as f:
+            pickle.dump(picks, f)
 
 
 if __name__ == "__main__":
@@ -169,7 +185,9 @@ if __name__ == "__main__":
     # data_processor.save_gameweek_data()
     # data_processor.save_classic_league_history()
     # data_processor.save_classic_league_picks()
-    data_processor.save_classic_league_standing()
+    # data_processor.save_classic_league_standing()
+    tmp_id = 7006192
+    data_processor.save_manager_current_gw_picks(tmp_id)
 
     # with open("./data/2020_21/clean/league_1457340_manager_picks.pkl", 'rb') as f:
     #    manage_picks_dict = pickle.load(f)

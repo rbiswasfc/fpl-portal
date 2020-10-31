@@ -24,10 +24,8 @@ def make_league_standing_table(league_id):
         return "", None
 
     config = load_config()
-    data_processor = DataProcessor(config)
     data_loader = DataLoader(config)
     # pdb.set_trace()
-    data_processor.save_classic_league_standing(league_id)
     df = data_loader.get_league_standings(league_id)
 
     try:
@@ -37,34 +35,52 @@ def make_league_standing_table(league_id):
                                 "score": "Points",
                                 "gw_points": "GW Score"})
         df["Rank Delta"] = (df["previous_rank"] - df["Rank"]).astype(int)
-        df = df[["Team", "Manager", "Points", "GW Score", "Rank Delta"]].copy()
         df = df.sort_values(by="Points", ascending=False).iloc[:100]  # keep top 100
-        table = make_table(df)
+        df_clean = df[["Team", "Manager", "Points", "GW Score", "Rank Delta"]].copy()
+        table = make_table(df_clean)
         return table, df.to_dict('records')
     except:
         return html.Div("Warning! This League Info Not Found!"), None
 
 
-@app.callback(Output('team-selection-dropdown', 'options'),
+@app.callback([Output('team-selection-dropdown', 'options'),
+               Output('league-team-picks-dropdown', 'options')],
               [Input('league-search-dropdown', 'value'),
                Input('league-standing-memory', 'data')])
 def make_team_selection_section(league_id, league_data):
-    if (league_id) and (league_data):
+    if league_id and league_data:
         df_managers = pd.DataFrame(league_data)
         managers = df_managers["Team"].unique().tolist()
         manager_options = [{'label': this_manager, 'value': this_manager} for this_manager in managers]
 
-        return manager_options
+        return manager_options, manager_options
 
     else:
-        return []
+        return [], []
+
+
+@app.callback(Output('league-team-picks-display', 'children'),
+              [Input('league-standing-memory', 'data'),
+               Input('league-team-picks-dropdown', 'value')])
+def show_current_team_picks(league_data, team_name):
+    if league_data and team_name:
+        df_managers = pd.DataFrame(league_data)
+        df_tmp = df_managers[df_managers["Team"] == team_name].copy()
+        manager_id = df_tmp["entry_id"].unique().tolist()[0]
+
+        config = load_config()
+        data_loader = DataLoader(config)
+        data = data_loader.get_manager_current_gw_picks(manager_id)
+        df = pd.DataFrame(data)
+        print(df)
+        table = make_table(df)
+        return table
 
 
 @app.callback(Output('league-point-history', 'children'),
               [Input('team-selection-dropdown', 'value')],
               [State('league-search-dropdown', 'value')])
 def make_gw_history_plot(teams, league_id):
-
     if (not league_id) or (not teams):
         return ""
 
@@ -76,7 +92,7 @@ def make_gw_history_plot(teams, league_id):
     data_processor.save_classic_league_history(league_id)
     df = data_loader.get_league_gw_history(league_id)
     start_gw = data_scraper.get_league_start_gameweek(league_id)
-    current_gw = data_scraper.get_next_gameweek_id()-1
+    current_gw = data_scraper.get_next_gameweek_id() - 1
 
     data = []
     for team in teams:
@@ -98,13 +114,15 @@ def make_gw_history_plot(teams, league_id):
                            hovertext=tmp_df['entry_name'],
                            hoverlabel=dict(namelength=0),
                            hovertemplate='%{hovertext}<br>Score: %{y} | GW Score: %{marker.size:,}' + '<br>%{text}</br>',
-                           text=['OVR: {:.1f}M | Budget: {:.1f} | Gain: {:.1f}k'.format(ovr/1e6, val/10, -delta/1000) for ovr, val, delta in zip(tmp_df["overall_rank"].values,
-                                                                                                                                                tmp_df["value"].values, tmp_df["gain"].values)]
+                           text=['OVR: {:.1f}M | Budget: {:.1f} | Gain: {:.1f}k'.format(ovr / 1e6, val / 10,
+                                                                                        -delta / 1000) for
+                                 ovr, val, delta in zip(tmp_df["overall_rank"].values,
+                                                        tmp_df["value"].values, tmp_df["gain"].values)]
                            )
         # trace = go.Scatter(tmp_df, x="event", y="league_points")
         data.append(trace)
     fig = make_line_plot(data, xlabel='Gameweek', ylabel='Total Score')
-    x_start = max(start_gw, current_gw-5)
+    x_start = max(start_gw, current_gw - 5)
     fig.update_xaxes(range=(x_start, current_gw + 0.05), ticks="inside", tick0=x_start, dtick=1)
     fig.update_yaxes(ticks="inside")
     fig.update_layout(
