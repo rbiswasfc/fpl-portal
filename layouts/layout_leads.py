@@ -13,7 +13,7 @@ try:
 except:
     raise ImportError
 
-TIMEOUT = 3600
+TIMEOUT = 3600 * 5
 
 
 @cache.memoize(timeout=TIMEOUT)
@@ -39,8 +39,8 @@ def make_pipeline_section():
 
     button_ingest = html.Div(
         children=[
-            html.Div(make_button("INGEST", button_ids[0]), className="col-4"),
-            dcc.Loading(html.Div(id="data-ingest-div", className="col-4"), color='black'),
+            html.Div(make_button("INGEST", button_ids[0]), className="col-6"),
+            dcc.Loading(html.Div(id="data-ingest-div", className="col-6"), color='black'),
         ],
         className="row",
         style=margin_style
@@ -48,8 +48,8 @@ def make_pipeline_section():
 
     button_fe = html.Div(
         children=[
-            html.Div(make_button("Feature Engineering", button_ids[1]), className="col-4"),
-            dcc.Loading(html.Div(id="data-fe-div", className="col-4"), color='black'),
+            html.Div(make_button("Feature Engineering", button_ids[1]), className="col-6"),
+            dcc.Loading(html.Div(id="data-fe-div", className="col-6"), color='black'),
         ],
         className="row",
         style=margin_style
@@ -65,6 +65,112 @@ def make_pipeline_section():
     return pipeline_section
 
 
+def make_points_predictor_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+
+    button_train = html.Div(
+        children=[
+            html.Div(make_button("TRAIN LGB MODEL", 'lgbm-xnext-btn'), className="col-6"),
+            html.Div(make_button("TRAIN FastAI MODEL", 'fastai-xnext-btn'), className="col-6"),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    train_output = html.Div(
+        children=[
+            dcc.Loading(html.Div(id="lgbm-xnext-outcome", className='six columns', style={"width": "80%"}),
+                        color='black'),
+            dcc.Loading(html.Div(id="fastai-xnext-outcome", className='six columns', style={"width": "50%"}),
+                        color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    point_predictor = html.Div(
+        children=[
+            html.Div("Points Predictor", className='subtitle inline-header'),
+            button_train,
+            # train_output,
+            dcc.Loading(html.Div(id="lgbm-xnext-outcome"), color='black'),
+            dcc.Loading(html.Div(id="fastai-xnext-outcome"), color='black'),
+        ])
+    point_predictor_section = html.Div(point_predictor)
+    return point_predictor_section
+
+
+def make_scoring_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+
+    button_scoring_lgbm_point = html.Div(
+        children=[
+            html.Div(make_button("LGBM Point Predictor", 'lgbm-point-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="lgbm-point-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    button_scoring_fastai_point = html.Div(
+        children=[
+            html.Div(make_button("FastAI Point Predictor", 'fastai-point-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="fastai-point-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    button_scoring_lgbm_potential = html.Div(
+        children=[
+            html.Div(make_button("LGBM Potential Predictor", 'lgbm-potential-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="lgbm-potential-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    button_scoring_fastai_potential = html.Div(
+        children=[
+            html.Div(make_button("FastAI Potential Predictor", 'fastai-potential-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="fastai-potential-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    button_scoring_lgbm_return = html.Div(
+        children=[
+            html.Div(make_button("LGBM Return Predictor", 'lgbm-return-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="lgbm-return-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    button_scoring_fastai_return = html.Div(
+        children=[
+            html.Div(make_button("FastAI Return Predictor", 'fastai-return-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="fastai-return-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    scoring = html.Div(
+        children=[
+            html.Div("Scoring", className='subtitle inline-header'),
+            button_scoring_lgbm_point,
+            button_scoring_fastai_point,
+            button_scoring_lgbm_potential,
+            button_scoring_fastai_potential,
+            button_scoring_lgbm_return,
+            button_scoring_fastai_return
+        ])
+    scoring_section = html.Div(scoring)
+    return scoring_section
+
+
 def make_left_layout_leads():
     header = make_header("Model Training")
     layout = html.Div(
@@ -75,10 +181,8 @@ def make_left_layout_leads():
             html.Div("Select Gameweek", className='subtitle inline-header'),
             make_gw_selection_section(),
             make_pipeline_section(),
-
-            html.Div("Points Predictor", className='subtitle inline-header'),
-
-            html.Div("Scoring", className='subtitle inline-header'),
+            make_points_predictor_section(),
+            make_scoring_section(),
         ],
     )
     return layout
