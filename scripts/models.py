@@ -24,14 +24,15 @@ except:
     raise ImportError
 
 
-def load_data(dataset_dir="./data/model_data/xy_data/"):
-    XY_train = pd.read_csv(os.path.join(dataset_dir, "xy_train.csv"))
-    XY_test = pd.read_csv(os.path.join(dataset_dir, "xy_test.csv"))
-    XY_scoring = pd.read_csv(os.path.join(dataset_dir, "xy_scoring.csv"))
+def load_data(gw, dataset_dir="./data/model_data/xy_data/"):
+    XY_train = pd.read_csv(os.path.join(dataset_dir, "xy_train_gw_{}.csv".format(gw)))
+    XY_test = pd.read_csv(os.path.join(dataset_dir, "xy_test_gw_{}.csv".format(gw)))
+    XY_scoring = pd.read_csv(os.path.join(dataset_dir, "xy_scoring_gw_{}.csv".format(gw)))
 
     with open(os.path.join(dataset_dir, "features_after_fe.pkl"), 'rb') as f:
         features_dict = pickle.load(f)
     return XY_train, XY_test, XY_scoring, features_dict
+
 
 def remove_next_features(feat_list):
     cur_feats = [feat for feat in feat_list if 'next' not in feat]
@@ -223,10 +224,9 @@ def generate_leads():
     lgbm_model = train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
     star_model = train_lgbm_reg_model(XY_train, XY_test, XY_scoring, features_dict, "star_target")
     potential_model = train_potential_model(XY_train, XY_test, XY_scoring, features_dict, "pot_target")
-    
+
     fastai_potential_model = train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, "pot_target")
     fastai_model = train_fastai_model(XY_train, XY_test, XY_scoring, features_dict, "reg_target")
-    
 
     config_2020 = {
         "data_dir": "./data/model_data/2020_21/",

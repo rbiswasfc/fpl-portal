@@ -2,5 +2,5 @@
 __pycache__/
 .vscode
 .idea
-data/model_data/xy_data/xy_train.csv
+data/model_data/xy_data/
 cache-directory/

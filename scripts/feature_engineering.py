@@ -124,9 +124,9 @@ class FeatureEngineering(object):
         opp_num_lag_dfs = self.make_lag_features(df_base, ["player_id", "effective_gw_id"],
                                                  "effective_gw_id", opp_team_num_features, 'num')
         opp_cat_next_dfs = self.make_next_features(df_base, ["player_id", "effective_gw_id"],
-                                                 "effective_gw_id", opp_team_cat_features, 'cat')
+                                                   "effective_gw_id", opp_team_cat_features, 'cat')
         opp_num_next_dfs = self.make_next_features(df_base, ["player_id", "effective_gw_id"],
-                                                 "effective_gw_id", opp_team_num_features, 'num')
+                                                   "effective_gw_id", opp_team_num_features, 'num')
 
         gw_cat_lag_dfs = self.make_lag_features(df_base, ["player_id", "effective_gw_id"],
                                                 "effective_gw_id", gw_cat_features, 'cat')
@@ -208,15 +208,19 @@ class FeatureEngineering(object):
         return df_base
 
 
-def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
+def make_XY_data(scoring_gw=None, dataset_dir="./data/model_data/xy_data/"):
     # configs
     check_create_dir(dataset_dir)
     scraper_config = {"season": "2020_21", "source_dir": "./data/raw/"}
     data_scraper = DataScraper(scraper_config)
-    scoring_gw = data_scraper.get_next_gameweek_id()
+
+    if scoring_gw:
+        pass
+    else:
+        print("getting latest scoring gameweek ...")
+        scoring_gw = data_scraper.get_next_gameweek_id()
 
     fe_2020 = FeatureEngineering()
-
     config_2020 = {
         "data_dir": "./data/model_data/2020_21/",
         "file_fixture": "fixtures.csv",
@@ -232,23 +236,22 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     # for imputing opponent next in scoring df
     data_maker_2020 = ModelDataMaker(config_2020)
     tbf_feats = ["strength", "strength_overall_home", "strength_overall_away", "strength_attack_home",
-                "strength_attack_away", "strength_defence_home", "strength_defence_away"]
-    tbf_feats = ["opp_"+feat for feat in tbf_feats]
+                 "strength_attack_away", "strength_defence_home", "strength_defence_away"]
+    tbf_feats = ["opp_" + feat for feat in tbf_feats]
     tbf_feats_next_1_map = dict()
     tbf_feats_next_2_map = dict()
     for feat in tbf_feats:
         tbf_feats_next_1_map[feat] = feat + "_next_1"
         tbf_feats_next_2_map[feat] = feat + "_next_2"
-    
-    df_next_1_gw = data_maker_2020.make_nth_gw_scoring_base(scoring_gw+1)
-    df_next_2_gw = data_maker_2020.make_nth_gw_scoring_base(scoring_gw+2)
-    
+
+    df_next_1_gw = data_maker_2020.make_nth_gw_scoring_base(scoring_gw + 1)
+    df_next_2_gw = data_maker_2020.make_nth_gw_scoring_base(scoring_gw + 2)
+
     df_next_1_gw = df_next_1_gw.rename(columns=tbf_feats_next_1_map)
     df_next_2_gw = df_next_2_gw.rename(columns=tbf_feats_next_2_map)
     df_next_1_gw = df_next_1_gw.drop(columns=["opp_id", "opp_name"])
     df_next_2_gw = df_next_2_gw.drop(columns=["opp_id", "opp_name"])
     # pdb.set_trace()
-
 
     fe_2019 = FeatureEngineering()
     config_2019 = {
@@ -330,16 +333,12 @@ def make_XY_data(dataset_dir="./data/model_data/xy_data/"):
     df_XY_scoring = pd.merge(df_XY_scoring, df_next_2_gw, how='left', on=["player_id", "gw_id"])
 
     # save XY data
-    df_XY_train.to_csv(os.path.join(dataset_dir, "xy_train.csv"), index=False)
-    df_XY_test.to_csv(os.path.join(dataset_dir, "xy_test.csv"), index=False)
-    df_XY_scoring.to_csv(os.path.join(dataset_dir, "xy_scoring.csv"), index=False)
-
-
+    df_XY_train.to_csv(os.path.join(dataset_dir, "xy_train_gw_{}.csv".format(scoring_gw)), index=False)
+    df_XY_test.to_csv(os.path.join(dataset_dir, "xy_test_gw_{}.csv".format(scoring_gw)), index=False)
+    df_XY_scoring.to_csv(os.path.join(dataset_dir, "xy_scoring_gw_{}.csv".format(scoring_gw)), index=False)
 
     with open(os.path.join(dataset_dir, "features_after_fe.pkl"), 'wb') as f:
         pickle.dump(features_dict, f)
-
-    # pdb.set_trace()
 
 
 if __name__ == "__main__":

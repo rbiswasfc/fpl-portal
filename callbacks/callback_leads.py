@@ -16,6 +16,7 @@ try:
     from scripts.utils import load_config
     from app import cache
     from scripts.model_data_ingestion import DataIngestor
+    from scripts.feature_engineering import make_XY_data
 except:
     raise ImportError
 
@@ -39,39 +40,39 @@ def ingest_data():
     data_ingestor.ingest_fixture_data()
     data_ingestor.ingest_understat_data()
     data_ingestor.ingest_gw_data()
-    result = html.P("Done!")
+    result = html.P("Done!", style={"text-align": "center"})
+    return result
+
+
+@cache.memoize(timeout=TIMEOUT)
+def prepare_xy_model_data(gw):
+    make_XY_data(gw)
+    result = html.P("Done!", style={"text-align": "center"})
     return result
 
 
 # Ingest data callbacks
-@app.callback(Output('data-ingest-point', 'children'),
-              [Input('ingest-btn-point', 'n_clicks')],
+@app.callback(Output('data-ingest-div', 'children'),
+              [Input('data-ingest-btn', 'n_clicks')],
               prevent_initial_call=True)
-def execute_data_ingestion_point(n_clicks):
-    print("Ingest click xPoint={}".format(n_clicks))
-    if n_clicks:
-        return ingest_data()
-    else:
-        return None
-
-
-@app.callback(Output('data-ingest-potential', 'children'),
-              [Input('ingest-btn-potential', 'n_clicks')],
-              prevent_initial_call=True)
-def execute_data_ingestion_potential(n_clicks):
-    print("Ingest click xPotential={}".format(n_clicks))
-    if n_clicks:
-        return ingest_data()
-    else:
-        return None
-
-
-@app.callback(Output('data-ingest-return', 'children'),
-              [Input('ingest-btn-return', 'n_clicks')],
-              prevent_initial_call=True)
-def execute_data_ingestion_return(n_clicks):
+def execute_data_ingestion(n_clicks):
     print("Ingest click={}".format(n_clicks))
     if n_clicks:
         return ingest_data()
+    else:
+        return None
+
+
+@app.callback(Output('data-fe-div', 'children'),
+              [Input('data-fe-btn', 'n_clicks')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_fe(n_clicks, gw):
+    print("FE click={}".format(n_clicks))
+    if n_clicks:
+        if not gw:
+            return html.P("Please Select GW")
+        print("Preparing data for gameweek={}".format(gw))
+        return prepare_xy_model_data(gw)
     else:
         return None

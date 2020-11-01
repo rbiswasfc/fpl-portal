@@ -288,3 +288,7 @@ New Additions for FPL Portal
   position: relative;
   align-items: center;
 }
+.space-provider {
+  margin-top: 1rem,
+  margin-bottom: 1rem
+}

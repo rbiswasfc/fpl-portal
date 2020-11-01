@@ -33,34 +33,36 @@ def make_gw_selection_section():
     return dropdown_section
 
 
-def make_pipeline_buttons(model_type='point'):
-    assert model_type in ["point", "potential", "return"]
-    button_ids = ["{}-btn-{}".format(pipe_step, model_type) for pipe_step in ["ingest", "fe", "train"]]
-    buttons = html.Div(
+def make_pipeline_section():
+    button_ids = ["data-ingest-btn", "data-fe-btn"]
+    margin_style = {"margin-top": "1rem", "margin-bottom": "1rem"}
+
+    button_ingest = html.Div(
         children=[
             html.Div(make_button("INGEST", button_ids[0]), className="col-4"),
-            html.Div(make_button("FE", button_ids[1]), className="col-4"),
-            html.Div(make_button("TRAIN", button_ids[2]), className="col-4"),
+            dcc.Loading(html.Div(id="data-ingest-div", className="col-4"), color='black'),
         ],
         className="row",
-        style={"margin-top": "1rem", "margin-bottom": "1rem"}
+        style=margin_style
     )
-    return buttons
 
-
-def make_pipeline_outcome(model_type='point'):
-    assert model_type in ["point", "potential", "return"]
-    div_ids = ["data-{}-{}".format(pipe_step, model_type) for pipe_step in ["ingest", "fe", "train"]]
-    section = html.Div(
+    button_fe = html.Div(
         children=[
-            dcc.Loading(html.Div(id=div_ids[0], className="col-4"), color='black', className='dcc-loading-spin'),
-            dcc.Loading(html.Div(id=div_ids[1], className="col-4"), color='black', className='dcc-loading-spin'),
-            dcc.Loading(html.Div(id=div_ids[2], className="col-4"), color='black', className='dcc-loading-spin'),
+            html.Div(make_button("Feature Engineering", button_ids[1]), className="col-4"),
+            dcc.Loading(html.Div(id="data-fe-div", className="col-4"), color='black'),
         ],
         className="row",
-        style={"margin-top": "1rem", "margin-bottom": "1rem"}
+        style=margin_style
     )
-    return section
+
+    pipeline = html.Div(
+        children=[
+            html.Div("Data Pipeline", className='subtitle inline-header'),
+            button_ingest,
+            button_fe
+        ])
+    pipeline_section = html.Div(pipeline)
+    return pipeline_section
 
 
 def make_left_layout_leads():
@@ -72,16 +74,10 @@ def make_left_layout_leads():
             header,
             html.Div("Select Gameweek", className='subtitle inline-header'),
             make_gw_selection_section(),
+            make_pipeline_section(),
 
             html.Div("Points Predictor", className='subtitle inline-header'),
-            make_pipeline_buttons('point'),
-            # dcc.Loading(html.Div(id='data-ingest-point', style={'text-align': 'center'})),
-            make_pipeline_outcome('point'),
 
-            html.Div("Potential Predictor", className='subtitle inline-header'),
-            make_pipeline_buttons('potential'),
-            html.Div("Return Predictor", className='subtitle inline-header'),
-            make_pipeline_buttons('return'),
             html.Div("Scoring", className='subtitle inline-header'),
         ],
     )
