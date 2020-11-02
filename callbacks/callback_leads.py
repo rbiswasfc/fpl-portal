@@ -1,5 +1,6 @@
 import os
 import pdb
+from pathlib import Path
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
@@ -9,9 +10,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from pathlib import Path
-from fastai.tabular import *
 
+from fastai.tabular import load_learner
 try:
     from layouts.layout_utils import make_table, make_dropdown, make_line_plot
     from scripts.data_loader import DataLoader
