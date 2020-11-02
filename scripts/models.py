@@ -165,19 +165,35 @@ def train_lgbm_model(gw, target="reg_target"):
         print("# features after removing next features = {}".format(len(features)))
         print("# cat features after removing next features = {}".format(len(cat_features)))
 
-    params = {
-        'task': 'train',
-        'boosting_type': 'gbdt',
-        'objective': 'regression',
-        'metric': 'l1',
-        'learning_rate': 0.005,
-        'feature_fraction': 0.8,
-        'bagging_fraction': 0.8,
-        'verbose': -1,
-        "max_depth": 7,
-        "num_leaves": 31,
-        "max_bin": 64
-    }
+    if target != "star_target":
+        params = {
+            'task': 'train',
+            'boosting_type': 'gbdt',
+            'objective': 'regression',
+            'metric': 'l1',
+            'learning_rate': 0.005,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'verbose': -1,
+            "max_depth": 7,
+            "num_leaves": 31,
+            "max_bin": 64
+        }
+    else:
+        params = {
+            'task': 'train',
+            'boosting_type': 'gbdt',
+            'objective': 'binary',
+            'metric': 'auc',
+            'learning_rate': 0.005,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
+            'verbose': -1,
+            "max_depth": 7,
+            "num_leaves": 31,
+            "max_bin": 64
+        }
+
     print("Shape before removing null targets: {}".format(XY_train.shape))
     XY_train = XY_train[~XY_train[target].isna()].copy()
     print("Shape after removing null targets: {}".format(XY_train.shape))
