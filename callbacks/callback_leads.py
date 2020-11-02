@@ -20,14 +20,32 @@ try:
     from scripts.data_scrape import DataScraper
     from scripts.utils import load_config
     from app import cache
+    from scripts.data_preparation import ModelDataMaker
     from scripts.model_data_ingestion import DataIngestor
     from scripts.feature_engineering import make_XY_data
     from scripts.models import load_data, train_lgbm_model, train_fastai_model
 except:
     raise ImportError
 
+CONFIG_2020 = {
+    "data_dir": "./data/model_data/2020_21/",
+    "file_fixture": "fixtures.csv",
+    "file_team": "teams.csv",
+    "file_gw": "merged_gw.csv",
+    "file_player": "players_raw.csv",
+    "file_understat_team": "understat_team_data.pkl",
+    "scoring_gw": "NA"
+}
+
 TIMEOUT = 3600 * 12
 
+def load_dataframe(path):
+    try:
+        df = pd.read_csv(path)
+    except:
+        print("Error in reading {}".format(path))
+        return pd.DataFrame()
+    return df
 
 @cache.memoize(timeout=TIMEOUT)
 def ingest_data():
@@ -567,3 +585,135 @@ def execute_fastai_return_scoring(n_clicks, gw):
         return html.Div("Done!", style={"text-align": "center"})
     else:
         return html.Div("Button Not Clicked!", style={"text-align": "center"})
+
+
+# Leads Update
+@app.callback([Output('gk-leads', 'children'),
+               Output('def-leads', 'children'),
+               Output('mid-leads', 'children'),
+               Output('fwd-leads', 'children'),],
+              [Input('team-selection-dropdown-leads', 'value'),
+               Input('model-selection-dropdown-leads', 'value')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_fastai_return_scoring(team_name, model_name, gw_id):
+    
+    if not gw_id:
+        msg = html.P("Please select GW for scoring")
+        return msg, msg, msg, msg
+    
+    if not model_name:
+        msg = html.P("Please select Model")
+        return msg, msg, msg, msg
+
+    model_name_col_map = {
+        "LGBM Point": "lgbm_point_pred",
+        "LGBM Potential": "lgbm_potential_pred",
+        "LGBM Return": "lgbm_return_pred",
+        "Fast Point": "fastai_point_pred",
+        "Fast Potential": "fastai_potential_pred",
+        "Fast Return": "fastai_return_pred"
+    }
+
+    print("Leads for {} in gw {}".format(team_name, gw_id))
+    data_maker = ModelDataMaker(CONFIG_2020)
+    output_dir = "./data/model_outputs/"
+    
+    # load model predictions
+    lgbm_point_path = os.path.join(output_dir, "lgbm_point_predictions_gw_{}.csv".format(gw_id))
+    lgbm_potential_path = os.path.join(output_dir, "lgbm_potential_predictions_gw_{}.csv".format(gw_id))
+    lgbm_return_path = os.path.join(output_dir, "lgbm_return_predictions_gw_{}.csv".format(gw_id))
+
+    fastai_point_path = os.path.join(output_dir, "fastai_point_predictions_gw_{}.csv".format(gw_id))
+    fastai_potential_path = os.path.join(output_dir, "fastai_potential_predictions_gw_{}.csv".format(gw_id))
+    fastai_return_path = os.path.join(output_dir, "fastai_return_predictions_gw_{}.csv".format(gw_id))
+
+    
+    df_lgbm_point = load_dataframe(lgbm_point_path)
+    df_lgbm_potential = load_dataframe(lgbm_potential_path)
+    df_lgbm_return = load_dataframe(lgbm_return_path)
+    df_fastai_point = load_dataframe(fastai_point_path)
+    df_fastai_potential = load_dataframe(fastai_potential_path)
+    df_fastai_return = load_dataframe(fastai_return_path)
+
+    all_preds_df = [df_lgbm_point, df_lgbm_potential, df_lgbm_return, 
+        df_fastai_point, df_fastai_potential, df_fastai_return]
+    
+    for df in all_preds_df:
+        try:
+            assert len(df)>0
+        except:
+            msg = html.P("Run scoring for models before generating leads")
+            return msg, msg, msg, msg
+    
+    # prepare prediction base dataframe
+    XY_train, XY_test, XY_scoring, features_dict = load_data(gw_id)
+    player_id_team_id_map = data_maker.get_player_id_team_id_map()
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    player_id_player_position_map = data_maker.get_player_id_player_position_map()
+    team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    player_id_cost_map = data_maker.get_player_id_cost_map()
+    player_id_play_chance_map = data_maker.get_player_id_play_chance_map()
+    player_id_selection_map = data_maker.get_player_id_selection_map()
+    player_id_ave_points_map = data_maker.get_player_id_ave_points_map()
+
+    df_leads = pd.DataFrame()
+    df_leads["player_id"] = XY_scoring["player_id"].values
+    df_leads["name"] = df_leads["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_leads["team"] = df_leads["player_id"].apply(lambda x: team_id_team_name_map[player_id_team_id_map.get(x, x)])
+    df_leads["next_opponent"] = XY_scoring["opp_team_id"].apply(lambda x: team_id_team_name_map.get(x, x))
+    df_leads["position"] = df_leads["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
+    df_leads["chance_of_play"] = df_leads["player_id"].apply(lambda x: player_id_play_chance_map.get(x, x))
+    df_leads["cost"] = df_leads["player_id"].apply(lambda x: player_id_cost_map.get(x, x))
+    df_leads["selection_pct"] = df_leads["player_id"].apply(lambda x: player_id_selection_map.get(x, x))
+    df_leads["ave_pts"] = df_leads["player_id"].apply(lambda x: player_id_ave_points_map.get(x, x))
+    df_leads["gw"] = gw_id
+    df_leads = df_leads.drop_duplicates(subset=["player_id"])
+
+    if team_name != "All":
+        df_leads = df_leads[df_leads["team"]==team_name].copy()
+
+    # merge predictions
+    for df in all_preds_df:
+        df = df.drop_duplicates()
+        df_leads = pd.merge(df_leads, df, how='left', on=['player_id', 'gw'])
+    # keep_cols = ["name", "cost", "position", "selection_pct", "next_opponent", "lgbm_point_pred", "lgbm_potential_pred"]
+    # df_leads = df_leads[keep_cols].copy()
+    # make tables
+    df_leads["cost"] = df_leads["cost"]/10
+    model_col = model_name_col_map[model_name]
+    df_leads = df_leads.sort_values(by=model_col, ascending=False)
+
+    # column round up
+    pred_cols = ["lgbm_point_pred", "lgbm_potential_pred", "lgbm_return_pred",
+                "fastai_point_pred", "fastai_potential_pred", "fastai_return_pred"]
+    for col in pred_cols:
+        df_leads[col] = df_leads[col].round(1)    
+
+    df_gk = df_leads[df_leads["position"] == "GK"].copy()
+    df_def = df_leads[df_leads["position"] == "DEF"].copy()
+    df_mid = df_leads[df_leads["position"] == "MID"].copy()
+    df_fwd = df_leads[df_leads["position"] == "FWD"].copy()
+    
+    col_map = {"name": "Player", "cost": "Cost", "next_opponent": "Opponent", 
+        "selection_pct": "TSB"}
+    base_cols = ["name", "cost", "selection_pct", "next_opponent"]
+    base_cols.append(model_col)
+    col_map[model_col] = model_name
+
+    df_gk = df_gk[base_cols].copy()
+    df_gk = df_gk.rename(columns=col_map)
+    gk_table = make_table(df_gk)
+
+    df_def = df_def[base_cols].copy()
+    df_def = df_def.rename(columns=col_map)
+    def_table = make_table(df_def)
+    
+    df_mid = df_mid[base_cols].copy()
+    df_mid = df_mid.rename(columns=col_map)
+    mid_table = make_table(df_mid)
+
+    df_fwd = df_fwd[base_cols].copy()
+    df_fwd = df_fwd.rename(columns=col_map)
+    fwd_table = make_table(df_fwd)
+    return gk_table, def_table, mid_table, fwd_table

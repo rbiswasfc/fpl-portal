@@ -8,12 +8,23 @@ try:
     from layouts.layout_utils import make_header, make_table, make_dropdown, make_button
     from scripts.data_loader import DataLoader
     from scripts.data_scrape import DataScraper
+    from scripts.data_preparation import ModelDataMaker
     from scripts.utils import load_config
     from app import cache
 except:
     raise ImportError
 
 TIMEOUT = 3600 * 12
+
+CONFIG_2020 = {
+    "data_dir": "./data/model_data/2020_21/",
+    "file_fixture": "fixtures.csv",
+    "file_team": "teams.csv",
+    "file_gw": "merged_gw.csv",
+    "file_player": "players_raw.csv",
+    "file_understat_team": "understat_team_data.pkl",
+    "scoring_gw": "NA"
+}
 
 
 @cache.memoize(timeout=TIMEOUT)
@@ -221,6 +232,55 @@ def make_scoring_section():
     scoring_section = html.Div(scoring)
     return scoring_section
 
+def make_lead_generation_section():
+    
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+    data_maker = ModelDataMaker(CONFIG_2020)
+    team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    team_names = []
+    for k,v in team_id_team_name_map.items():
+        team_names.append(v)
+    team_names = list(set(team_names))
+    team_names.append("All")
+    team_names = sorted(team_names)
+
+    team_options = [{'label': team, 'value': team} for team in team_names]
+    dropdown_team = make_dropdown('team-selection-dropdown-leads', team_options,
+                                     placeholder="Select Team ...")
+    
+    ai_models = ["LGBM Point", "LGBM Potential", "LGBM Return", "Fast Point", "Fast Potential", "Fast Return"]
+    model_options = [{'label': model, 'value': model} for model in ai_models]
+    dropdown_model = make_dropdown('model-selection-dropdown-leads', model_options,
+                                     placeholder="Select Model ...")
+    dropdown_section = html.Div(
+        children=[
+            html.Div(dropdown_team, className='col-6'),
+            html.Div(dropdown_model, className='col-6'),
+        ],
+        className='row'
+    )
+    
+    leads_output = html.Div(
+        children=[
+            html.Div("GK Leads", className='subtitle inline-header'),
+            dcc.Loading(html.Div(id='gk-leads', style=margin_style), color='black'),
+            html.Div("DEF Leads", className='subtitle inline-header'),
+            dcc.Loading(html.Div(id='def-leads', style=margin_style), color='black'),
+            html.Div("MID Leads", className='subtitle inline-header'),
+            dcc.Loading(html.Div(id='mid-leads', style=margin_style), color='black'),
+            html.Div("FWD Leads", className='subtitle inline-header'),
+            dcc.Loading(html.Div(id='fwd-leads', style=margin_style), color='black')
+        ])
+
+    section = html.Div(
+        children=[
+            html.Div("Select Team & Model", className='subtitle inline-header'),
+            dropdown_section,
+            leads_output
+        ]
+    )
+    return section
+
 
 def make_left_layout_leads():
     header = make_header("Model Training")
@@ -242,16 +302,14 @@ def make_left_layout_leads():
 
 
 def make_right_layout_leads():
-    header = make_header("Generated Leads")
+    header = make_header("Leads")
     layout = html.Div(
         id='leads-layout-left',
         className="six columns",
         children=[
             header,
-            html.Div("GK Leads", className='subtitle inline-header'),
-            html.Div("DEF Leads", className='subtitle inline-header'),
-            html.Div("MID Leads", className='subtitle inline-header'),
-            html.Div("FWD Leads", className='subtitle inline-header'),
+            make_lead_generation_section(),
+            html.Div("Shap Explanation", className='subtitle inline-header'),
         ],
     )
     return layout

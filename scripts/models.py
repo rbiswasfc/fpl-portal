@@ -305,7 +305,7 @@ def generate_leads(gw):
     # player_id_team_id_map = data_maker.get_player_id_team_id_map()
     # player_id_player_name_map = data_maker.get_player_id_player_name_map()
     # player_id_player_position_map = data_maker.get_player_id_player_position_map()
-    # team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    # c = data_maker.get_team_id_team_name_map()
     # player_id_cost_map = data_maker.get_player_id_cost_map()
     # player_id_play_chance_map = data_maker.get_player_id_play_chance_map()
     # player_id_selection_map = data_maker.get_player_id_selection_map()
