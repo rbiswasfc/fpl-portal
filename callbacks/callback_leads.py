@@ -371,6 +371,38 @@ def perform_lgbm_point_scoring(gw):
     return result
 
 
+@cache.memoize(timeout=TIMEOUT)
+def perform_lgbm_potential_scoring(gw):
+    model, _ = perform_lgbm_potential_training(gw)
+    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
+    preds = model.predict(XY_scoring)
+    df = pd.DataFrame()
+    df["player_id"] = XY_scoring["player_id"].values
+    df["gw"] = gw
+    df['lgbm_potential_pred'] = preds
+    save_path = os.path.join(model.model_output_dir, "lgbm_potential_predictions_gw_{}.csv".format(gw))
+    df.to_csv(save_path, index=False)
+    print(df.head())
+    result = html.P("Done!", style={"text-align": "center"})
+    return result
+
+
+@cache.memoize(timeout=TIMEOUT)
+def perform_lgbm_return_scoring(gw):
+    model, _ = perform_lgbm_return_training(gw)
+    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
+    preds = model.predict(XY_scoring)
+    df = pd.DataFrame()
+    df["player_id"] = XY_scoring["player_id"].values
+    df["gw"] = gw
+    df['lgbm_return_pred'] = preds
+    save_path = os.path.join(model.model_output_dir, "lgbm_return_predictions_gw_{}.csv".format(gw))
+    df.to_csv(save_path, index=False)
+    print(df.head())
+    result = html.P("Done!", style={"text-align": "center"})
+    return result
+
+
 @app.callback(Output('lgbm-point-predict-output', 'children'),
               [Input('lgbm-point-predict-btn', 'n_clicks')],
               [State('gw-selection-dropdown', 'value')],
@@ -382,6 +414,38 @@ def execute_lgbm_point_scoring(n_clicks, gw):
             return html.P("Please Select GW")
         print("Scoring from LGBM Point Model for gameweek={}".format(gw))
         result = perform_lgbm_point_scoring(gw)
+        return result
+    else:
+        return html.P("Button Not Clicked!", style={"text-align": "center"})
+
+
+@app.callback(Output('lgbm-potential-predict-output', 'children'),
+              [Input('lgbm-potential-predict-btn', 'n_clicks')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_lgbm_potential_scoring(n_clicks, gw):
+    print("LGBM Potential Prediction click={}".format(n_clicks))
+    if n_clicks:
+        if not gw:
+            return html.P("Please Select GW")
+        print("Scoring from LGBM Potential Model for gameweek={}".format(gw))
+        result = perform_lgbm_potential_scoring(gw)
+        return result
+    else:
+        return html.P("Button Not Clicked!", style={"text-align": "center"})
+
+
+@app.callback(Output('lgbm-return-predict-output', 'children'),
+              [Input('lgbm-return-predict-btn', 'n_clicks')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_lgbm_return_scoring(n_clicks, gw):
+    print("LGBM Return Prediction click={}".format(n_clicks))
+    if n_clicks:
+        if not gw:
+            return html.P("Please Select GW")
+        print("Scoring from LGBM Return Model for gameweek={}".format(gw))
+        result = perform_lgbm_return_scoring(gw)
         return result
     else:
         return html.P("Button Not Clicked!", style={"text-align": "center"})
@@ -411,6 +475,52 @@ def perform_fastai_point_scoring(gw):
     return result_code
 
 
+@cache.memoize(timeout=TIMEOUT)
+def perform_fastai_potential_scoring(gw):
+    export_dir = Path("./data/model_outputs/fastai_pot_target_model")
+    learn = load_learner(export_dir)
+    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
+
+    n_ex = len(XY_scoring)
+    fast_scores = []
+    for idx in tqdm(range(n_ex)):
+        _, _, this_pred = learn.predict(XY_scoring.iloc[idx])
+        fast_scores.append(this_pred.item())
+
+    df = pd.DataFrame()
+    df["player_id"] = XY_scoring["player_id"].values
+    df["gw"] = gw
+    df['fastai_potential_pred'] = fast_scores
+    save_path = os.path.join("./data/model_outputs", "fastai_potential_predictions_gw_{}.csv".format(gw))
+    df.to_csv(save_path, index=False)
+    print(df.head())
+    result_code = 1
+    return result_code
+
+
+@cache.memoize(timeout=TIMEOUT)
+def perform_fastai_return_scoring(gw):
+    export_dir = Path("./data/model_outputs/fastai_star_target_model")
+    learn = load_learner(export_dir)
+    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
+
+    n_ex = len(XY_scoring)
+    fast_scores = []
+    for idx in tqdm(range(n_ex)):
+        _, _, this_pred = learn.predict(XY_scoring.iloc[idx])
+        fast_scores.append(this_pred.item())
+
+    df = pd.DataFrame()
+    df["player_id"] = XY_scoring["player_id"].values
+    df["gw"] = gw
+    df['fastai_return_pred'] = fast_scores
+    save_path = os.path.join("./data/model_outputs", "fastai_return_predictions_gw_{}.csv".format(gw))
+    df.to_csv(save_path, index=False)
+    print(df.head())
+    result_code = 1
+    return result_code
+
+
 @app.callback(Output('fastai-point-predict-output', 'children'),
               [Input('fastai-point-predict-btn', 'n_clicks')],
               [State('gw-selection-dropdown', 'value')],
@@ -422,6 +532,38 @@ def execute_fastai_point_scoring(n_clicks, gw):
             return html.P("Please Select GW")
         print("Scoring from FastAI Point Model for gameweek={}".format(gw))
         result = perform_fastai_point_scoring(gw)
+        return html.Div("Done!", style={"text-align": "center"})
+    else:
+        return html.Div("Button Not Clicked!", style={"text-align": "center"})
+
+
+@app.callback(Output('fastai-potential-predict-output', 'children'),
+              [Input('fastai-potential-predict-btn', 'n_clicks')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_fastai_potential_scoring(n_clicks, gw):
+    print("FastAI Potential Prediction click={}".format(n_clicks))
+    if n_clicks:
+        if not gw:
+            return html.P("Please Select GW")
+        print("Scoring from FastAI Potential Model for gameweek={}".format(gw))
+        result = perform_fastai_potential_scoring(gw)
+        return html.Div("Done!", style={"text-align": "center"})
+    else:
+        return html.Div("Button Not Clicked!", style={"text-align": "center"})
+
+
+@app.callback(Output('fastai-return-predict-output', 'children'),
+              [Input('fastai-return-predict-btn', 'n_clicks')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_fastai_return_scoring(n_clicks, gw):
+    print("FastAI Return Prediction click={}".format(n_clicks))
+    if n_clicks:
+        if not gw:
+            return html.P("Please Select GW")
+        print("Scoring from FastAI Potential Model for gameweek={}".format(gw))
+        result = perform_fastai_return_scoring(gw)
         return html.Div("Done!", style={"text-align": "center"})
     else:
         return html.Div("Button Not Clicked!", style={"text-align": "center"})
