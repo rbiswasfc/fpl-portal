@@ -232,13 +232,13 @@ def make_scoring_section():
     scoring_section = html.Div(scoring)
     return scoring_section
 
+
 def make_lead_generation_section():
-    
     margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
     data_maker = ModelDataMaker(CONFIG_2020)
     team_id_team_name_map = data_maker.get_team_id_team_name_map()
     team_names = []
-    for k,v in team_id_team_name_map.items():
+    for k, v in team_id_team_name_map.items():
         team_names.append(v)
     team_names = list(set(team_names))
     team_names.append("All")
@@ -246,12 +246,12 @@ def make_lead_generation_section():
 
     team_options = [{'label': team, 'value': team} for team in team_names]
     dropdown_team = make_dropdown('team-selection-dropdown-leads', team_options,
-                                     placeholder="Select Team ...")
-    
+                                  placeholder="Select Team ...")
+
     ai_models = ["LGBM Point", "LGBM Potential", "LGBM Return", "Fast Point", "Fast Potential", "Fast Return"]
     model_options = [{'label': model, 'value': model} for model in ai_models]
     dropdown_model = make_dropdown('model-selection-dropdown-leads', model_options,
-                                     placeholder="Select Model ...")
+                                   placeholder="Select Model ...")
     dropdown_section = html.Div(
         children=[
             html.Div(dropdown_team, className='col-6'),
@@ -259,7 +259,7 @@ def make_lead_generation_section():
         ],
         className='row'
     )
-    
+
     leads_output = html.Div(
         children=[
             html.Div("GK Leads", className='subtitle inline-header'),
@@ -277,6 +277,46 @@ def make_lead_generation_section():
             html.Div("Select Team & Model", className='subtitle inline-header'),
             dropdown_section,
             leads_output
+        ]
+    )
+    return section
+
+
+def make_shap_explanation_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+    data_maker = ModelDataMaker(CONFIG_2020)
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    player_names = []
+    for k, v in player_id_player_name_map.items():
+        player_names.append(v)
+    player_names = sorted(list(set(player_names)))
+
+    player_options = [{'label': player, 'value': player} for player in player_names]
+    dropdown_player = make_dropdown('player-selection-dropdown-shap', player_options,
+                                    placeholder="Select Player ...")
+
+    ai_models = ["LGBM Point", "LGBM Potential", "LGBM Return"]
+    model_options = [{'label': model, 'value': model} for model in ai_models]
+    dropdown_model = make_dropdown('model-selection-dropdown-shap', model_options,
+                                   placeholder="Select Model ...")
+    dropdown_section = html.Div(
+        children=[
+            html.Div(dropdown_player, className='col-6'),
+            html.Div(dropdown_model, className='col-6'),
+        ],
+        className='row'
+    )
+
+    shap_output = html.Div(
+        children=[
+            dcc.Loading(html.Div(id='shap-output', style=margin_style), color='black'),
+        ])
+
+    section = html.Div(
+        children=[
+            # html.Div("Select Player & Model", className='subtitle inline-header'),
+            dropdown_section,
+            shap_output
         ]
     )
     return section
@@ -310,6 +350,7 @@ def make_right_layout_leads():
             header,
             make_lead_generation_section(),
             html.Div("Shap Explanation", className='subtitle inline-header'),
+            make_shap_explanation_section(),
         ],
     )
     return layout

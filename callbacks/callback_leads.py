@@ -1,5 +1,6 @@
 import os
 import pdb
+import shap
 from pathlib import Path
 import dash_html_components as html
 import dash_core_components as dcc
@@ -39,6 +40,7 @@ CONFIG_2020 = {
 
 TIMEOUT = 3600 * 12
 
+
 def load_dataframe(path):
     try:
         df = pd.read_csv(path)
@@ -46,6 +48,7 @@ def load_dataframe(path):
         print("Error in reading {}".format(path))
         return pd.DataFrame()
     return df
+
 
 @cache.memoize(timeout=TIMEOUT)
 def ingest_data():
@@ -591,17 +594,16 @@ def execute_fastai_return_scoring(n_clicks, gw):
 @app.callback([Output('gk-leads', 'children'),
                Output('def-leads', 'children'),
                Output('mid-leads', 'children'),
-               Output('fwd-leads', 'children'),],
+               Output('fwd-leads', 'children'), ],
               [Input('team-selection-dropdown-leads', 'value'),
-               Input('model-selection-dropdown-leads', 'value')],
-              [State('gw-selection-dropdown', 'value')],
+               Input('model-selection-dropdown-leads', 'value'),
+               Input('gw-selection-dropdown', 'value')],
               prevent_initial_call=True)
 def execute_fastai_return_scoring(team_name, model_name, gw_id):
-    
     if not gw_id:
         msg = html.P("Please select GW for scoring")
         return msg, msg, msg, msg
-    
+
     if not model_name:
         msg = html.P("Please select Model")
         return msg, msg, msg, msg
@@ -618,7 +620,7 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     print("Leads for {} in gw {}".format(team_name, gw_id))
     data_maker = ModelDataMaker(CONFIG_2020)
     output_dir = "./data/model_outputs/"
-    
+
     # load model predictions
     lgbm_point_path = os.path.join(output_dir, "lgbm_point_predictions_gw_{}.csv".format(gw_id))
     lgbm_potential_path = os.path.join(output_dir, "lgbm_potential_predictions_gw_{}.csv".format(gw_id))
@@ -628,7 +630,6 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     fastai_potential_path = os.path.join(output_dir, "fastai_potential_predictions_gw_{}.csv".format(gw_id))
     fastai_return_path = os.path.join(output_dir, "fastai_return_predictions_gw_{}.csv".format(gw_id))
 
-    
     df_lgbm_point = load_dataframe(lgbm_point_path)
     df_lgbm_potential = load_dataframe(lgbm_potential_path)
     df_lgbm_return = load_dataframe(lgbm_return_path)
@@ -636,16 +637,16 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     df_fastai_potential = load_dataframe(fastai_potential_path)
     df_fastai_return = load_dataframe(fastai_return_path)
 
-    all_preds_df = [df_lgbm_point, df_lgbm_potential, df_lgbm_return, 
-        df_fastai_point, df_fastai_potential, df_fastai_return]
-    
+    all_preds_df = [df_lgbm_point, df_lgbm_potential, df_lgbm_return,
+                    df_fastai_point, df_fastai_potential, df_fastai_return]
+
     for df in all_preds_df:
         try:
-            assert len(df)>0
+            assert len(df) > 0
         except:
             msg = html.P("Run scoring for models before generating leads")
             return msg, msg, msg, msg
-    
+
     # prepare prediction base dataframe
     XY_train, XY_test, XY_scoring, features_dict = load_data(gw_id)
     player_id_team_id_map = data_maker.get_player_id_team_id_map()
@@ -671,7 +672,7 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     df_leads = df_leads.drop_duplicates(subset=["player_id"])
 
     if team_name != "All":
-        df_leads = df_leads[df_leads["team"]==team_name].copy()
+        df_leads = df_leads[df_leads["team"] == team_name].copy()
 
     # merge predictions
     for df in all_preds_df:
@@ -680,25 +681,24 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     # keep_cols = ["name", "cost", "position", "selection_pct", "next_opponent", "lgbm_point_pred", "lgbm_potential_pred"]
     # df_leads = df_leads[keep_cols].copy()
     # make tables
-    df_leads["cost"] = df_leads["cost"]/10
+    df_leads["cost"] = df_leads["cost"] / 10
     model_col = model_name_col_map[model_name]
     df_leads = df_leads.sort_values(by=model_col, ascending=False)
 
     # column round up
     pred_cols = ["lgbm_point_pred", "lgbm_potential_pred", "lgbm_return_pred",
-                "fastai_point_pred", "fastai_potential_pred", "fastai_return_pred"]
+                 "fastai_point_pred", "fastai_potential_pred", "fastai_return_pred"]
     for col in pred_cols:
-        df_leads[col] = df_leads[col].round(1)    
+        df_leads[col] = df_leads[col].round(2)
 
     df_gk = df_leads[df_leads["position"] == "GK"].copy()
     df_def = df_leads[df_leads["position"] == "DEF"].copy()
     df_mid = df_leads[df_leads["position"] == "MID"].copy()
     df_fwd = df_leads[df_leads["position"] == "FWD"].copy()
-    
-    col_map = {"name": "Player", "cost": "Cost", "next_opponent": "Opponent", 
-        "selection_pct": "TSB"}
-    base_cols = ["name", "cost", "selection_pct", "next_opponent"]
-    base_cols.append(model_col)
+
+    col_map = {"name": "Player", "cost": "Cost", "next_opponent": "Opponent",
+               "selection_pct": "TSB"}
+    base_cols = ["name", "cost", "selection_pct", "next_opponent", model_col]
     col_map[model_col] = model_name
 
     df_gk = df_gk[base_cols].copy()
@@ -708,7 +708,7 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     df_def = df_def[base_cols].copy()
     df_def = df_def.rename(columns=col_map)
     def_table = make_table(df_def)
-    
+
     df_mid = df_mid[base_cols].copy()
     df_mid = df_mid.rename(columns=col_map)
     mid_table = make_table(df_mid)
@@ -717,3 +717,88 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     df_fwd = df_fwd.rename(columns=col_map)
     fwd_table = make_table(df_fwd)
     return gk_table, def_table, mid_table, fwd_table
+
+
+# SHAP
+@cache.memoize(timeout=TIMEOUT)
+def perform_shap_analysis(model_name, gw_id):
+    XY_train, XY_test, XY_scoring, features_dict = load_data(gw_id)
+    model, features = None, None
+    if model_name == 'LGBM Point':
+        model, _ = perform_lgbm_point_training(gw_id)
+        features = model.features
+    if model_name == 'LGBM Potential':
+        model, _ = perform_lgbm_potential_training(gw_id)
+        features = model.features
+    if model_name == 'LGBM Return':
+        model, _ = perform_lgbm_return_training(gw_id)
+        features = model.features
+
+    X_scoring = XY_scoring[features].copy()
+    explainer = shap.TreeExplainer(model.model)
+    shap_values = explainer.shap_values(X_scoring)
+    if model_name == 'LGBM Return':
+        shap_values = shap_values[1]
+    df = pd.DataFrame(shap_values)
+    shap_cols = ["shap_" + feat for feat in features]
+    df.columns = shap_cols
+    df_exp = pd.concat([XY_scoring, df], axis=1)
+
+    data_maker = ModelDataMaker(CONFIG_2020)
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    df_exp["name"] = df_exp["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
+
+    return df_exp
+
+
+@app.callback(Output('shap-output', 'children'),
+              [Input('player-selection-dropdown-shap', 'value'),
+               Input('model-selection-dropdown-shap', 'value'),
+               Input('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_shap_explanation(player_name, model_name, gw_id):
+    if not gw_id:
+        msg = html.P("Please select GW for scoring")
+        return msg
+
+    if not player_name:
+        msg = html.P("Please select Player")
+        return msg
+
+    if not model_name:
+        msg = html.P("Please select Model")
+        return msg
+
+    # get shap dataframe
+    df_shap = perform_shap_analysis(model_name, gw_id)
+
+    df_this_player = df_shap[df_shap["name"] == player_name].copy()
+    df_this_player = df_this_player.drop_duplicates(subset=["name"])
+
+    if len(df_this_player) == 0:
+        return html.P("Player Not Found")
+    shap_cols = [col for col in df_this_player.columns if col.startswith('shap')]
+    feature_cols = [col.split("shap_")[1] for col in shap_cols]
+    explanation_list = []
+    for feat, feat_shap in zip(feature_cols, shap_cols):
+        feat_val = df_this_player[feat].values[0]
+        shap_val = df_this_player[feat_shap].values[0]
+        this_exp = {"feature": feat, "feature_val": feat_val, "shap_val": shap_val}
+        explanation_list.append(this_exp)
+
+    df_meta = pd.DataFrame(explanation_list)
+    df_meta["abs_shap"] = df_meta["shap_val"].apply(lambda x: abs(x))
+    df_meta = df_meta.sort_values(by="abs_shap", ascending=False)
+    df_top_exp = df_meta.iloc[:20]
+
+    fig = px.bar(df_top_exp, y='shap_val', x='feature', title="Shap Analysis: {}".format(player_name),
+                 labels={"shap_val": "SHAP", "feature": "Feature"},
+                 template="seaborn")
+
+    fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+    fig.update_layout(margin={'l': 5, 'b': 75, 't': 25, 'r': 0})
+    imp_bar = dcc.Graph(figure=fig)
+
+    return imp_bar
+
+
