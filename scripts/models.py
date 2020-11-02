@@ -195,7 +195,8 @@ def train_lgbm_model(gw, target="reg_target"):
             'verbose': -1,
             "max_depth": 7,
             "num_leaves": 31,
-            "max_bin": 64
+            "max_bin": 64,
+            'is_unbalance': 'true'
         }
 
     print("Shape before removing null targets: {}".format(XY_train.shape))

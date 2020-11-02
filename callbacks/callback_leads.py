@@ -508,7 +508,7 @@ def perform_fastai_return_scoring(gw):
     fast_scores = []
     for idx in tqdm(range(n_ex)):
         _, _, this_pred = learn.predict(XY_scoring.iloc[idx])
-        fast_scores.append(this_pred.item())
+        fast_scores.append(this_pred[1].item())
 
     df = pd.DataFrame()
     df["player_id"] = XY_scoring["player_id"].values
