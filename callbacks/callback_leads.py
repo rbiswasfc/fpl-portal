@@ -736,9 +736,12 @@ def perform_shap_analysis(model_name, gw_id):
 
     X_scoring = XY_scoring[features].copy()
     explainer = shap.TreeExplainer(model.model)
+
     shap_values = explainer.shap_values(X_scoring)
+    ave_score = explainer.expected_value
     if model_name == 'LGBM Return':
         shap_values = shap_values[1]
+        ave_score = explainer.expected_value[1]
     df = pd.DataFrame(shap_values)
     shap_cols = ["shap_" + feat for feat in features]
     df.columns = shap_cols
@@ -748,7 +751,7 @@ def perform_shap_analysis(model_name, gw_id):
     player_id_player_name_map = data_maker.get_player_id_player_name_map()
     df_exp["name"] = df_exp["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
 
-    return df_exp
+    return df_exp, ave_score
 
 
 @app.callback(Output('shap-output', 'children'),
@@ -770,7 +773,8 @@ def execute_shap_explanation(player_name, model_name, gw_id):
         return msg
 
     # get shap dataframe
-    df_shap = perform_shap_analysis(model_name, gw_id)
+    df_shap, ave_score = perform_shap_analysis(model_name, gw_id)
+    print(ave_score)
 
     df_this_player = df_shap[df_shap["name"] == player_name].copy()
     df_this_player = df_this_player.drop_duplicates(subset=["name"])
@@ -789,9 +793,10 @@ def execute_shap_explanation(player_name, model_name, gw_id):
     df_meta = pd.DataFrame(explanation_list)
     df_meta["abs_shap"] = df_meta["shap_val"].apply(lambda x: abs(x))
     df_meta = df_meta.sort_values(by="abs_shap", ascending=False)
+    score = df_meta["shap_val"].sum() + ave_score
     df_top_exp = df_meta.iloc[:20]
 
-    fig = px.bar(df_top_exp, y='shap_val', x='feature', title="Shap Analysis: {}".format(player_name),
+    fig = px.bar(df_top_exp, y='shap_val', x='feature', text='feature_val', title="{}: Score = {:.2f}".format(player_name, score),
                  labels={"shap_val": "SHAP", "feature": "Feature"},
                  template="seaborn")
 

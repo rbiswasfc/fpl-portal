@@ -262,13 +262,13 @@ def make_lead_generation_section():
 
     leads_output = html.Div(
         children=[
-            html.Div("GK Leads", className='subtitle inline-header'),
+            html.Div("GK", className='subtitle inline-header'),
             dcc.Loading(html.Div(id='gk-leads', style=margin_style), color='black'),
-            html.Div("DEF Leads", className='subtitle inline-header'),
+            html.Div("DEF", className='subtitle inline-header'),
             dcc.Loading(html.Div(id='def-leads', style=margin_style), color='black'),
-            html.Div("MID Leads", className='subtitle inline-header'),
+            html.Div("MID", className='subtitle inline-header'),
             dcc.Loading(html.Div(id='mid-leads', style=margin_style), color='black'),
-            html.Div("FWD Leads", className='subtitle inline-header'),
+            html.Div("FWD", className='subtitle inline-header'),
             dcc.Loading(html.Div(id='fwd-leads', style=margin_style), color='black')
         ])
 
