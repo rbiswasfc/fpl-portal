@@ -95,9 +95,60 @@ def make_points_predictor_section():
             # train_output,
             dcc.Loading(html.Div(id="lgbm-xnext-outcome"), color='black'),
             dcc.Loading(html.Div(id="fastai-xnext-outcome"), color='black'),
+            dcc.Loading(html.Div(id="xnext-feature-imp", style={"width": "100%"}), color='black'),
         ])
     point_predictor_section = html.Div(point_predictor)
     return point_predictor_section
+
+
+def make_return_predictor_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+
+    button_train = html.Div(
+        children=[
+            html.Div(make_button("TRAIN LGB MODEL", 'lgbm-xreturn-btn'), className="col-6"),
+            html.Div(make_button("TRAIN FastAI MODEL", 'fastai-xreturn-btn'), className="col-6"),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    return_predictor = html.Div(
+        children=[
+            html.Div("Return Predictor", className='subtitle inline-header'),
+            button_train,
+            # train_output,
+            dcc.Loading(html.Div(id="lgbm-xreturn-outcome"), color='black'),
+            dcc.Loading(html.Div(id="fastai-xreturn-outcome"), color='black'),
+            dcc.Loading(html.Div(id="xreturn-feature-imp", style={"width": "100%"}), color='black'),
+        ])
+    return_predictor_section = html.Div(return_predictor)
+    return return_predictor_section
+
+
+def make_potential_predictor_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+
+    button_train = html.Div(
+        children=[
+            html.Div(make_button("TRAIN LGB MODEL", 'lgbm-xpotential-btn'), className="col-6"),
+            html.Div(make_button("TRAIN FastAI MODEL", 'fastai-xpotential-btn'), className="col-6"),
+        ],
+        className="row",
+        style=margin_style
+    )
+
+    potential_predictor = html.Div(
+        children=[
+            html.Div("Potential Predictor", className='subtitle inline-header'),
+            button_train,
+            # train_output,
+            dcc.Loading(html.Div(id="lgbm-xpotential-outcome"), color='black'),
+            dcc.Loading(html.Div(id="fastai-xpotential-outcome"), color='black'),
+            dcc.Loading(html.Div(id="xpotential-feature-imp", style={"width": "100%"}), color='black'),
+        ])
+    potential_predictor_section = html.Div(potential_predictor)
+    return potential_predictor_section
 
 
 def make_scoring_section():
@@ -182,6 +233,8 @@ def make_left_layout_leads():
             make_gw_selection_section(),
             make_pipeline_section(),
             make_points_predictor_section(),
+            make_potential_predictor_section(),
+            make_return_predictor_section(),
             make_scoring_section(),
         ],
     )

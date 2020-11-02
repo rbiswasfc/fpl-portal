@@ -186,7 +186,8 @@ def train_lgbm_model(gw, target="reg_target"):
     evaluation_results = model.train(XY_train, features, target, cat_features=cat_features)
     model.save_model()
     df_imp = model.get_feature_importance()
-    df_imp.to_csv(os.path.join(model.model_output_dir, "lgbm_points_predictor_feature_imp.csv"))
+    df_imp.to_csv(os.path.join(model.model_output_dir, "lgbm_{}_feature_imp.csv".format(target)), index=False)
+
     print(df_imp.head(30))
 
     return model, evaluation_results

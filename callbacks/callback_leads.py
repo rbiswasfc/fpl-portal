@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 from fastai.tabular import load_learner
+
 try:
     from layouts.layout_utils import make_table, make_dropdown, make_line_plot
     from scripts.data_loader import DataLoader
@@ -56,9 +57,15 @@ def prepare_xy_model_data(gw):
     return result
 
 
+# LGBM Model Training
 @cache.memoize(timeout=TIMEOUT)
 def perform_lgbm_point_training(gw):
     model, evaluation_results = train_lgbm_model(gw, target="reg_target")
+    return model, evaluation_results
+
+@cache.memoize(timeout=TIMEOUT)
+def perform_lgbm_potential_training(gw):
+    model, evaluation_results = train_lgbm_model(gw, target="pot_target")
     return model, evaluation_results
 
 
@@ -96,7 +103,8 @@ def execute_fe(n_clicks, gw):
 
 
 # Model Training
-@app.callback(Output('lgbm-xnext-outcome', 'children'),
+@app.callback([Output('lgbm-xnext-outcome', 'children'),
+               Output('xnext-feature-imp', 'children')],
               [Input('lgbm-xnext-btn', 'n_clicks')],
               [State('gw-selection-dropdown', 'value')],
               prevent_initial_call=True)
@@ -104,7 +112,7 @@ def execute_lgbm_point_training(n_clicks, gw):
     print("LGB Point Model click={}".format(n_clicks))
     if n_clicks:
         if not gw:
-            return html.P("Please Select GW")
+            return html.P("Please Select GW"), ""
         print("Training LGBM Point Model for gameweek={}".format(gw))
         model, evaluation_results = perform_lgbm_point_training(gw)
         train_loss, valid_loss = evaluation_results["training"]["l1"], evaluation_results["valid_1"]["l1"]
@@ -118,9 +126,27 @@ def execute_lgbm_point_training(n_clicks, gw):
         fig.update_layout(legend=legend, title="LGBM Training History")
 
         graph = dcc.Graph(figure=fig)
-        return graph
+
+        # feature importance
+        df_imp = pd.read_csv("./data/model_outputs/lgbm_reg_target_feature_imp.csv")
+        print(df_imp.head())
+        max_imp = df_imp["imp"].max()
+        df_imp["relative_imp"] = df_imp["imp"] / max_imp
+        df_imp = df_imp.sort_values(by="imp", ascending=False)
+        df_imp["rank"] = [i + 1 for i in range(len(df_imp))]
+        top_k = 15
+        df_imp = df_imp.iloc[:top_k].copy()
+        fig = px.bar(df_imp, y='relative_imp', x='feature_name', title="Point Predictor: Feature Importance",
+                     labels={"relative_imp": "Relative Importance", "feature_name": "Feature"},
+                     template="seaborn")
+
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+        fig.update_layout(margin={'l': 5, 'b': 75, 't': 25, 'r': 0})
+        imp_bar = dcc.Graph(figure=fig)
+
+        return graph, imp_bar
     else:
-        return html.P("Button Not Clicked!", style={"text-align": "center"})
+        return html.P("Button Not Clicked!", style={"text-align": "center"}), ""
 
 
 @app.callback(Output('fastai-xnext-outcome', 'children'),
