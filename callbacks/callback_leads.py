@@ -25,7 +25,7 @@ try:
 except:
     raise ImportError
 
-TIMEOUT = 3600 * 5
+TIMEOUT = 3600 * 12
 
 
 @cache.memoize(timeout=TIMEOUT)
@@ -222,7 +222,6 @@ def execute_fastai_point_scoring(n_clicks, gw):
             return html.P("Please Select GW")
         print("Scoring from FastAI Point Model for gameweek={}".format(gw))
         result = perform_fastai_point_scoring(gw)
-        pdb.set_trace()
         return html.Div("Done!", style={"text-align": "center"})
     else:
         return html.Div("Button Not Clicked!", style={"text-align": "center"})

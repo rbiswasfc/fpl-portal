@@ -21,7 +21,7 @@ cache = Cache(app.server, config={
 })
 
 app.config.suppress_callback_exceptions = True
-app.title = "FPL Buddy"
+app.title = "FPL BlackBox"
 
 app.layout = html.Div(children=[
     dcc.Location(id='url', refresh=False),

@@ -13,7 +13,7 @@ try:
 except:
     raise ImportError
 
-TIMEOUT = 3600 * 5
+TIMEOUT = 3600 * 12
 
 
 @cache.memoize(timeout=TIMEOUT)

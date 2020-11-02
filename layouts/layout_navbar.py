@@ -46,7 +46,7 @@ def get_navigation_bar():
                 dbc.Row(
                     [
                         dbc.Col(html.Img(src="/assets/fpl-logo.jpg", height="60px")),
-                        dbc.NavbarBrand(" FPL Predictor ", className="ml-2 title-modifier"),
+                        dbc.NavbarBrand(" THE FPL BlackBox ", className="ml-2 title-modifier"),
                     ],
                     align="center",
                     no_gutters=True,
