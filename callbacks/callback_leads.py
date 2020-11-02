@@ -227,12 +227,12 @@ def execute_lgbm_return_training(n_clicks, gw):
             return html.P("Please Select GW"), ""
         print("Training LGBM Return Model for gameweek={}".format(gw))
         model, evaluation_results = perform_lgbm_return_training(gw)
-        train_loss, valid_loss = evaluation_results["training"]["l1"], evaluation_results["valid_1"]["l1"]
+        train_loss, valid_loss = evaluation_results["training"]["auc"], evaluation_results["valid_1"]["auc"]
         iterations = [i for i in range(len(train_loss))]
         # print(iterations)
         train_plot = go.Scatter(x=iterations, y=train_loss, mode='lines', name='Train')
         valid_plot = go.Scatter(x=iterations, y=valid_loss, mode='lines', name='Valid')
-        fig = make_line_plot([train_plot, valid_plot], xlabel='# Iterations', ylabel='Log Loss')
+        fig = make_line_plot([train_plot, valid_plot], xlabel='# Iterations', ylabel='AUC')
         fig.update_xaxes(range=(0, len(train_loss)), ticks="inside", tick0=0, dtick=500)
         legend = dict(x=0.02, y=0.02, traceorder="normal", font=dict(family="sans-serif", size=12))
         fig.update_layout(legend=legend, title="LGBM Training History")

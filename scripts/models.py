@@ -114,8 +114,12 @@ class FastaiModel(object):
         return fast_data
 
     def train(self, xy_train, xy_test):
+        if self.target == "star_target":
+            metric_fn = accuracy
+        else:
+            metric_fn = mae
         fast_data = self.prepare_data(xy_train, xy_test)
-        learn = tabular_learner(fast_data, layers=[256, 128], emb_drop=0.2, metrics=mae)
+        learn = tabular_learner(fast_data, layers=[256, 128], emb_drop=0.2, metrics=metric_fn)
         learn.fit_one_cycle(4, 1e-4)  # set this to 4
         self.model = learn
 
