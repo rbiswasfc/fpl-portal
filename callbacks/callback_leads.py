@@ -38,7 +38,7 @@ CONFIG_2020 = {
     "scoring_gw": "NA"
 }
 
-TIMEOUT = 3600 * 12
+TIMEOUT = 3600 * 48
 
 
 def load_dataframe(path):
