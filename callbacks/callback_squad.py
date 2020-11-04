@@ -74,6 +74,7 @@ def squad_optimizer(df, formation, budget=100.0, optimise_on='LGBM Point'):
     # could get straight from dataframe...
     player_cost = dict(zip(df["name"], df["cost"]))
     player_position = dict(zip(df["name"], df["position"]))
+    player_team = dict(zip(df["name"], df["team"]))
     player_gk = dict(zip(df["name"], df["is_gk"]))
     player_def = dict(zip(df["name"], df["is_def"]))
     player_mid = dict(zip(df["name"], df["is_mid"]))
@@ -101,6 +102,7 @@ def squad_optimizer(df, formation, budget=100.0, optimise_on='LGBM Point'):
 
             optimal_squad.append({
                 'name': p,
+                #'team': player_team[p],
                 'position': player_position[p],
                 'cost': player_cost[p],
                 'points': player_points[p]
@@ -177,6 +179,10 @@ def load_leads(gw_id):
         col_model_name_map[v] = k
 
     df_leads = df_leads.rename(columns=col_model_name_map)
+    df_leads["Net"] = (2*df_leads["LGBM Point"] + df_leads["LGBM Potential"] + 
+            2*df_leads["Fast Point"] + df_leads["Fast Potential"])*df_leads["Fast Return"]*df_leads["LGBM Return"]
+    max_net = df_leads["Net"].max()
+    df_leads["Net"] = df_leads["Net"]/max_net
     return df_leads
 
 
@@ -234,9 +240,17 @@ def execute_fastai_return_scoring(n_clicks, gw_id, model_name, formation, squad_
         # df_squad = df_squad[["position", "cost", "points"]].copy()
         df_squad_xi["points"] = df_squad_xi["points"].round(2)
         df_squad_bench["points"] = df_squad_bench["points"].round(2)
-        col_map = {"name": "Player", "cost": "Cost", "position": "Position", "points": model_name}
+        col_map = {"name": "Player", "team": "Team", "cost": "Cost", "position": "Position", "points": model_name}
         df_squad_xi = df_squad_xi.rename(columns=col_map)
         df_squad_bench = df_squad_bench.rename(columns=col_map)
+        position_map = {'GK': 1, 'DEF': 2, 'MID': 3, 'FWD': 4}
+
+        df_squad_xi["pos_map"] = df_squad_xi["Position"].apply(lambda x: position_map[x])
+        df_squad_bench["pos_map"] = df_squad_bench["Position"].apply(lambda x: position_map[x])
+        df_squad_xi = df_squad_xi.sort_values(by=["pos_map"])
+        df_squad_bench = df_squad_bench.sort_values(by=["pos_map"])
+        df_squad_xi = df_squad_xi.drop(columns=["pos_map"])
+        df_squad_bench = df_squad_bench.drop(columns=["pos_map"])
         table_xi, table_bench = make_table(df_squad_xi, page_size=11), make_table(df_squad_bench)
 
         return table_xi, table_bench

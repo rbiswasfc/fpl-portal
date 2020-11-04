@@ -36,7 +36,7 @@ def make_optimization_settings_section():
     dropdown_gw = make_dropdown('gw-selection-dropdown-squad', gw_options,
                                 placeholder="Select Gameweek ...")
 
-    ai_models = ["LGBM Point", "LGBM Potential", "LGBM Return", "Fast Point", "Fast Potential", "Fast Return"]
+    ai_models = ["LGBM Point", "LGBM Potential", "LGBM Return", "Fast Point", "Fast Potential", "Fast Return", "Net"]
     model_options = [{'label': model, 'value': model} for model in ai_models]
     dropdown_model = make_dropdown('model-selection-dropdown-optim', model_options,
                                    placeholder="Select Model ...")

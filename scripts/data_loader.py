@@ -78,3 +78,15 @@ class DataLoader(object):
         with open(file_path, 'rb') as f:
             gw = pickle.load(f)
         return gw
+
+    def get_live_gameweek_data(self):
+        this_gw = self.get_next_gameweek_id()-1
+        file_path = os.path.join(self.data_dir_clean, "snapshot_players_gw_{}.csv".format(this_gw))
+        if check_cache_validity(file_path):
+            print("Valid cache found for {}".format(file_path))
+        else:
+            print("executing scrape ...")
+            self.data_processor.save_gameweek_data()
+        df = pd.read_csv(file_path)
+        return df
+        

@@ -1,5 +1,6 @@
 import os
 import sys
+import pdb
 import json
 import pickle
 import requests
@@ -14,6 +15,9 @@ from datetime import datetime
 sys.path.insert(0, './')
 from scripts.utils import load_config, check_create_dir
 
+from tqdm import tqdm
+from multiprocessing.dummy import Pool as ThreadPool
+import concurrent.futures
 
 def fetch_data(url):
     """
@@ -140,6 +144,7 @@ class DataScraper(object):
         filepath = os.path.join(self.data_dir, filename)
         with open(filepath, 'w') as f:
             json.dump(data, f)
+
 
     def get_fpl_manager_entry_ids(self, league_id="1457340"):
         entries = []
@@ -274,6 +279,41 @@ class DataScraper(object):
     def execute_all(self):
         pass
 
+    def get_top_1k_manager_picks_stat(self):
+        league_id = 314
+        all_pages = [i+1 for i in range(20)]
+        entries = []
+        for ls_page in all_pages:
+            league_url = self.league_standing_url + str(league_id) + "/standings/" + "?page_new_entries=1&page_standings=" + str(ls_page) + "&phase=1"
+            response = self.session.get(league_url)
+            json_response = response.json()
+            managers = json_response["standings"]["results"]
+            for manager in managers:
+                entries.append(manager["entry"])
+
+
+        dfs = []
+        # step_size = 10
+        # n_steps = int(len(entries)//step_size)
+        # for i in tqdm(range(n_steps)):
+        #    with concurrent.futures.ThreadPoolExecutor() as executor:
+        #        entries_subset = entries[i*step_size:(i+1)*step_size]
+        #        results = executor.map(self.get_entry_current_gw_picks, entries_subset)
+        #        dfs.extend(results)
+
+        # for i in tqdm(range(n_steps)):
+        #    entries_subset = entries[i*step_size:(i+1)*step_size]
+        #    results = pool.map(self.get_entry_current_gw_picks, entries_subset)
+        #    dfs.extend(results)
+        for entry in tqdm(entries):
+            manager_data = self.get_entry_current_gw_picks(entry)
+            df_manager_picks = pd.DataFrame(manager_data["picks"])
+            dfs.append(df_manager_picks)
+        pdb.set_trace()
+        df_all = pd.concat(dfs)
+        df_stats = df_all.groupby("element")["multiplier"].agg('sum')
+
+
 
 def get_understat_data(url):
     response = requests.get(url)
@@ -309,8 +349,9 @@ def get_understat_epl_season_data(season='2020'):
 
 
 if __name__ == "__main__":
-    # this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
-    # data_scraper = DataScraper(this_config)
+    this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
+    data_scraper = DataScraper(this_config)
+    data_scraper.get_top_1k_manager_picks_stat()
 
     # gw_data = data_scraper.get_gameweek_data()
     # print(gw_data[2])
@@ -348,14 +389,14 @@ if __name__ == "__main__":
     # transfer_data = data_scraper.get_entry_transfers_data(this_entry_id)
     # print(transfer_data)
 
-    team_data_2020, player_data_2020 = get_understat_epl_season_data('2020')
-    with open("./data/model_data/2020_21/understat_team_data.pkl", 'wb') as f:
-        pickle.dump(team_data_2020, f)
+    # team_data_2020, player_data_2020 = get_understat_epl_season_data('2020')
+    # with open("./data/model_data/2020_21/understat_team_data.pkl", 'wb') as f:
+    #    pickle.dump(team_data_2020, f)
 
-    team_data_2019, player_data_2019 = get_understat_epl_season_data('2019')
-    with open("./data/model_data/2019_20/understat_team_data.pkl", 'wb') as f:
-        pickle.dump(team_data_2019, f)
+    #team_data_2019, player_data_2019 = get_understat_epl_season_data('2019')
+    #with open("./data/model_data/2019_20/understat_team_data.pkl", 'wb') as f:
+    #    pickle.dump(team_data_2019, f)
 
-    team_data_2018, player_data_2018 = get_understat_epl_season_data('2018')
-    with open("./data/model_data/2018_19/understat_team_data.pkl", 'wb') as f:
-        pickle.dump(team_data_2018, f)
+    #team_data_2018, player_data_2018 = get_understat_epl_season_data('2018')
+    #with open("./data/model_data/2018_19/understat_team_data.pkl", 'wb') as f:
+    #    pickle.dump(team_data_2018, f)

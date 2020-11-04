@@ -15,6 +15,8 @@ def make_league_search_section():
                                      placeholder="Select League ID ...")
     return dropdown_section
 
+def make_league_comparison_section():
+    pass
 
 def make_left_layout_league():
     header = make_header("League Standing")
@@ -48,8 +50,7 @@ def make_right_layout_league():
             header,
             html.Div("Team Picks", className='subtitle inline-header'),
             dropdown_section,
-            html.Div(id="league-team-picks-display"),
-            html.Div("This is standings")
+            dcc.Loading(html.Div(id="league-team-picks-display"), color='black'),
         ],
     )
     return layout

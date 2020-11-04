@@ -4,17 +4,64 @@ import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
 from app import app
 
-from layouts.layout_utils import make_table, make_dropdown, make_line_plot
-from scripts.data_loader import DataLoader
-from scripts.data_processor import DataProcessor
-from scripts.data_scrape import DataScraper
-from scripts.utils import load_config
 
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 
+try:
+    from layouts.layout_utils import make_table, make_dropdown, make_line_plot
+    from layouts.layout_leads import query_next_gameweek
+    from scripts.data_loader import DataLoader
+    from scripts.data_processor import DataProcessor
+    from scripts.data_scrape import DataScraper
+    from scripts.utils import load_config
+    from app import cache
+    from scripts.data_preparation import ModelDataMaker
+    from scripts.model_data_ingestion import DataIngestor
+    from scripts.feature_engineering import make_XY_data
+    from scripts.models import load_data, train_lgbm_model, train_fastai_model
+except:
+    raise ImportError
+
+TIMEOUT = 3600*2
+
+CONFIG_2020 = {
+    "data_dir": "./data/model_data/2020_21/",
+    "file_fixture": "fixtures.csv",
+    "file_team": "teams.csv",
+    "file_gw": "merged_gw.csv",
+    "file_player": "players_raw.csv",
+    "file_understat_team": "understat_team_data.pkl",
+    "scoring_gw": "NA"
+}
+
+
+@cache.memoize(timeout=TIMEOUT)
+def query_league_data(league_id):
+    config = load_config()
+    data_loader = DataLoader(config)
+    df = data_loader.get_league_standings(league_id)
+    return df
+
+@cache.memoize(timeout=TIMEOUT)
+def query_league_history_data(league_id):
+    config = load_config()
+    data_scraper = DataScraper(config)
+    data_processor = DataProcessor(config)
+    data_loader = DataLoader(config)
+
+    data_processor.save_classic_league_history(league_id)
+    df = data_loader.get_league_gw_history(league_id)
+    return df
+
+@cache.memoize(timeout=TIMEOUT)
+def query_league_start_gw(league_id):
+    config = load_config()
+    data_scraper = DataScraper(config)
+    start_gw = data_scraper.get_league_start_gameweek(league_id)
+    return start_gw
 
 @app.callback([Output('league-standing-table', 'children'),
                Output('league-standing-memory', 'data')],
@@ -22,11 +69,7 @@ import plotly.express as px
 def make_league_standing_table(league_id):
     if not league_id:
         return "", None
-
-    config = load_config()
-    data_loader = DataLoader(config)
-    # pdb.set_trace()
-    df = data_loader.get_league_standings(league_id)
+    df = query_league_data(league_id)
 
     try:
         df = df.rename(columns={"entry_name": "Team",
@@ -59,6 +102,50 @@ def make_team_selection_section(league_id, league_data):
         return [], []
 
 
+#@cache.memoize(timeout=TIMEOUT)
+def query_manager_current_gw_picks(manager_id):
+    config = load_config()
+    data_loader = DataLoader(config)
+    data = data_loader.get_manager_current_gw_picks(manager_id)
+    df = pd.DataFrame(data)
+
+    data_maker = ModelDataMaker(CONFIG_2020)
+    player_id_team_id_map = data_maker.get_player_id_team_id_map()
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    player_id_player_position_map = data_maker.get_player_id_player_position_map()
+    team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    player_id_cost_map = data_maker.get_player_id_cost_map()
+    player_id_selection_map = data_maker.get_player_id_selection_map()
+
+    # points
+    df_gw = data_loader.get_live_gameweek_data()
+    df_gw = df_gw.rename(columns={"id": "element", "event_points": "Points"})
+    #print(df_gw.head(1).T)
+    df_gw = df_gw[["element", "Points"]].copy()
+    df_gw = df_gw.drop_duplicates(subset=["element"])
+    df = pd.merge(df, df_gw, how='left', on="element")
+    #print(df.head())
+    df["Player"] = df["element"].apply(lambda x: player_id_player_name_map.get(x,x))
+    df["Player"] = df["Player"].apply(lambda x: " ".join(x.split(" ")[:2]))
+    df["Team"] = df["element"].apply(lambda x: team_id_team_name_map[player_id_team_id_map[x]])
+    df["Position"] = df["element"].apply(lambda x: player_id_player_position_map.get(x,x))
+    df["Player"] = df[["Player", "is_captain"]].apply(lambda x: x[0]+" (C)" if x[1] else x[0], axis=1)
+    df["Player"] = df[["Player", "is_vice_captain"]].apply(lambda x: x[0]+" (VC)" if x[1] else x[0], axis=1)
+    df["Cost"] = df["element"].apply(lambda x: player_id_cost_map.get(x, x))
+    df["Cost"] = df["Cost"]/10
+    df["TSB"] = df["element"].apply(lambda x: player_id_selection_map.get(x,x))
+    position_map = {"GK": 1, "DEF": 2, "MID": 3, "FWD": 4}
+    df["pos"] = df["Position"].apply(lambda x: position_map[x])
+    df = df.sort_values(by=["pos"])
+    df_xi = df[df["multiplier"]>0].copy()
+    df_bench = df[df["multiplier"]==0].copy()
+    df = pd.concat([df_xi, df_bench])
+    #print(df.head())
+    keep_cols = ["Player", "Team", "Position", "Cost", "TSB", "Points"]
+    # merge player info
+    df = df[keep_cols].copy()
+    return df
+
 @app.callback(Output('league-team-picks-display', 'children'),
               [Input('league-standing-memory', 'data'),
                Input('league-team-picks-dropdown', 'value')])
@@ -67,13 +154,8 @@ def show_current_team_picks(league_data, team_name):
         df_managers = pd.DataFrame(league_data)
         df_tmp = df_managers[df_managers["Team"] == team_name].copy()
         manager_id = df_tmp["entry_id"].unique().tolist()[0]
-
-        config = load_config()
-        data_loader = DataLoader(config)
-        data = data_loader.get_manager_current_gw_picks(manager_id)
-        df = pd.DataFrame(data)
-        print(df)
-        table = make_table(df)
+        df = query_manager_current_gw_picks(manager_id)
+        table = make_table(df, page_size=11)
         return table
 
 
@@ -84,15 +166,9 @@ def make_gw_history_plot(teams, league_id):
     if (not league_id) or (not teams):
         return ""
 
-    config = load_config()
-    data_scraper = DataScraper(config)
-    data_processor = DataProcessor(config)
-    data_loader = DataLoader(config)
-
-    data_processor.save_classic_league_history(league_id)
-    df = data_loader.get_league_gw_history(league_id)
-    start_gw = data_scraper.get_league_start_gameweek(league_id)
-    current_gw = data_scraper.get_next_gameweek_id() - 1
+    df = query_league_history_data(league_id)
+    start_gw = query_league_start_gw(league_id)
+    current_gw = query_next_gameweek() - 1
 
     data = []
     for team in teams:
