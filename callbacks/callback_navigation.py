@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output
 from app import app
 from layouts.layout_league import make_league_page
 from layouts.layout_leads import make_leads_page
+from layouts.layout_squad import make_squad_page
 
 
 @app.callback(Output('current-tab-content', 'children'),
@@ -15,7 +16,7 @@ def render_content(tab):
     elif tab == 'Leads':
         return make_leads_page()
     elif tab == 'Squad':
-        return html.Div("This is SQUADS Page")
+        return make_squad_page()
     elif tab == 'League':
         return make_league_page()
     else:

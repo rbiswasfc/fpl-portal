@@ -14,7 +14,7 @@ def make_header(text):
     return section
 
 
-def make_table(df):
+def make_table(df, page_size=6):
     table = dash_table.DataTable(
         columns=[{'name': col, 'id': col} for col in df.columns],
         data=df.to_dict('records'),
@@ -27,7 +27,7 @@ def make_table(df):
             'textAlign': 'center'
         },
         sort_action='native',
-        page_size=6
+        page_size=page_size
     )
     layout = html.Div(table, className='container', style={"width": "95.5%"})
     return layout
@@ -55,6 +55,19 @@ def make_dropdown(dropdown_id, dropdown_options, placeholder=None, multi_flag=Fa
         style={'margin-top': '1rem', 'margin-bottom': '2rem'}
     )
     return dropdown_section
+
+
+def make_input(input_id, input_type, value=None):
+    input_field = dcc.Input(id=input_id, type=input_type, value=value)
+    # if options:
+    #    input_field = dcc.Input(id=input_id, type=input_type, value=value, list=options)
+    input_section = dbc.Row(
+        children=[
+            html.Div(input_field, className='col-12')
+        ],
+        style={'margin-top': '1rem', 'margin-bottom': '2rem'}
+    )
+    return input_section
 
 
 def make_line_plot(data, xlabel=None, ylabel=None):
