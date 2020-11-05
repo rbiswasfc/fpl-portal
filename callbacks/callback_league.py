@@ -4,7 +4,6 @@ import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
 from app import app
 
-
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -25,7 +24,7 @@ try:
 except:
     raise ImportError
 
-TIMEOUT = 3600*2
+TIMEOUT = 3600 * 2
 
 CONFIG_2020 = {
     "data_dir": "./data/model_data/2020_21/",
@@ -45,6 +44,7 @@ def query_league_data(league_id):
     df = data_loader.get_league_standings(league_id)
     return df
 
+
 @cache.memoize(timeout=TIMEOUT)
 def query_league_history_data(league_id):
     config = load_config()
@@ -56,12 +56,14 @@ def query_league_history_data(league_id):
     df = data_loader.get_league_gw_history(league_id)
     return df
 
+
 @cache.memoize(timeout=TIMEOUT)
 def query_league_start_gw(league_id):
     config = load_config()
     data_scraper = DataScraper(config)
     start_gw = data_scraper.get_league_start_gameweek(league_id)
     return start_gw
+
 
 @app.callback([Output('league-standing-table', 'children'),
                Output('league-standing-memory', 'data')],
@@ -102,8 +104,41 @@ def make_team_selection_section(league_id, league_data):
         return [], []
 
 
-#@cache.memoize(timeout=TIMEOUT)
-def query_manager_current_gw_picks(manager_id):
+@cache.memoize(timeout=TIMEOUT)
+def get_league_eo(league_id):
+    config = load_config()
+    data_loader = DataLoader(config)
+    print(league_id)
+    df_league = data_loader.get_league_standings(league_id)
+    managers = df_league["entry_id"].unique().tolist()
+    dfs = []
+    for manager in managers:
+        df = pd.DataFrame(data_loader.get_manager_current_gw_picks(manager))
+        dfs.append(df)
+    df_eo = pd.concat(dfs)
+    n_players = int(len(df_eo) / 15.0)
+    df_stats = df_eo.groupby('element')["multiplier"].agg("sum").reset_index()
+    df_stats["League EO"] = df_stats["multiplier"] * 100.0 / n_players
+    df_stats["League EO"] = df_stats["League EO"].round(2)
+    df_stats = df_stats[["element", "League EO"]].copy()
+    return df_stats
+
+
+@cache.memoize(timeout=TIMEOUT)
+def get_top_eo():
+    config = load_config()
+    data_loader = DataLoader(config)
+    df_top = data_loader.get_top_manager_picks()
+    n_players = int(len(df_top) / 15.0)
+    df_stats = df_top.groupby('element')["multiplier"].agg("sum").reset_index()
+    df_stats["Top EO"] = df_stats["multiplier"] * 100.0 / n_players
+    df_stats["Top EO"] = df_stats["Top EO"].round(2)
+    df_stats = df_stats[["element", "Top EO"]].copy()
+    return df_stats
+
+
+@cache.memoize(timeout=TIMEOUT)
+def query_manager_current_gw_picks(manager_id, league_id):
     config = load_config()
     data_loader = DataLoader(config)
     data = data_loader.get_manager_current_gw_picks(manager_id)
@@ -120,41 +155,52 @@ def query_manager_current_gw_picks(manager_id):
     # points
     df_gw = data_loader.get_live_gameweek_data()
     df_gw = df_gw.rename(columns={"id": "element", "event_points": "Points"})
-    #print(df_gw.head(1).T)
+    # print(df_gw.head(1).T)
     df_gw = df_gw[["element", "Points"]].copy()
     df_gw = df_gw.drop_duplicates(subset=["element"])
     df = pd.merge(df, df_gw, how='left', on="element")
-    #print(df.head())
-    df["Player"] = df["element"].apply(lambda x: player_id_player_name_map.get(x,x))
+    # print(df.head())
+    df["Player"] = df["element"].apply(lambda x: player_id_player_name_map.get(x, x))
     df["Player"] = df["Player"].apply(lambda x: " ".join(x.split(" ")[:2]))
     df["Team"] = df["element"].apply(lambda x: team_id_team_name_map[player_id_team_id_map[x]])
-    df["Position"] = df["element"].apply(lambda x: player_id_player_position_map.get(x,x))
-    df["Player"] = df[["Player", "is_captain"]].apply(lambda x: x[0]+" (C)" if x[1] else x[0], axis=1)
-    df["Player"] = df[["Player", "is_vice_captain"]].apply(lambda x: x[0]+" (VC)" if x[1] else x[0], axis=1)
+    df["Position"] = df["element"].apply(lambda x: player_id_player_position_map.get(x, x))
+    df["Player"] = df[["Player", "is_captain"]].apply(lambda x: x[0] + " (C)" if x[1] else x[0], axis=1)
+    df["Player"] = df[["Player", "is_vice_captain"]].apply(lambda x: x[0] + " (VC)" if x[1] else x[0], axis=1)
     df["Cost"] = df["element"].apply(lambda x: player_id_cost_map.get(x, x))
-    df["Cost"] = df["Cost"]/10
-    df["TSB"] = df["element"].apply(lambda x: player_id_selection_map.get(x,x))
+    df["Cost"] = df["Cost"] / 10
+    df["TSB"] = df["element"].apply(lambda x: player_id_selection_map.get(x, x))
+
+    # Get Effective ownership
+    df_stats = get_top_eo()
+    df_league_eo = get_league_eo(league_id)
+    df = pd.merge(df, df_stats, on="element", how="left")
+    df = pd.merge(df, df_league_eo, on="element", how="left")
+
     position_map = {"GK": 1, "DEF": 2, "MID": 3, "FWD": 4}
     df["pos"] = df["Position"].apply(lambda x: position_map[x])
     df = df.sort_values(by=["pos"])
-    df_xi = df[df["multiplier"]>0].copy()
-    df_bench = df[df["multiplier"]==0].copy()
+    df_xi = df[df["multiplier"] > 0].copy()
+    df_bench = df[df["multiplier"] == 0].copy()
     df = pd.concat([df_xi, df_bench])
-    #print(df.head())
-    keep_cols = ["Player", "Team", "Position", "Cost", "TSB", "Points"]
+    # print(df.head())
+    keep_cols = ["Player", "Team", "Position", "TSB", "Top EO", "League EO", "Points"]
+    # keep_cols = ["Player", "Team", "Position", "TSB", "Top EO", "Points"]
     # merge player info
     df = df[keep_cols].copy()
     return df
 
+
 @app.callback(Output('league-team-picks-display', 'children'),
               [Input('league-standing-memory', 'data'),
-               Input('league-team-picks-dropdown', 'value')])
-def show_current_team_picks(league_data, team_name):
+               Input('league-team-picks-dropdown', 'value'),
+               State('league-search-dropdown', 'value')])
+def show_current_team_picks(league_data, team_name, league_id):
     if league_data and team_name:
         df_managers = pd.DataFrame(league_data)
         df_tmp = df_managers[df_managers["Team"] == team_name].copy()
         manager_id = df_tmp["entry_id"].unique().tolist()[0]
-        df = query_manager_current_gw_picks(manager_id)
+        df = query_manager_current_gw_picks(manager_id, league_id)
+
         table = make_table(df, page_size=11)
         return table
 

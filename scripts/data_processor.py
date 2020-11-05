@@ -161,7 +161,8 @@ class DataProcessor(object):
                 peaked_team = this_pick["entry_history"]['picks']
                 manager_picks_dict[manager_id][gw_id] = peaked_team
 
-        with open(os.path.join(self.data_dir_clean, "league_{}_manager_picks_history.pkl".format(league_id)), 'wb') as f:
+        with open(os.path.join(self.data_dir_clean, "league_{}_manager_picks_history.pkl".format(league_id)),
+                  'wb') as f:
             pickle.dump(manager_picks_dict, f)
 
     def save_manager_current_gw_picks(self, manager_id):
@@ -180,6 +181,11 @@ class DataProcessor(object):
         with open(filepath, 'wb') as f:
             pickle.dump(next_gw, f)
 
+    def save_top_manager_picks(self, n_pages=12):
+        current_gw = int(self.data_scraper.get_next_gameweek_id()) - 1
+        df = self.data_scraper.get_top_manager_picks(n_pages=n_pages)
+        df.to_csv(os.path.join(self.data_dir_clean, "top_manager_picks_gw_{}.csv".format(current_gw)), index=False)
+
 
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data"}
@@ -192,8 +198,9 @@ if __name__ == "__main__":
     # data_processor.save_classic_league_history()
     # data_processor.save_classic_league_picks()
     # data_processor.save_classic_league_standing()
-    tmp_id = 7006192
-    data_processor.save_manager_current_gw_picks(tmp_id)
+    # tmp_id = 7006192
+    # data_processor.save_manager_current_gw_picks(tmp_id)
+    data_processor.save_top_manager_picks(n_pages=10)
 
     # with open("./data/2020_21/clean/league_1457340_manager_picks.pkl", 'rb') as f:
     #    manage_picks_dict = pickle.load(f)

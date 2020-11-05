@@ -19,6 +19,7 @@ from tqdm import tqdm
 from multiprocessing.dummy import Pool as ThreadPool
 import concurrent.futures
 
+
 def fetch_data(url):
     """
     get json data from API
@@ -145,7 +146,6 @@ class DataScraper(object):
         with open(filepath, 'w') as f:
             json.dump(data, f)
 
-
     def get_fpl_manager_entry_ids(self, league_id="1457340"):
         entries = []
         entry_names = []
@@ -247,7 +247,7 @@ class DataScraper(object):
         :return:
         :rtype:
         """
-        current_gw = int(self.get_next_gameweek_id()-1)
+        current_gw = int(self.get_next_gameweek_id() - 1)
         url = self.manager_url + str(entry_id) + "/event/" + str(current_gw) + "/picks/"
         try:
             data = fetch_data(url)
@@ -279,18 +279,18 @@ class DataScraper(object):
     def execute_all(self):
         pass
 
-    def get_top_1k_manager_picks_stat(self):
+    def get_top_manager_picks(self, n_pages=12):
         league_id = 314
-        all_pages = [i+1 for i in range(20)]
+        all_pages = [i + 1 for i in range(n_pages)]
         entries = []
         for ls_page in all_pages:
-            league_url = self.league_standing_url + str(league_id) + "/standings/" + "?page_new_entries=1&page_standings=" + str(ls_page) + "&phase=1"
+            league_url = self.league_standing_url + str(
+                league_id) + "/standings/" + "?page_new_entries=1&page_standings=" + str(ls_page) + "&phase=1"
             response = self.session.get(league_url)
             json_response = response.json()
             managers = json_response["standings"]["results"]
             for manager in managers:
                 entries.append(manager["entry"])
-
 
         dfs = []
         # step_size = 10
@@ -309,10 +309,8 @@ class DataScraper(object):
             manager_data = self.get_entry_current_gw_picks(entry)
             df_manager_picks = pd.DataFrame(manager_data["picks"])
             dfs.append(df_manager_picks)
-        pdb.set_trace()
         df_all = pd.concat(dfs)
-        df_stats = df_all.groupby("element")["multiplier"].agg('sum')
-
+        return df_all
 
 
 def get_understat_data(url):
@@ -351,7 +349,7 @@ def get_understat_epl_season_data(season='2020'):
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
     data_scraper = DataScraper(this_config)
-    data_scraper.get_top_1k_manager_picks_stat()
+    data_scraper.get_top_manager_picks()
 
     # gw_data = data_scraper.get_gameweek_data()
     # print(gw_data[2])
@@ -393,10 +391,10 @@ if __name__ == "__main__":
     # with open("./data/model_data/2020_21/understat_team_data.pkl", 'wb') as f:
     #    pickle.dump(team_data_2020, f)
 
-    #team_data_2019, player_data_2019 = get_understat_epl_season_data('2019')
-    #with open("./data/model_data/2019_20/understat_team_data.pkl", 'wb') as f:
+    # team_data_2019, player_data_2019 = get_understat_epl_season_data('2019')
+    # with open("./data/model_data/2019_20/understat_team_data.pkl", 'wb') as f:
     #    pickle.dump(team_data_2019, f)
 
-    #team_data_2018, player_data_2018 = get_understat_epl_season_data('2018')
-    #with open("./data/model_data/2018_19/understat_team_data.pkl", 'wb') as f:
+    # team_data_2018, player_data_2018 = get_understat_epl_season_data('2018')
+    # with open("./data/model_data/2018_19/understat_team_data.pkl", 'wb') as f:
     #    pickle.dump(team_data_2018, f)

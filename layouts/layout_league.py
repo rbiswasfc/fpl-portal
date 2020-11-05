@@ -15,8 +15,10 @@ def make_league_search_section():
                                      placeholder="Select League ID ...")
     return dropdown_section
 
+
 def make_league_comparison_section():
     pass
+
 
 def make_left_layout_league():
     header = make_header("League Standing")

@@ -13,7 +13,7 @@ except:
     raise ImportError
 
 
-def check_cache_validity(file_path, valid_days=0.05):
+def check_cache_validity(file_path, valid_days=0.25):
     if os.path.isfile(file_path):
         mod_time = os.path.getmtime(file_path)
         if (time.time() - mod_time) / 3600 < 24 * valid_days:
@@ -80,7 +80,7 @@ class DataLoader(object):
         return gw
 
     def get_live_gameweek_data(self):
-        this_gw = self.get_next_gameweek_id()-1
+        this_gw = self.get_next_gameweek_id() - 1
         file_path = os.path.join(self.data_dir_clean, "snapshot_players_gw_{}.csv".format(this_gw))
         if check_cache_validity(file_path):
             print("Valid cache found for {}".format(file_path))
@@ -89,4 +89,18 @@ class DataLoader(object):
             self.data_processor.save_gameweek_data()
         df = pd.read_csv(file_path)
         return df
-        
+
+    def get_top_manager_picks(self):
+        this_gw = int(self.get_next_gameweek_id() - 1)
+        file_path = os.path.join(self.data_dir_clean, "top_manager_picks_gw_{}.csv".format(this_gw))
+        if check_cache_validity(file_path):
+            print("Valid cache found for {}".format(file_path))
+        else:
+            print("executing scrape ...")
+            self.data_processor.save_top_manager_picks(n_pages=12)
+        df = pd.read_csv(file_path)
+        return df
+
+
+if __name__ == "__main__":
+    pass
