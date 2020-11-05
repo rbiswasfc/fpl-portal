@@ -108,6 +108,34 @@ def make_left_layout_squad():
     )
     return layout
 
+def make_player_comparison_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+    data_maker = ModelDataMaker(CONFIG_2020)
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    player_names = []
+    for k, v in player_id_player_name_map.items():
+        player_names.append(v)
+    player_names = sorted(list(set(player_names)))
+    player_options = [{'label': player, 'value': player} for player in player_names]
+    dropdown_player_a = make_dropdown('player-selection-dropdown-a', player_options,
+                                placeholder="Select Player ...")
+    dropdown_player_b = make_dropdown('player-selection-dropdown-b', player_options,
+                                placeholder="Select Player ...")
+
+    player_dropdown_section = html.Div(
+        children=[
+            html.Div(dropdown_player_a, className='col-6'),
+            html.Div(dropdown_player_b, className='col-6'),
+        ],
+        className='row'
+    )
+    section = html.Div(
+        children=[
+            html.Div("Player Comparison", className='subtitle inline-header'),
+            player_dropdown_section,
+            html.Div(id='player-compare-output', style=margin_style)
+    ])
+    return section
 
 def make_right_layout_squad():
     header = make_header("Transfers")
@@ -116,6 +144,7 @@ def make_right_layout_squad():
         className="six columns",
         children=[
             header,
+            make_player_comparison_section(),
         ],
     )
     return layout

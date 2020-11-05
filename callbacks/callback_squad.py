@@ -185,6 +185,58 @@ def load_leads(gw_id):
     df_leads["Net"] = df_leads["Net"]/max_net
     return df_leads
 
+@app.callback(Output('player-compare-output', 'children'),
+              [Input('player-selection-dropdown-a', 'value'),
+               Input('player-selection-dropdown-b', 'value'),
+               Input('gw-selection-dropdown-squad', 'value')],
+              prevent_initial_call=True)
+def execute_fastai_return_scoring(player_a, player_b, gw_id):
+    if not player_a:
+        msg = html.P("Please select first player")
+        return msg
+    if not player_b:
+        msg = html.P("Please select second player")
+        return msg
+    if not gw_id:
+        msg = html.P("Please select gameweek in left layout")
+        return msg
+    #
+    df_leads = load_leads(gw_id)
+
+    # normalization
+    pot_div = 12
+    point_div = 6
+    retrun_div = 0.8
+
+    df_leads["LGBM Potential"] = df_leads["LGBM Potential"]/pot_div
+    df_leads["Fast Potential"] = df_leads["Fast Potential"]/pot_div
+    df_leads["LGBM Point"] = df_leads["LGBM Point"]/point_div
+    df_leads["Fast Point"] = df_leads["Fast Point"]/point_div
+    df_leads["LGBM Return"] = df_leads["LGBM Return"]/0.8
+    df_leads["Fast Return"] = df_leads["Fast Return"]/0.4
+    df_leads["Net"] = df_leads["Net"]/0.4
+    df_leads["Cost"] = df_leads["cost"]/10.0
+
+    df_a = df_leads[df_leads["name"]==player_a].copy()
+    df_b = df_leads[df_leads["name"]==player_b].copy()
+    keep_cols = ["LGBM Point", "LGBM Potential", "LGBM Return", 
+                 "Fast Point", "Fast Potential", "Fast Return", "Cost"]
+    df_a = df_a[keep_cols].copy().T.reset_index()
+    df_a.columns = ["theta", "r"]
+
+    df_b = df_b[keep_cols].copy().T.reset_index()
+    df_b.columns = ["theta", "r"]
+
+    # pdb.set_trace()
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(r=df_a['r'].values, theta=df_a["theta"].values, 
+                                    fill='toself', name=player_a))
+    fig.add_trace(go.Scatterpolar(r=df_b['r'].values, theta=df_b["theta"].values, 
+                                    fill='toself', name=player_b))
+    fig.update_layout(polar=dict(radialaxis=dict(visible=False)), showlegend=True)
+    # fig = px.line_polar(df_a, r='r', theta='theta', line_close=True)
+    graph = dcc.Graph(figure=fig)
+    return graph
 
 @app.callback([Output('squad-optim-output-play-xi', 'children'),
                Output('squad-optim-output-bench', 'children')],
