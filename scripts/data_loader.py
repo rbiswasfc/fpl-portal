@@ -93,7 +93,7 @@ class DataLoader(object):
     def get_top_manager_picks(self):
         this_gw = int(self.get_next_gameweek_id() - 1)
         file_path = os.path.join(self.data_dir_clean, "top_manager_picks_gw_{}.csv".format(this_gw))
-        if check_cache_validity(file_path):
+        if check_cache_validity(file_path, valid_days=1.0):
             print("Valid cache found for {}".format(file_path))
         else:
             print("executing scrape ...")
