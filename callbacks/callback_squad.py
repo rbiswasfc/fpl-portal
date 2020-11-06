@@ -102,7 +102,7 @@ def squad_optimizer(df, formation, budget=100.0, optimise_on='LGBM Point'):
 
             optimal_squad.append({
                 'name': p,
-                #'team': player_team[p],
+                # 'team': player_team[p],
                 'position': player_position[p],
                 'cost': player_cost[p],
                 'points': player_points[p]
@@ -179,11 +179,13 @@ def load_leads(gw_id):
         col_model_name_map[v] = k
 
     df_leads = df_leads.rename(columns=col_model_name_map)
-    df_leads["Net"] = (2*df_leads["LGBM Point"] + df_leads["LGBM Potential"] + 
-            2*df_leads["Fast Point"] + df_leads["Fast Potential"])*df_leads["Fast Return"]*df_leads["LGBM Return"]
+    df_leads["Net"] = (2 * df_leads["LGBM Point"] + df_leads["LGBM Potential"] +
+                       2 * df_leads["Fast Point"] + df_leads["Fast Potential"]) * df_leads["Fast Return"] * df_leads[
+                          "LGBM Return"]
     max_net = df_leads["Net"].max()
-    df_leads["Net"] = df_leads["Net"]/max_net
+    df_leads["Net"] = df_leads["Net"] / max_net
     return df_leads
+
 
 @app.callback(Output('player-compare-output', 'children'),
               [Input('player-selection-dropdown-a', 'value'),
@@ -208,18 +210,18 @@ def execute_fastai_return_scoring(player_a, player_b, gw_id):
     point_div = 6
     retrun_div = 0.8
 
-    df_leads["LGBM Potential"] = df_leads["LGBM Potential"]/pot_div
-    df_leads["Fast Potential"] = df_leads["Fast Potential"]/pot_div
-    df_leads["LGBM Point"] = df_leads["LGBM Point"]/point_div
-    df_leads["Fast Point"] = df_leads["Fast Point"]/point_div
-    df_leads["LGBM Return"] = df_leads["LGBM Return"]/0.8
-    df_leads["Fast Return"] = df_leads["Fast Return"]/0.4
-    df_leads["Net"] = df_leads["Net"]/0.4
-    df_leads["Cost"] = df_leads["cost"]/10.0
+    df_leads["LGBM Potential"] = df_leads["LGBM Potential"] / pot_div
+    df_leads["Fast Potential"] = df_leads["Fast Potential"] / pot_div
+    df_leads["LGBM Point"] = df_leads["LGBM Point"] / point_div
+    df_leads["Fast Point"] = df_leads["Fast Point"] / point_div
+    df_leads["LGBM Return"] = df_leads["LGBM Return"] / 0.8
+    df_leads["Fast Return"] = df_leads["Fast Return"] / 0.4
+    df_leads["Net"] = df_leads["Net"] / 0.4
+    df_leads["Cost"] = df_leads["cost"] / 10.0
 
-    df_a = df_leads[df_leads["name"]==player_a].copy()
-    df_b = df_leads[df_leads["name"]==player_b].copy()
-    keep_cols = ["LGBM Point", "LGBM Potential", "LGBM Return", 
+    df_a = df_leads[df_leads["name"] == player_a].copy()
+    df_b = df_leads[df_leads["name"] == player_b].copy()
+    keep_cols = ["LGBM Point", "LGBM Potential", "LGBM Return",
                  "Fast Point", "Fast Potential", "Fast Return", "Cost"]
     df_a = df_a[keep_cols].copy().T.reset_index()
     df_a.columns = ["theta", "r"]
@@ -229,14 +231,15 @@ def execute_fastai_return_scoring(player_a, player_b, gw_id):
 
     # pdb.set_trace()
     fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(r=df_a['r'].values, theta=df_a["theta"].values, 
-                                    fill='toself', name=player_a))
-    fig.add_trace(go.Scatterpolar(r=df_b['r'].values, theta=df_b["theta"].values, 
-                                    fill='toself', name=player_b))
+    fig.add_trace(go.Scatterpolar(r=df_a['r'].values, theta=df_a["theta"].values,
+                                  fill='toself', name=player_a))
+    fig.add_trace(go.Scatterpolar(r=df_b['r'].values, theta=df_b["theta"].values,
+                                  fill='toself', name=player_b))
     fig.update_layout(polar=dict(radialaxis=dict(visible=False)), showlegend=True)
     # fig = px.line_polar(df_a, r='r', theta='theta', line_close=True)
     graph = dcc.Graph(figure=fig)
     return graph
+
 
 @app.callback([Output('squad-optim-output-play-xi', 'children'),
                Output('squad-optim-output-bench', 'children')],

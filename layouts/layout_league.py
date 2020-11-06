@@ -53,6 +53,7 @@ def make_right_layout_league():
             html.Div("Team Picks", className='subtitle inline-header'),
             dropdown_section,
             dcc.Loading(html.Div(id="league-team-picks-display"), color='black'),
+            dcc.Loading(html.Div(id="league-team-xp-output"), color='black'),
         ],
     )
     return layout

@@ -289,6 +289,8 @@ class ModelDataMaker(object):
         # concat scoring dataframe
         df_scoring = self.make_scoring_base()
         if len(df_scoring) > 0:
+            scoring_gw = int(self.config["scoring_gw"])
+            df_gw = df_gw[df_gw["gw_id"]<scoring_gw].copy()
             df_gw = pd.concat([df_gw, df_scoring])
 
         df_teams = df_teams[["id", "name", "strength", "strength_attack_away",
@@ -385,7 +387,5 @@ if __name__ == "__main__":
 
     # df_map_tmp = data_maker.get_effective_gameweek_map()
     # print(df_map_tmp.sample(10))
-
-    data_maker.make_scoring_base()
 
     # pdb.set_trace()

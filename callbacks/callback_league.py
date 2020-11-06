@@ -21,6 +21,7 @@ try:
     from scripts.model_data_ingestion import DataIngestor
     from scripts.feature_engineering import make_XY_data
     from scripts.models import load_data, train_lgbm_model, train_fastai_model
+    from callbacks.callback_squad import load_leads
 except:
     raise ImportError
 
@@ -138,6 +139,28 @@ def get_top_eo():
 
 
 @cache.memoize(timeout=TIMEOUT)
+def load_leads_current_gw():
+    config = load_config()
+    data_loader = DataLoader(config)
+    current_gw = data_loader.get_next_gameweek_id() - 1
+    print(current_gw)
+    df_leads = load_leads(current_gw)
+    print(df_leads)
+    try:
+        print(df_leads.head())
+    except:
+        # no scores available
+        df_leads = pd.DataFrame()
+        df_leads["player_id"] = [-1, -1]
+        df_leads["LGBM Point"] = [-1, -1]
+        df_leads["Fast Point"] = [-1, -1]
+
+    df_leads['xP'] = (df_leads["LGBM Point"] + df_leads["Fast Point"]) / 2.0
+    df_leads['xP'] = df_leads['xP'].round(2)
+    return df_leads
+
+
+@cache.memoize(timeout=TIMEOUT)
 def query_manager_current_gw_picks(manager_id, league_id):
     config = load_config()
     data_loader = DataLoader(config)
@@ -176,6 +199,10 @@ def query_manager_current_gw_picks(manager_id, league_id):
     df = pd.merge(df, df_stats, on="element", how="left")
     df = pd.merge(df, df_league_eo, on="element", how="left")
 
+    df_leads = load_leads_current_gw()
+    df_leads = df_leads[["player_id", "xP"]].copy()
+    df = pd.merge(df, df_leads, how='left', left_on="element", right_on="player_id")
+
     position_map = {"GK": 1, "DEF": 2, "MID": 3, "FWD": 4}
     df["pos"] = df["Position"].apply(lambda x: position_map[x])
     df = df.sort_values(by=["pos"])
@@ -183,26 +210,45 @@ def query_manager_current_gw_picks(manager_id, league_id):
     df_bench = df[df["multiplier"] == 0].copy()
     df = pd.concat([df_xi, df_bench])
     # print(df.head())
-    keep_cols = ["Player", "Team", "Position", "TSB", "Top EO", "League EO", "Points"]
+    keep_cols = ["Player", "multiplier", "Team", "Position", "Top EO", "League EO", "xP", "Points"]
     # keep_cols = ["Player", "Team", "Position", "TSB", "Top EO", "Points"]
     # merge player info
     df = df[keep_cols].copy()
     return df
 
 
-@app.callback(Output('league-team-picks-display', 'children'),
+@app.callback([Output('league-team-picks-display', 'children'),
+               Output('league-team-xp-output', 'children')],
               [Input('league-standing-memory', 'data'),
                Input('league-team-picks-dropdown', 'value'),
                State('league-search-dropdown', 'value')])
 def show_current_team_picks(league_data, team_name, league_id):
+    if not league_data:
+        return "", ""
+    if not team_name:
+        return "", ""
+    if not league_id:
+        return "", ""
+
     if league_data and team_name:
         df_managers = pd.DataFrame(league_data)
         df_tmp = df_managers[df_managers["Team"] == team_name].copy()
         manager_id = df_tmp["entry_id"].unique().tolist()[0]
         df = query_manager_current_gw_picks(manager_id, league_id)
+        team_points = (df["Points"] * df["multiplier"]).sum()
+        expected_points = (df["xP"] * df["multiplier"]).sum()
 
+        summary_section = html.Div(
+            children=[
+                html.P("Expected Points: {:.2f}".format(expected_points), className='col-6'),
+                html.P("Live Points: {}".format(team_points), className='col-6'),
+            ],
+            className='row',
+        )
+        keep_cols = ["Player", "Team", "Position", "Top EO", "League EO", "xP", "Points"]
+        df = df[keep_cols].copy()
         table = make_table(df, page_size=11)
-        return table
+        return table, summary_section
 
 
 @app.callback(Output('league-point-history', 'children'),
