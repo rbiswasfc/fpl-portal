@@ -15,6 +15,7 @@ except:
     raise ImportError
 
 TIMEOUT = 3600 * 48
+TIMEOUT_SHORT = 3600 * 0.5
 
 CONFIG_2020 = {
     "data_dir": "./data/model_data/2020_21/",

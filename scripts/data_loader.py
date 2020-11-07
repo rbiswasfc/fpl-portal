@@ -101,6 +101,18 @@ class DataLoader(object):
         df = pd.read_csv(file_path)
         return df
 
+    def get_manager_bank_balance(self, manager_id):
+        this_gw = int(self.get_next_gameweek_id() - 1)
+        file_path = os.path.join(self.data_dir_clean, "manager_{}_bank_gw_{}.csv".format(manager_id, this_gw))
+        if check_cache_validity(file_path):
+            print("Valid cache found for {}".format(file_path))
+        else:
+            print("executing scrape ...")
+            self.data_processor.save_manager_bank_balance(manager_id)
+        with open(file_path, 'rb') as f:
+            bb = pickle.load(f)
+        return bb
+
 
 if __name__ == "__main__":
     pass

@@ -186,6 +186,13 @@ class DataProcessor(object):
         df = self.data_scraper.get_top_manager_picks(n_pages=n_pages)
         df.to_csv(os.path.join(self.data_dir_clean, "top_manager_picks_gw_{}.csv".format(current_gw)), index=False)
 
+    def save_manager_bank_balance(self, manager_id):
+        current_gw = int(self.data_scraper.get_next_gameweek_id()) - 1
+        bb = self.data_scraper.get_entry_bank_balance(manager_id)
+        filepath = os.path.join(self.data_dir_clean, "manager_{}_bank_gw_{}.csv".format(manager_id, current_gw))
+        with open(filepath, 'wb') as f:
+            pickle.dump(bb, f)
+
 
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data"}

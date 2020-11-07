@@ -256,6 +256,16 @@ class DataScraper(object):
             return
         return data
 
+    def get_entry_bank_balance(self, entry_id):
+        current_gw = int(self.get_next_gameweek_id() - 1)
+        url = self.manager_url + str(entry_id) + "/event/" + str(current_gw) + "/picks/"
+        try:
+            data = fetch_data(url)
+        except:
+            print("Squad data not found for {} in gw {}".format(entry_id, current_gw))
+        bb = data["entry_history"]["bank"]/10
+        return bb
+
     def get_entry_gw_transfers(self, entry_id):
         """
         get transfer data of fpl managers
@@ -349,7 +359,10 @@ def get_understat_epl_season_data(season='2020'):
 if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
     data_scraper = DataScraper(this_config)
-    data_scraper.get_top_manager_picks()
+    # data_scraper.get_top_manager_picks()
+    this_entry_id = '2235933'
+    bank = data_scraper.get_entry_bank_balance(this_entry_id)
+    print(bank)
 
     # gw_data = data_scraper.get_gameweek_data()
     # print(gw_data[2])

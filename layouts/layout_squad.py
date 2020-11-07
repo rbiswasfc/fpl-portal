@@ -85,7 +85,6 @@ def make_optimization_settings_section():
 
 
 def make_left_layout_squad():
-
     header = make_header("Squad Optimization")
     layout = html.Div(
         id='squad-layout-left',
@@ -108,6 +107,7 @@ def make_left_layout_squad():
     )
     return layout
 
+
 def make_player_comparison_section():
     margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
     data_maker = ModelDataMaker(CONFIG_2020)
@@ -118,9 +118,9 @@ def make_player_comparison_section():
     player_names = sorted(list(set(player_names)))
     player_options = [{'label': player, 'value': player} for player in player_names]
     dropdown_player_a = make_dropdown('player-selection-dropdown-a', player_options,
-                                placeholder="Select Player ...")
+                                      placeholder="Select Player ...")
     dropdown_player_b = make_dropdown('player-selection-dropdown-b', player_options,
-                                placeholder="Select Player ...")
+                                      placeholder="Select Player ...")
 
     player_dropdown_section = html.Div(
         children=[
@@ -134,8 +134,42 @@ def make_player_comparison_section():
             html.Div("Player Comparison", className='subtitle inline-header'),
             player_dropdown_section,
             html.Div(id='player-compare-output', style=margin_style)
-    ])
+        ])
     return section
+
+
+def make_transfers_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+    config = load_config()
+    data_loader = DataLoader(config)
+    df_league = data_loader.get_league_standings()
+    manager_ids = df_league["entry_id"].unique().tolist()
+    manager_names = df_league["entry_name"].unique().tolist()
+    manager_options = [{'label': manager, 'value': manager_id} for manager, manager_id in
+                       zip(manager_names, manager_ids)]
+    dropdown_manager = make_dropdown('manager-selection-transfers', manager_options,
+                                     placeholder="Select Manager ...")
+    num_transfers = [1, 2, 3, 4]
+    transfer_options = [{'label': num, 'value': num} for num in num_transfers]
+    dropdown_num_transfers = make_dropdown('transfer-selection-numbers', transfer_options,
+                                           placeholder="Select number of transfers ...")
+
+    dropdown_section = html.Div(
+        children=[
+            html.Div(dropdown_manager, className='col-6'),
+            html.Div(dropdown_num_transfers, className='col-6'),
+        ],
+        className='row'
+    )
+    section = html.Div(
+        children=[
+            html.Div("Transfer Suggestion", className='subtitle inline-header'),
+            dropdown_section,
+            html.Div(make_button("Submit", 'transfer-optimization-btn')),
+            dcc.Loading(html.Div(id='transfer-suggestion-output', style=margin_style), color='black')
+        ])
+    return section
+
 
 def make_right_layout_squad():
     header = make_header("Transfers")
@@ -145,6 +179,7 @@ def make_right_layout_squad():
         children=[
             header,
             make_player_comparison_section(),
+            make_transfers_section(),
         ],
     )
     return layout
