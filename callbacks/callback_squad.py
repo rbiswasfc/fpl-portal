@@ -1,6 +1,7 @@
 import os
 import pdb
 import pulp
+import random
 import shap
 from pathlib import Path
 import dash_html_components as html
@@ -118,9 +119,8 @@ def squad_optimizer(df, formation, budget=100.0, optimise_on='LGBM Point'):
     return df_squad, solution_info
 
 
-@cache.memoize(timeout=TIMEOUT)
-def transfer_optimizer(manager_id, num_transfers, gw_id, model_name):
-    df_leads = load_leads(gw_id)
+def transfer_optimizer(df_leads, manager_id, num_transfers, model_name):
+
     df_leads["name"] = df_leads["name"].apply(lambda x: str(x).encode('ascii', 'ignore'))
     config = load_config()
     data_loader = DataLoader(config)
@@ -445,8 +445,23 @@ def execute_transfer_suggestions(n_clicks, manager_id, num_transfers, gw_id, mod
         return msg
 
     if n_clicks:
-        df_transfer = transfer_optimizer(manager_id, num_transfers, gw_id, model_name)
-        table = make_table(df_transfer)
-        return table
+        tables = []
+        n_suggestions = 5
+        df_leads = load_leads(gw_id)
+
+        for i in range(n_suggestions):
+            try:
+                df_transfer = transfer_optimizer(df_leads, manager_id, num_transfers, model_name)
+                tables.append(make_table(df_transfer))
+                exclude_names = df_transfer["Transfer In"].unique().tolist()
+                df_leads = df_leads[~df_leads["name"].isin(exclude_names)].copy()
+            except:
+                pass
+
+        output = html.Div(
+            children= tables
+        )
+
+        return output
 
     return html.P("Button Not Clicked!")
