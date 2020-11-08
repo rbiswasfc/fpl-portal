@@ -1,10 +1,8 @@
-import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
-from layouts.layout_utils import make_header, make_table, make_dropdown
-from scripts.data_loader import DataLoader
+
 from scripts.utils import load_config
+from layouts.layout_utils import make_header, make_table, make_dropdown
 
 
 def make_league_search_section():

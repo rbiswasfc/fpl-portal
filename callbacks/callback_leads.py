@@ -1,7 +1,5 @@
 import os
 import pdb
-import shap
-from pathlib import Path
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
@@ -11,8 +9,6 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-
-from fastai.tabular import load_learner
 
 try:
     from layouts.layout_utils import make_table, make_dropdown, make_line_plot
@@ -25,20 +21,15 @@ try:
     from scripts.model_data_ingestion import DataIngestor
     from scripts.feature_engineering import make_XY_data
     from scripts.models import load_data, train_lgbm_model, train_fastai_model
+    from callbacks.callback_cache import ingest_data, prepare_xy_model_data, perform_lgbm_point_training
+    from callbacks.callback_cache import perform_lgbm_potential_training, perform_lgbm_return_training
+    from callbacks.callback_cache import perform_fastai_point_training, perform_fastai_potential_training, \
+        perform_fastai_return_training, perform_lgbm_point_scoring, perform_lgbm_potential_scoring, \
+        perform_lgbm_return_scoring, perform_fastai_point_scoring, perform_fastai_potential_scoring, \
+        perform_fastai_return_scoring, perform_shap_analysis
+    from callbacks.callback_cache import CONFIG_2020
 except:
     raise ImportError
-
-CONFIG_2020 = {
-    "data_dir": "./data/model_data/2020_21/",
-    "file_fixture": "fixtures.csv",
-    "file_team": "teams.csv",
-    "file_gw": "merged_gw.csv",
-    "file_player": "players_raw.csv",
-    "file_understat_team": "understat_team_data.pkl",
-    "scoring_gw": "NA"
-}
-
-TIMEOUT = 3600 * 48
 
 
 def load_dataframe(path):
@@ -48,72 +39,6 @@ def load_dataframe(path):
         print("Error in reading {}".format(path))
         return pd.DataFrame()
     return df
-
-
-@cache.memoize(timeout=TIMEOUT)
-def ingest_data():
-    config_2020 = {"season": "2020_21",
-                   "source_dir": "./data",
-                   "ingest_dir": "./data/model_data/2020_21/",
-                   "player_ingest_filename": "players_raw.csv",
-                   "team_ingest_filename": "teams.csv",
-                   "gw_ingest_filename": "merged_gw.csv",
-                   "understat_ingest_filename": "understat_team_data.pkl",
-                   "fixture_ingest_filename": "fixtures.csv"
-                   }
-    data_ingestor = DataIngestor(config_2020)
-    data_ingestor.ingest_player_data()
-    data_ingestor.ingest_team_data()
-    data_ingestor.ingest_fixture_data()
-    data_ingestor.ingest_understat_data()
-    data_ingestor.ingest_gw_data()
-    result = html.P("Done!", style={"text-align": "center"})
-    return result
-
-
-@cache.memoize(timeout=TIMEOUT)
-def prepare_xy_model_data(gw):
-    make_XY_data(gw)
-    result = html.P("Done!", style={"text-align": "center"})
-    return result
-
-
-# LGBM Model Training
-@cache.memoize(timeout=TIMEOUT)
-def perform_lgbm_point_training(gw):
-    model, evaluation_results = train_lgbm_model(gw, target="reg_target")
-    return model, evaluation_results
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_lgbm_potential_training(gw):
-    model, evaluation_results = train_lgbm_model(gw, target="pot_target")
-    return model, evaluation_results
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_lgbm_return_training(gw):
-    model, evaluation_results = train_lgbm_model(gw, target="star_target")
-    return model, evaluation_results
-
-
-# Fast AI Model Training
-@cache.memoize(timeout=TIMEOUT)
-def perform_fastai_point_training(gw):
-    loss_history = train_fastai_model(gw, target="reg_target")
-    return loss_history
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_fastai_potential_training(gw):
-    loss_history = train_fastai_model(gw, target="pot_target")
-    return loss_history
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_fastai_return_training(gw):
-    loss_history = train_fastai_model(gw, target="star_target")
-    return loss_history
 
 
 # Ingest data callbacks
@@ -375,55 +300,6 @@ def execute_fastai_return_training(n_clicks, gw):
         return html.P("Button Not Clicked!", style={"text-align": "center"})
 
 
-# scoring
-@cache.memoize(timeout=TIMEOUT)
-def perform_lgbm_point_scoring(gw):
-    model, _ = perform_lgbm_point_training(gw)
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
-    preds = model.predict(XY_scoring)
-    df = pd.DataFrame()
-    df["player_id"] = XY_scoring["player_id"].values
-    df["gw"] = gw
-    df['lgbm_point_pred'] = preds
-    save_path = os.path.join(model.model_output_dir, "lgbm_point_predictions_gw_{}.csv".format(gw))
-    df.to_csv(save_path, index=False)
-    print(df.head())
-    result = html.P("Done!", style={"text-align": "center"})
-    return result
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_lgbm_potential_scoring(gw):
-    model, _ = perform_lgbm_potential_training(gw)
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
-    preds = model.predict(XY_scoring)
-    df = pd.DataFrame()
-    df["player_id"] = XY_scoring["player_id"].values
-    df["gw"] = gw
-    df['lgbm_potential_pred'] = preds
-    save_path = os.path.join(model.model_output_dir, "lgbm_potential_predictions_gw_{}.csv".format(gw))
-    df.to_csv(save_path, index=False)
-    print(df.head())
-    result = html.P("Done!", style={"text-align": "center"})
-    return result
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_lgbm_return_scoring(gw):
-    model, _ = perform_lgbm_return_training(gw)
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
-    preds = model.predict(XY_scoring)
-    df = pd.DataFrame()
-    df["player_id"] = XY_scoring["player_id"].values
-    df["gw"] = gw
-    df['lgbm_return_pred'] = preds
-    save_path = os.path.join(model.model_output_dir, "lgbm_return_predictions_gw_{}.csv".format(gw))
-    df.to_csv(save_path, index=False)
-    print(df.head())
-    result = html.P("Done!", style={"text-align": "center"})
-    return result
-
-
 @app.callback(Output('lgbm-point-predict-output', 'children'),
               [Input('lgbm-point-predict-btn', 'n_clicks')],
               [State('gw-selection-dropdown', 'value')],
@@ -470,76 +346,6 @@ def execute_lgbm_return_scoring(n_clicks, gw):
         return result
     else:
         return html.P("Button Not Clicked!", style={"text-align": "center"})
-
-
-# fastai point predictor
-@cache.memoize(timeout=TIMEOUT)
-def perform_fastai_point_scoring(gw):
-    export_dir = Path("./data/model_outputs/fastai_reg_target_model")
-    learn = load_learner(export_dir)
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
-
-    n_ex = len(XY_scoring)
-    fast_scores = []
-    for idx in tqdm(range(n_ex)):
-        _, _, this_pred = learn.predict(XY_scoring.iloc[idx])
-        fast_scores.append(this_pred.item())
-
-    df = pd.DataFrame()
-    df["player_id"] = XY_scoring["player_id"].values
-    df["gw"] = gw
-    df['fastai_point_pred'] = fast_scores
-    save_path = os.path.join("./data/model_outputs", "fastai_point_predictions_gw_{}.csv".format(gw))
-    df.to_csv(save_path, index=False)
-    print(df.head())
-    result_code = 1
-    return result_code
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_fastai_potential_scoring(gw):
-    export_dir = Path("./data/model_outputs/fastai_pot_target_model")
-    learn = load_learner(export_dir)
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
-
-    n_ex = len(XY_scoring)
-    fast_scores = []
-    for idx in tqdm(range(n_ex)):
-        _, _, this_pred = learn.predict(XY_scoring.iloc[idx])
-        fast_scores.append(this_pred.item())
-
-    df = pd.DataFrame()
-    df["player_id"] = XY_scoring["player_id"].values
-    df["gw"] = gw
-    df['fastai_potential_pred'] = fast_scores
-    save_path = os.path.join("./data/model_outputs", "fastai_potential_predictions_gw_{}.csv".format(gw))
-    df.to_csv(save_path, index=False)
-    print(df.head())
-    result_code = 1
-    return result_code
-
-
-@cache.memoize(timeout=TIMEOUT)
-def perform_fastai_return_scoring(gw):
-    export_dir = Path("./data/model_outputs/fastai_star_target_model")
-    learn = load_learner(export_dir)
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
-
-    n_ex = len(XY_scoring)
-    fast_scores = []
-    for idx in tqdm(range(n_ex)):
-        _, _, this_pred = learn.predict(XY_scoring.iloc[idx])
-        fast_scores.append(this_pred[1].item())
-
-    df = pd.DataFrame()
-    df["player_id"] = XY_scoring["player_id"].values
-    df["gw"] = gw
-    df['fastai_return_pred'] = fast_scores
-    save_path = os.path.join("./data/model_outputs", "fastai_return_predictions_gw_{}.csv".format(gw))
-    df.to_csv(save_path, index=False)
-    print(df.head())
-    result_code = 1
-    return result_code
 
 
 @app.callback(Output('fastai-point-predict-output', 'children'),
@@ -599,7 +405,7 @@ def execute_fastai_return_scoring(n_clicks, gw):
                Input('model-selection-dropdown-leads', 'value'),
                Input('gw-selection-dropdown', 'value')],
               prevent_initial_call=True)
-def execute_fastai_return_scoring(team_name, model_name, gw_id):
+def update_leads_section(team_name, model_name, gw_id):
     if not gw_id:
         msg = html.P("Please select GW for scoring")
         return msg, msg, msg, msg
@@ -719,41 +525,6 @@ def execute_fastai_return_scoring(team_name, model_name, gw_id):
     return gk_table, def_table, mid_table, fwd_table
 
 
-# SHAP
-@cache.memoize(timeout=TIMEOUT)
-def perform_shap_analysis(model_name, gw_id):
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw_id)
-    model, features = None, None
-    if model_name == 'LGBM Point':
-        model, _ = perform_lgbm_point_training(gw_id)
-        features = model.features
-    if model_name == 'LGBM Potential':
-        model, _ = perform_lgbm_potential_training(gw_id)
-        features = model.features
-    if model_name == 'LGBM Return':
-        model, _ = perform_lgbm_return_training(gw_id)
-        features = model.features
-
-    X_scoring = XY_scoring[features].copy()
-    explainer = shap.TreeExplainer(model.model)
-
-    shap_values = explainer.shap_values(X_scoring)
-    ave_score = explainer.expected_value
-    if model_name == 'LGBM Return':
-        shap_values = shap_values[1]
-        ave_score = explainer.expected_value[1]
-    df = pd.DataFrame(shap_values)
-    shap_cols = ["shap_" + feat for feat in features]
-    df.columns = shap_cols
-    df_exp = pd.concat([XY_scoring, df], axis=1)
-
-    data_maker = ModelDataMaker(CONFIG_2020)
-    player_id_player_name_map = data_maker.get_player_id_player_name_map()
-    df_exp["name"] = df_exp["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
-
-    return df_exp, ave_score
-
-
 @app.callback(Output('shap-output', 'children'),
               [Input('player-selection-dropdown-shap', 'value'),
                Input('model-selection-dropdown-shap', 'value'),
@@ -796,7 +567,8 @@ def execute_shap_explanation(player_name, model_name, gw_id):
     score = df_meta["shap_val"].sum() + ave_score
     df_top_exp = df_meta.iloc[:20]
 
-    fig = px.bar(df_top_exp, y='shap_val', x='feature', text='feature_val', title="{}: Score = {:.2f}".format(player_name, score),
+    fig = px.bar(df_top_exp, y='shap_val', x='feature', text='feature_val',
+                 title="{}: Score = {:.2f}".format(player_name, score),
                  labels={"shap_val": "SHAP", "feature": "Feature"},
                  template="seaborn")
 
@@ -805,5 +577,3 @@ def execute_shap_explanation(player_name, model_name, gw_id):
     imp_bar = dcc.Graph(figure=fig)
 
     return imp_bar
-
-

@@ -14,33 +14,20 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 
-from fastai.tabular import load_learner
-
 try:
     from layouts.layout_utils import make_table, make_dropdown, make_line_plot
-    from scripts.data_loader import DataLoader, check_cache_validity
+    from scripts.data_loader import DataLoader
     from scripts.data_processor import DataProcessor
     from scripts.data_scrape import DataScraper
-    from scripts.utils import load_config
+    from scripts.utils import load_config, check_cache_validity
     from app import cache
     from scripts.data_preparation import ModelDataMaker
     from scripts.model_data_ingestion import DataIngestor
     from scripts.feature_engineering import make_XY_data
     from scripts.models import load_data, train_lgbm_model, train_fastai_model
+    from callbacks.callback_cache import load_leads, CONFIG_2020
 except:
     raise ImportError
-
-CONFIG_2020 = {
-    "data_dir": "./data/model_data/2020_21/",
-    "file_fixture": "fixtures.csv",
-    "file_team": "teams.csv",
-    "file_gw": "merged_gw.csv",
-    "file_player": "players_raw.csv",
-    "file_understat_team": "understat_team_data.pkl",
-    "scoring_gw": "NA"
-}
-
-TIMEOUT = 3600
 
 
 def add_position_dummy(df):
@@ -120,7 +107,6 @@ def squad_optimizer(df, formation, budget=100.0, optimise_on='LGBM Point'):
 
 
 def transfer_optimizer(df_leads, manager_id, num_transfers, model_name):
-
     df_leads["name"] = df_leads["name"].apply(lambda x: str(x).encode('ascii', 'ignore'))
     config = load_config()
     data_loader = DataLoader(config)
@@ -226,75 +212,6 @@ def transfer_optimizer(df_leads, manager_id, num_transfers, model_name):
     df_res["gain"] = df_res["gain"].apply(lambda y: "" if int(float(y)) == 0 else y)
     df_res = df_res.rename(columns={"gain": "Gain"})
     return df_res
-
-
-@cache.memoize(timeout=TIMEOUT)
-def load_leads(gw_id):
-    data_maker = ModelDataMaker(CONFIG_2020)
-    output_dir = "./data/model_outputs/"
-    lgbm_point_path = os.path.join(output_dir, "lgbm_point_predictions_gw_{}.csv".format(gw_id))
-    lgbm_potential_path = os.path.join(output_dir, "lgbm_potential_predictions_gw_{}.csv".format(gw_id))
-    lgbm_return_path = os.path.join(output_dir, "lgbm_return_predictions_gw_{}.csv".format(gw_id))
-
-    fastai_point_path = os.path.join(output_dir, "fastai_point_predictions_gw_{}.csv".format(gw_id))
-    fastai_potential_path = os.path.join(output_dir, "fastai_potential_predictions_gw_{}.csv".format(gw_id))
-    fastai_return_path = os.path.join(output_dir, "fastai_return_predictions_gw_{}.csv".format(gw_id))
-    all_paths = [lgbm_point_path, lgbm_potential_path, lgbm_return_path,
-                 fastai_point_path, fastai_potential_path, fastai_return_path]
-    dfs = []
-    for file_path in all_paths:
-        if not check_cache_validity(file_path, valid_days=2.0):
-            return html.P("refresh model scores")
-        df = pd.read_csv(file_path)
-        dfs.append(df)
-    XY_train, XY_test, XY_scoring, features_dict = load_data(gw_id)
-    player_id_team_id_map = data_maker.get_player_id_team_id_map()
-    player_id_player_name_map = data_maker.get_player_id_player_name_map()
-    player_id_player_position_map = data_maker.get_player_id_player_position_map()
-    team_id_team_name_map = data_maker.get_team_id_team_name_map()
-    player_id_cost_map = data_maker.get_player_id_cost_map()
-    player_id_play_chance_map = data_maker.get_player_id_play_chance_map()
-    player_id_selection_map = data_maker.get_player_id_selection_map()
-    player_id_ave_points_map = data_maker.get_player_id_ave_points_map()
-
-    df_leads = pd.DataFrame()
-    df_leads["player_id"] = XY_scoring["player_id"].values
-    df_leads["name"] = df_leads["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
-    df_leads["team"] = df_leads["player_id"].apply(lambda x: team_id_team_name_map[player_id_team_id_map.get(x, x)])
-    df_leads["next_opponent"] = XY_scoring["opp_team_id"].apply(lambda x: team_id_team_name_map.get(x, x))
-    df_leads["position"] = df_leads["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
-    df_leads["chance_of_play"] = df_leads["player_id"].apply(lambda x: player_id_play_chance_map.get(x, x))
-    df_leads["cost"] = df_leads["player_id"].apply(lambda x: player_id_cost_map.get(x, x))
-    df_leads["selection_pct"] = df_leads["player_id"].apply(lambda x: player_id_selection_map.get(x, x))
-    df_leads["ave_pts"] = df_leads["player_id"].apply(lambda x: player_id_ave_points_map.get(x, x))
-    df_leads["gw"] = gw_id
-    df_leads = df_leads.drop_duplicates(subset=["player_id"])
-
-    # merge predictions
-    for df in dfs:
-        df = df.drop_duplicates()
-        df_leads = pd.merge(df_leads, df, how='left', on=['player_id', 'gw'])
-    df_leads["cost"] = df_leads["cost"] / 10
-
-    model_name_col_map = {
-        "LGBM Point": "lgbm_point_pred",
-        "LGBM Potential": "lgbm_potential_pred",
-        "LGBM Return": "lgbm_return_pred",
-        "Fast Point": "fastai_point_pred",
-        "Fast Potential": "fastai_potential_pred",
-        "Fast Return": "fastai_return_pred"
-    }
-    col_model_name_map = dict()
-    for k, v in model_name_col_map.items():
-        col_model_name_map[v] = k
-
-    df_leads = df_leads.rename(columns=col_model_name_map)
-    df_leads["Net"] = (2 * df_leads["LGBM Point"] + df_leads["LGBM Potential"] +
-                       2 * df_leads["Fast Point"] + df_leads["Fast Potential"]) * df_leads["Fast Return"] * df_leads[
-                          "LGBM Return"]
-    max_net = df_leads["Net"].max()
-    df_leads["Net"] = df_leads["Net"] / max_net
-    return df_leads
 
 
 @app.callback(Output('player-compare-output', 'children'),
@@ -459,7 +376,7 @@ def execute_transfer_suggestions(n_clicks, manager_id, num_transfers, gw_id, mod
                 pass
 
         output = html.Div(
-            children= tables
+            children=tables
         )
 
         return output

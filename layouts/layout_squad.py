@@ -6,30 +6,14 @@ from flask_caching import Cache
 
 try:
     from layouts.layout_utils import make_header, make_table, make_dropdown, make_button, make_input
-    from scripts.data_loader import DataLoader
-    from scripts.data_scrape import DataScraper
-    from scripts.data_preparation import ModelDataMaker
-    from scripts.utils import load_config
-    from app import cache
-    from layouts.layout_leads import query_next_gameweek
+    from layouts.layout_cache import query_next_gameweek, query_player_id_player_name_map, query_league_standing
+    from layouts.layout_cache import CONFIG_2020
 except:
     raise ImportError
 
-TIMEOUT = 3600 * 48
-
-CONFIG_2020 = {
-    "data_dir": "./data/model_data/2020_21/",
-    "file_fixture": "fixtures.csv",
-    "file_team": "teams.csv",
-    "file_gw": "merged_gw.csv",
-    "file_player": "players_raw.csv",
-    "file_understat_team": "understat_team_data.pkl",
-    "scoring_gw": "NA"
-}
-
 
 def make_optimization_settings_section():
-    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+
     next_gw = query_next_gameweek()
     focus_gws = [next_gw - 2, next_gw - 1, next_gw]
     gw_options = [{'label': gw_id, 'value': gw_id} for gw_id in focus_gws]
@@ -110,8 +94,7 @@ def make_left_layout_squad():
 
 def make_player_comparison_section():
     margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
-    data_maker = ModelDataMaker(CONFIG_2020)
-    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    player_id_player_name_map = query_player_id_player_name_map()
     player_names = []
     for k, v in player_id_player_name_map.items():
         player_names.append(v)
@@ -140,9 +123,7 @@ def make_player_comparison_section():
 
 def make_transfers_section():
     margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
-    config = load_config()
-    data_loader = DataLoader(config)
-    df_league = data_loader.get_league_standings()
+    df_league = query_league_standing()
     manager_ids = df_league["entry_id"].unique().tolist()
     manager_names = df_league["entry_name"].unique().tolist()
     manager_options = [{'label': manager, 'value': manager_id} for manager, manager_id in

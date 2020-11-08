@@ -1,8 +1,5 @@
-import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_bootstrap_components as dbc
-from flask_caching import Cache
 
 try:
     from layouts.layout_utils import make_header, make_table, make_dropdown, make_button
@@ -10,30 +7,9 @@ try:
     from scripts.data_scrape import DataScraper
     from scripts.data_preparation import ModelDataMaker
     from scripts.utils import load_config
-    from app import cache
+    from layouts.layout_cache import query_next_gameweek, CONFIG_2020
 except:
     raise ImportError
-
-TIMEOUT = 3600 * 48
-TIMEOUT_SHORT = 3600 * 0.5
-
-CONFIG_2020 = {
-    "data_dir": "./data/model_data/2020_21/",
-    "file_fixture": "fixtures.csv",
-    "file_team": "teams.csv",
-    "file_gw": "merged_gw.csv",
-    "file_player": "players_raw.csv",
-    "file_understat_team": "understat_team_data.pkl",
-    "scoring_gw": "NA"
-}
-
-
-@cache.memoize(timeout=TIMEOUT)
-def query_next_gameweek():
-    config = load_config()
-    data_loader = DataLoader(config)
-    next_gw = int(data_loader.get_next_gameweek_id())
-    return next_gw
 
 
 def make_gw_selection_section():
@@ -89,22 +65,10 @@ def make_points_predictor_section():
         style=margin_style
     )
 
-    train_output = html.Div(
-        children=[
-            dcc.Loading(html.Div(id="lgbm-xnext-outcome", className='six columns', style={"width": "80%"}),
-                        color='black'),
-            dcc.Loading(html.Div(id="fastai-xnext-outcome", className='six columns', style={"width": "50%"}),
-                        color='black'),
-        ],
-        className="row",
-        style=margin_style
-    )
-
     point_predictor = html.Div(
         children=[
             html.Div("Points Predictor", className='subtitle inline-header'),
             button_train,
-            # train_output,
             dcc.Loading(html.Div(id="lgbm-xnext-outcome"), color='black'),
             dcc.Loading(html.Div(id="fastai-xnext-outcome"), color='black'),
             dcc.Loading(html.Div(id="xnext-feature-imp", style={"width": "100%"}), color='black'),
@@ -154,7 +118,6 @@ def make_potential_predictor_section():
         children=[
             html.Div("Potential Predictor", className='subtitle inline-header'),
             button_train,
-            # train_output,
             dcc.Loading(html.Div(id="lgbm-xpotential-outcome"), color='black'),
             dcc.Loading(html.Div(id="fastai-xpotential-outcome"), color='black'),
             dcc.Loading(html.Div(id="xpotential-feature-imp", style={"width": "100%"}), color='black'),
