@@ -19,7 +19,16 @@ except:
 
 
 class FeatureEngineering(object):
+    """
+    Class to perform feature engineering for FPL models
+    """
+
     def __init__(self, scoring=False):
+        """
+        Feature engineering initialization
+        :param scoring: scoring flag
+        :type scoring: bool
+        """
         self.lag_list = [1, 2, 3]
         self.next_list = [1, 2]
         self.feature_dict = dict()
@@ -29,6 +38,21 @@ class FeatureEngineering(object):
         self.scoring = scoring
 
     def make_lag_features(self, df, index_cols, shift_col, feat_list, feat_type):
+        """
+        Create lag features
+        :param df: dataframe with base features
+        :type df: pd.DataFrame
+        :param index_cols: index cols for merging
+        :type index_cols: List
+        :param shift_col: shift col for lagging
+        :type shift_col: str
+        :param feat_list: list of features for which lag features will be generated
+        :type feat_list: List
+        :param feat_type: feature type categorical or numerical
+        :type feat_type: str
+        :return: list of dfs with lag features
+        :rtype: List
+        """
         added_dfs = []
         for feat in feat_list:
             for lag in self.lag_list:
@@ -47,6 +71,21 @@ class FeatureEngineering(object):
         return added_dfs
 
     def make_next_features(self, df, index_cols, shift_col, feat_list, feat_type):
+        """
+        Create next features
+        :param df: dataframe with base features
+        :type df: pd.DataFrame
+        :param index_cols: index cols for merging
+        :type index_cols: List
+        :param shift_col: shift col for next features
+        :type shift_col: str
+        :param feat_list: list of features for which next features will be generated
+        :type feat_list: List
+        :param feat_type: feature type categorical or numerical
+        :type feat_type: str
+        :return: list of dfs with next features
+        :rtype: List
+        """
         added_dfs = []
         for feat in feat_list:
             for next_num in self.next_list:
@@ -65,6 +104,13 @@ class FeatureEngineering(object):
         return added_dfs
 
     def execute_fe(self, config):
+        """
+        Main function to perform feature engineering
+        :param config: config
+        :type config: dict
+        :return: dataframe after feature engineering
+        :rtype: pd.DataFrame
+        """
         gw_cat_features = ["was_home", "team_h_score", "team_a_score", "goals_scored", "assists",
                            "clean_sheets", "goals_conceded", "own_goals", "penalties_saved", "penalties_missed",
                            "yellow_cards", "red_cards", "saves", "bonus"]
@@ -209,9 +255,16 @@ class FeatureEngineering(object):
 
 
 def make_XY_data(scoring_gw=None, dataset_dir="./data/model_data/xy_data/"):
+    """
+    Prepare XY data for modelling
+    :param scoring_gw: scoring gameweek
+    :type scoring_gw: int, defaults to None
+    :param dataset_dir: output directory
+    :type dataset_dir: str
+    """
     # configs
     check_create_dir(dataset_dir)
-    scraper_config = {"season": "2020_21", "source_dir": "./data/raw/"}
+    scraper_config = {"season": "2020_21", "source_dir": "./data"}
     data_scraper = DataScraper(scraper_config)
 
     if scoring_gw:
@@ -318,7 +371,8 @@ def make_XY_data(scoring_gw=None, dataset_dir="./data/model_data/xy_data/"):
     df_XY["global_gw_id"] = df_XY["global_gw_id"].astype(int)
     global_scoring_gw = df_XY["global_gw_id"].max()
     global_test_gw = global_scoring_gw - 1
-    df_XY_train = df_XY[df_XY["global_gw_id"] < global_test_gw].copy()
+    df_XY_train = df_XY[
+        df_XY["global_gw_id"] <= global_test_gw].copy()  # include test data in training as model already tested
     df_XY_test = df_XY[df_XY["global_gw_id"] == global_test_gw].copy()
     df_XY_scoring = df_XY[df_XY["global_gw_id"] == global_scoring_gw].copy()
 

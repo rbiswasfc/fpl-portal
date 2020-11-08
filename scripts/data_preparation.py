@@ -1,15 +1,14 @@
 import os
 import sys
+import pdb
 import json
 import pickle
 
 import numpy as np
 import pandas as pd
-import pdb
 from datetime import datetime, timedelta
 
 sys.path.insert(0, './')
-
 try:
     from scripts.utils import load_config, check_create_dir
     from scripts.data_scrape import DataScraper
@@ -19,11 +18,15 @@ except:
 
 class ModelDataMaker(object):
     """
-    Prepare data for model
+    Helper class to prepare data for modelling
     """
 
     def __init__(self, config):
-
+        """
+        Initialization for model data maker
+        :param config: config file
+        :type config: dict
+        """
         self.config = config
         self.data_dir = config["data_dir"]
         self.fixture_filepath = os.path.join(self.data_dir, config["file_fixture"])
@@ -32,17 +35,43 @@ class ModelDataMaker(object):
         self.player_filepath = os.path.join(self.data_dir, config["file_player"])
         self.understat_team_filepath = os.path.join(self.data_dir, config["file_understat_team"])
 
+        # mappings
+        self.player_id_team_id_map = dict()
+        self.player_id_player_name_map = dict()
+        self.player_id_player_position_map = dict()
+        self.team_id_team_name_map = dict()
+        self.team_name_team_id_map = dict()
+        self.player_id_cost_map = dict()
+        self.player_id_play_chance_map = dict()
+        self.player_id_selection_map = dict()
+        self.player_id_ave_points_map = dict()
+
     def get_fixtures_data(self):
+        """
+        Load fixtures data
+        :return: fixtures dataframe
+        :rtype: pd.DataFrame
+        """
         df = pd.read_csv(self.fixture_filepath)
         df.columns = df.columns.str.lower()
         return df
 
     def get_teams_data(self):
+        """
+        Load teams data
+        :return: teams dataframe
+        :rtype: pd.DataFrame
+        """
         df = pd.read_csv(self.team_filepath)
         df.columns = df.columns.str.lower()
         return df
 
     def get_gw_data(self):
+        """
+        Load gameweek data
+        :return: gameweek dataframe
+        :rtype: pd.DataFrame
+        """
         try:
             df = pd.read_csv(self.gw_filepath)
         except UnicodeDecodeError:
@@ -51,23 +80,31 @@ class ModelDataMaker(object):
         return df
 
     def get_players_data(self):
+        """
+        Load players data
+        :return: player dataframe
+        :rtype: pd.DataFrame
+        """
         df = pd.read_csv(self.player_filepath)
         df.columns = df.columns.str.lower()
         return df
 
     def get_understat_team_data(self):
+        """
+        Load understat team data
+        :return: teams understat data
+        :rtype: dict
+        """
         with open(self.understat_team_filepath, 'rb') as f:
             data = pickle.load(f)
-
-        # all_team_ids = list(data.keys())
-        # names = []
-        # for team_id in all_team_ids:
-        #    names.append(data[team_id]['title'])
-        # for name in sorted(names):
-        #    print(name)
         return data
 
     def get_player_id_team_id_map(self):
+        """
+        Player id to team id mapping
+        :return: mapping
+        :rtype: dict
+        """
         player_id_team_id_map = {}
         df = self.get_players_data()
         for idx, row in df.iterrows():
@@ -77,6 +114,11 @@ class ModelDataMaker(object):
         return player_id_team_id_map
 
     def get_player_id_player_name_map(self):
+        """
+        Player id to player name mapping
+        :return: mapping
+        :rtype: dict
+        """
         player_id_player_name_map = {}
         df = self.get_players_data()
         for idx, row in df.iterrows():
@@ -87,6 +129,11 @@ class ModelDataMaker(object):
         return player_id_player_name_map
 
     def get_player_id_player_position_map(self):
+        """
+        Player id to player position mapping
+        :return: mapping
+        :rtype: dict
+        """
         player_id_player_position_map = {}
         df = self.get_players_data()
         position_map = {1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD'}
@@ -98,6 +145,11 @@ class ModelDataMaker(object):
         return player_id_player_position_map
 
     def get_team_id_team_name_map(self):
+        """
+        Team id to team name mapping
+        :return: mapping
+        :rtype: dict
+        """
         team_id_team_name_map = {}
         df = self.get_teams_data()
         df = df.drop_duplicates(subset=["id"])
@@ -108,6 +160,11 @@ class ModelDataMaker(object):
         return team_id_team_name_map
 
     def get_team_name_team_id_map(self):
+        """
+        Team name id to team id mapping
+        :return: mapping
+        :rtype: dict
+        """
         team_id_team_name_map = self.get_team_id_team_name_map()
         team_name_team_id_map = {}
         for k, v in team_id_team_name_map.items():
@@ -116,6 +173,11 @@ class ModelDataMaker(object):
         return team_name_team_id_map
 
     def get_player_id_cost_map(self):
+        """
+        Player id to player cost mapping
+        :return: mapping
+        :rtype: dict
+        """
         player_id_cost_map = {}
         df = self.get_players_data()
         for idx, row in df.iterrows():
@@ -125,6 +187,11 @@ class ModelDataMaker(object):
         return player_id_cost_map
 
     def get_player_id_play_chance_map(self):
+        """
+        Player id to chance of play mapping
+        :return: mapping
+        :rtype: dict
+        """
         player_id_play_chance_map = {}
         df = self.get_players_data()
         for idx, row in df.iterrows():
@@ -134,6 +201,11 @@ class ModelDataMaker(object):
         return player_id_play_chance_map
 
     def get_player_id_selection_map(self):
+        """
+        Player id to selection percentage (TSB) mapping
+        :return: mapping
+        :rtype: dict
+        """
         player_id_selection_map = {}
         df = self.get_players_data()
         for idx, row in df.iterrows():
@@ -143,6 +215,11 @@ class ModelDataMaker(object):
         return player_id_selection_map
 
     def get_player_id_ave_points_map(self):
+        """
+        Player id to average point per gameweek mapping
+        :return: mapping
+        :rtype: dict
+        """
         player_id_ave_points_map = {}
         df = self.get_players_data()
         for idx, row in df.iterrows():
@@ -152,6 +229,11 @@ class ModelDataMaker(object):
         return player_id_ave_points_map
 
     def prepare_understat_data(self):
+        """
+        Prepare understat data for modelling
+        :return: processed understat dataframe
+        :rtype: pd.DataFrame
+        """
         data = self.get_understat_team_data()
 
         with open(os.path.join(self.data_dir, "understat_team_mapping.json"), 'rb') as f:
@@ -185,9 +267,14 @@ class ModelDataMaker(object):
         return df_understat
 
     def get_effective_gameweek_map(self):
+        """
+        Handle gameweeks with multiple/no matches for EPL teams
+        :return: gameweek to effective gameweek mapping
+        :rtype: pd.DataFrame
+        """
         df_fixtures = self.get_fixtures_data()
-
         all_teams = df_fixtures["team_a"].unique().tolist()
+
         dfs = []
         for this_team in all_teams:
             df_this_team = df_fixtures[
@@ -213,6 +300,13 @@ class ModelDataMaker(object):
         return df_map
 
     def make_nth_gw_scoring_base(self, gw):
+        """
+        Prepare scoring dataframe base for n th gameweek in a season
+        :param gw: gameweek id
+        :type gw: int
+        :return: scoring dataframe base for nth gameweek
+        :rtype: pd.DataFrame
+        """
         player_id_team_id_map = self.get_player_id_team_id_map()
         all_players = list(player_id_team_id_map.keys())
         df_map = self.get_effective_gameweek_map()
@@ -228,9 +322,9 @@ class ModelDataMaker(object):
 
         df_teams = self.get_teams_data()
         df_teams = df_teams[["id", "name", "strength", "strength_attack_away",
-                        "strength_attack_home", "strength_defence_away",
-                        "strength_defence_home", "strength_overall_away",
-                        "strength_overall_home"]].copy()
+                             "strength_attack_home", "strength_defence_away",
+                             "strength_defence_home", "strength_overall_away",
+                             "strength_overall_home"]].copy()
         team_cols = list(df_teams.columns)
         df_teams_opp = df_teams.copy()
         df_teams_opp.columns = ['opp_' + col for col in team_cols]
@@ -240,6 +334,11 @@ class ModelDataMaker(object):
         return df
 
     def make_scoring_base(self):
+        """
+        Prepare scoring dataframe
+        :return: scoring dataframe
+        :rtype: pd.DataFrame
+        """
         player_id_team_id_map = self.get_player_id_team_id_map()
         all_players = list(player_id_team_id_map.keys())
         df_map = self.get_effective_gameweek_map()
@@ -248,7 +347,7 @@ class ModelDataMaker(object):
         except:
             print("No Valid Scoring GW provided")
             return pd.DataFrame()
-        print("=="*20)
+        print("==" * 20)
         print("getting scoring df...")
         df_scoring = pd.DataFrame()
         df_scoring["player_id"] = all_players
@@ -263,10 +362,13 @@ class ModelDataMaker(object):
         return df_scoring
 
     def make_base_data(self):
+        """
+        Make base features for modelling
+        :return: base dataframe
+        :rtype: pd.DataFrame
+        """
         df_teams = self.get_teams_data()
         df_gw = self.get_gw_data()
-        df_players = self.get_players_data()
-        df_fixture = self.get_fixtures_data()
 
         df_gw["player_id"] = df_gw["element"].astype(int)
         df_gw["gw_id"] = df_gw["gw"].astype(int)
@@ -290,7 +392,7 @@ class ModelDataMaker(object):
         df_scoring = self.make_scoring_base()
         if len(df_scoring) > 0:
             scoring_gw = int(self.config["scoring_gw"])
-            df_gw = df_gw[df_gw["gw_id"]<scoring_gw].copy()
+            df_gw = df_gw[df_gw["gw_id"] < scoring_gw].copy()
             df_gw = pd.concat([df_gw, df_scoring])
 
         df_teams = df_teams[["id", "name", "strength", "strength_attack_away",
@@ -314,14 +416,15 @@ class ModelDataMaker(object):
             df_tmp = df_gw[["player_id", "effective_gw_id", "total_points"]].copy()
             new_col = "total_points_next_{}".format(n_future)
             df_tmp["effective_gw_id"] = df_tmp["effective_gw_id"] - n_future
-            df_tmp = df_tmp.rename(columns={"total_points":new_col})
+            df_tmp = df_tmp.rename(columns={"total_points": new_col})
             df_tmp = df_tmp.drop_duplicates(subset=["player_id", "effective_gw_id"])
             return df_tmp
+
         df_next_1 = get_future_points(1)
         df_next_2 = get_future_points(2)
         df_gw = pd.merge(df_gw, df_next_1, how='left', on=["player_id", "effective_gw_id"])
         df_gw = pd.merge(df_gw, df_next_2, how='left', on=["player_id", "effective_gw_id"])
-        df_gw["potential"] = df_gw["total_points"] + df_gw["total_points_next_1"] + df_gw["total_points_next_2"] 
+        df_gw["potential"] = df_gw["total_points"] + df_gw["total_points_next_1"] + df_gw["total_points_next_2"]
 
         # print(df_gw.head().T)
         # print(df_gw.tail().T)
@@ -380,7 +483,7 @@ if __name__ == "__main__":
     # player_id_player_position_map = data_maker.get_player_id_player_position_map() 
     # team_id_team_name_map = data_maker.get_team_id_team_name_map() 
 
-    df = data_maker.make_base_data()
+    df_tmp = data_maker.make_base_data()
     # print(df.sample(5))
     # df_understat_tmp = data_maker.prepare_understat_data()
     # print(df_understat_tmp.sample(5).T)

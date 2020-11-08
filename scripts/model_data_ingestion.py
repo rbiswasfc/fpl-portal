@@ -3,12 +3,23 @@ import sys
 import pickle
 
 sys.path.insert(0, './')
-from scripts.data_scrape import get_understat_epl_season_data
-from scripts.data_processor import DataProcessor
+try:
+    from scripts.data_scrape import get_understat_epl_season_data
+    from scripts.data_processor import DataProcessor
+except:
+    raise ImportError
 
 
 class DataIngestor(object):
+    """
+    Class to ingest data for modelling
+    """
     def __init__(self, config):
+        """
+        initialize data ingestor
+        :param config: config dict
+        :type config: dict
+        """
         self.config = config
         self.ingest_dir = config["ingest_dir"]
         self.player_filepath = os.path.join(config["ingest_dir"], config["player_ingest_filename"])
@@ -18,21 +29,33 @@ class DataIngestor(object):
         self.fixture_filepath = os.path.join(config["ingest_dir"], config["fixture_ingest_filename"])
 
     def ingest_player_data(self):
+        """
+        ingest latest player data
+        """
         data_processor = DataProcessor(self.config)
         df_players_raw = data_processor.save_players_data()
         df_players_raw.to_csv(self.player_filepath, index=False)
 
     def ingest_team_data(self):
+        """
+        ingest latest team data
+        """
         data_processor = DataProcessor(self.config)
         df_teams = data_processor.save_teams_data()
         df_teams.to_csv(self.team_filepath, index=False)
 
     def ingest_fixture_data(self):
+        """
+        ingest latest fixtures data
+        """
         data_processor = DataProcessor(self.config)
         df_fixture = data_processor.save_fixtures_data()
         df_fixture.to_csv(self.fixture_filepath, index=False)
 
     def ingest_understat_data(self):
+        """
+        ingest understat data
+        """
         understat_season = self.config["season"].split('_')[0]
         print(understat_season)
         team_data, _ = get_understat_epl_season_data(understat_season)
@@ -40,6 +63,9 @@ class DataIngestor(object):
             pickle.dump(team_data, f)
 
     def ingest_gw_data(self):
+        """
+        ingest latest gameweek data
+        """
         data_processor = DataProcessor(self.config)
         df_gw_merged = data_processor.save_gameweek_data()
         df_gw_merged.to_csv(self.gw_filepath, index=False)
