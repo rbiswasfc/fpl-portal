@@ -1,0 +1,32 @@
+name: envFPL
+channels:
+  - pytorch
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - dash
+  - dash-bootstrap-components
+  - dash-table
+  - flask
+  - lightgbm
+  - matplotlib
+  - numpy
+  - pandas
+  - plotly
+  - pytorch=1.7.0=py3.8_0
+  - scikit-learn
+  - scipy
+  - torchvision=0.8.1=py38_cpu
+  - uwsgi=2.0.18=py38h263c729_3
+  - pip:
+    - beautifulsoup4==4.9.1
+    - bs4==0.0.1
+    - fastai==1.0.61
+    - pytest
+    - pytest-aiohttp
+    - pytest-cov
+    - pytest-mock
+    - requests
+    - tqdm
+

@@ -1,3 +1,8 @@
 *.pyc
 __pycache__/
 .vscode
+.idea
+data/model_data/xy_data/
+cache-directory/
+data/model_outputs
+data/2020_21
