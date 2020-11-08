@@ -16,7 +16,7 @@ except:
 
 def save_json_data(data, file_path):
     """
-    save data extracted from the FPL api
+    Save data extracted from the FPL api
     :param file_path:
     :type file_path:
     :param data:
@@ -46,17 +46,21 @@ class DataProcessor(object):
         self.data_scraper = DataScraper(config)
 
     def save_teams_data(self):
+        """
+        Save teams data
+        """
         data = self.data_scraper.get_team_data()
         file_path = os.path.join(self.data_dir_raw, "teams.json")
         save_json_data(data, file_path)
         df = pd.DataFrame(data)
         df.columns = df.columns.str.lower()
         df.to_csv(os.path.join(self.data_dir_clean, 'teams.csv'), index=False)
-        # print(df.head())
         return df
 
     def save_players_data(self):
-        # data = self.data_scraper.get_all_players_data()
+        """
+        Save latest player data
+        """
         bootstrap_data = self.data_scraper.get_bootstrap_data()
         data = bootstrap_data['elements']
         file_path = os.path.join(self.data_dir_raw, "players_raw.json")
@@ -64,34 +68,41 @@ class DataProcessor(object):
         df = pd.DataFrame(data)
         df.columns = df.columns.str.lower()
         df.to_csv(os.path.join(self.data_dir_clean, 'players_raw.csv'), index=False)
-        # print(df.head())
         return df
 
     def save_fixtures_data(self):
+        """
+        Save current season fixtures data
+        """
         data = self.data_scraper.get_fixtures_data()
         file_path = os.path.join(self.data_dir_raw, "fixtures.json")
         save_json_data(data, file_path)
         df = pd.DataFrame(data)
         df.columns = df.columns.str.lower()
         df.to_csv(os.path.join(self.data_dir_clean, 'fixtures.csv'), index=False)
-        # print(df.head())
         return df
 
     def save_gameweek_metadata(self):
+        """
+        Save gameweek metadata for the current season
+        """
         data = self.data_scraper.get_gameweek_metadata()
         file_path = os.path.join(self.data_dir_raw, "gw_metadata.json")
         save_json_data(data, file_path)
         df = pd.DataFrame(data)
         df.to_csv(os.path.join(self.data_dir_clean, 'gw_metadata.csv'), index=False)
-        # print(df.head())
 
     def save_gameweek_data(self):
+        """
+        Save player history data for all game weeks
+        """
         bootstrap_data = self.data_scraper.get_bootstrap_data()
         this_gw = self.data_scraper.get_next_gameweek_id() - 1
         players = bootstrap_data['elements']
         position_map = {'1': 'GK', '2': 'DEF', '3': 'MID', '4': 'FWD'}
         snapshot_data = []
         player_dfs = []
+
         for player in tqdm(players):
             player_id = player['id']
             player_name = player['first_name'] + ' ' + player['second_name']
@@ -101,7 +112,7 @@ class DataProcessor(object):
             player['name'] = player_name
             player['position'] = player_position
             snapshot_data.append(player)
-            # print(player)
+
             player_data = self.data_scraper.get_player_data(player_id)
             df = pd.DataFrame(player_data['history'])
             df['player_id'] = int(player_id)
@@ -109,7 +120,7 @@ class DataProcessor(object):
             df['position'] = player_position
             df['team'] = team
             player_dfs.append(df)
-            # print(player_id)
+
         # merge dfs
         snapshot_file_name = "snapshot_players_gw_{}.csv".format(this_gw)
         snapshot_df = pd.DataFrame(snapshot_data)
@@ -125,11 +136,21 @@ class DataProcessor(object):
         return df_gws
 
     def save_classic_league_standing(self, league_id="1457340"):
+        """
+        Save a classic league standings data
+        :param league_id: league code
+        :type league_id: str
+        """
         df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
         df_league.to_csv(os.path.join(self.data_dir_clean, "league_{}_standing.csv".format(league_id)),
                          index=False)
 
     def save_classic_league_history(self, league_id="1457340"):
+        """
+        Save gameweek by gameweek data for managers in a league
+        :param league_id: league code
+        :type league_id: str
+        """
         df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
         manager_ids = df_league["entry_id"].unique().tolist()
         league_history_rows = []
@@ -144,10 +165,13 @@ class DataProcessor(object):
         df_league_history = pd.merge(df_league_history, df_tmp, on='entry_id', how='left')
         df_league_history.to_csv(os.path.join(self.data_dir_clean, "league_{}_history.csv".format(league_id)),
                                  index=False)
-        # print(df_league_history.head())
 
     def save_classic_league_picks_history(self, league_id="1457340"):
-
+        """
+        Save manager team picks in a given classic league
+        :param league_id: league code
+        :type league_id: str
+        """
         df_league = self.data_scraper.get_fpl_manager_entry_ids(league_id)
         manager_ids = df_league["entry_id"].unique().tolist()
         this_gw = self.data_scraper.get_next_gameweek_id() - 1
@@ -166,6 +190,11 @@ class DataProcessor(object):
             pickle.dump(manager_picks_dict, f)
 
     def save_manager_current_gw_picks(self, manager_id):
+        """
+        Save current gameweek picks for a particular FPL manager
+        :param manager_id: manager id
+        :type manager_id: str
+        """
         current_gw = self.data_scraper.get_next_gameweek_id() - 1
         current_picks_data = self.data_scraper.get_entry_current_gw_picks(manager_id)
         assert int(current_picks_data["entry_history"]['event']) == int(current_gw), "gameweek mismatch in picks"
@@ -176,17 +205,30 @@ class DataProcessor(object):
             pickle.dump(picks, f)
 
     def save_next_gw_id(self):
+        """
+        Save next gameweek id
+        """
         next_gw = int(self.data_scraper.get_next_gameweek_id())
         filepath = os.path.join(self.data_dir_clean, "next_gw_id.pkl")
         with open(filepath, 'wb') as f:
             pickle.dump(next_gw, f)
 
     def save_top_manager_picks(self, n_pages=12):
+        """
+        Save team picks by top managers in the current gameweek
+        :param n_pages: number of top manager pages, each page has 50 managers
+        :type n_pages: int
+        """
         current_gw = int(self.data_scraper.get_next_gameweek_id()) - 1
         df = self.data_scraper.get_top_manager_picks(n_pages=n_pages)
         df.to_csv(os.path.join(self.data_dir_clean, "top_manager_picks_gw_{}.csv".format(current_gw)), index=False)
 
     def save_manager_bank_balance(self, manager_id):
+        """
+        Save bank balance of a particular manager
+        :param manager_id: manager id
+        :type manager_id: str
+        """
         current_gw = int(self.data_scraper.get_next_gameweek_id()) - 1
         bb = self.data_scraper.get_entry_bank_balance(manager_id)
         filepath = os.path.join(self.data_dir_clean, "manager_{}_bank_gw_{}.csv".format(manager_id, current_gw))

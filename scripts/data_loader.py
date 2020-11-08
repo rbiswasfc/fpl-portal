@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import pickle
 import pandas as pd
 
@@ -9,20 +8,21 @@ try:
     from scripts.utils import check_create_dir
     from scripts.data_scrape import DataScraper
     from scripts.data_processor import DataProcessor
+    from scripts.utils import check_cache_validity
 except:
     raise ImportError
 
 
-def check_cache_validity(file_path, valid_days=0.25):
-    if os.path.isfile(file_path):
-        mod_time = os.path.getmtime(file_path)
-        if (time.time() - mod_time) / 3600 < 24 * valid_days:
-            return True
-    return False
-
-
 class DataLoader(object):
+    """
+    Interface to load data as need for FPL models
+    """
     def __init__(self, config):
+        """
+        initialization of data loader class
+        :param config: config file
+        :type config: dict
+        """
         self.config = config
         self.data_processor = DataProcessor(config)
         self.data_dir = os.path.join(config["source_dir"], config["season"])
@@ -31,6 +31,13 @@ class DataLoader(object):
         self.current_gw = int(self.data_processor.data_scraper.get_next_gameweek_id() - 1)
 
     def get_league_standings(self, league_id="1457340"):
+        """
+        Load current league standings
+        :param league_id: league code
+        :type league_id: str
+        :return league standing df
+        :rtype pd.DataFrame
+        """
         file_path = os.path.join(self.data_dir_clean, "league_{}_standing.csv".format(league_id))
         if check_cache_validity(file_path):
             print("Valid cache found for {}".format(file_path))
@@ -40,6 +47,13 @@ class DataLoader(object):
         return df
 
     def get_league_gw_history(self, league_id="1457340"):
+        """
+        Load league gameweek points history
+        :param league_id: league code
+        :type league_id: str
+        :return: league points history df
+        :rtype: pd.DataFrame
+        """
         file_path = os.path.join(self.data_dir_clean, "league_{}_history.csv".format(league_id))
         if check_cache_validity(file_path):
             print("Valid cache found for {}".format(file_path))
@@ -49,6 +63,13 @@ class DataLoader(object):
         return df
 
     def get_league_picks_history(self, league_id="1457340"):
+        """
+        Load teams picks history for a given league
+        :param league_id: league code
+        :type league_id: str
+        :return: data with league picks
+        :rtype: dict
+        """
         file_path = os.path.join(self.data_dir_clean, "league_{}_manager_picks_history.pkl".format(league_id))
         if check_cache_validity(file_path):
             print("Valid cache found for {}".format(file_path))
@@ -59,6 +80,13 @@ class DataLoader(object):
         return data
 
     def get_manager_current_gw_picks(self, manager_id):
+        """
+        Load a manager's current gameweek team picks
+        :param manager_id: manager id
+        :type manager_id: str
+        :return: managers team picks data
+        :rtype: List
+        """
         file_path = os.path.join(self.data_dir_clean, "manager_{}_picks_gw_{}.pkl".format(manager_id, self.current_gw))
         if check_cache_validity(file_path):
             print("Valid cache found for {}".format(file_path))
@@ -69,6 +97,11 @@ class DataLoader(object):
         return data
 
     def get_next_gameweek_id(self):
+        """
+        Load next gameweek id
+        :return: next gameweek id
+        :rtype: int
+        """
         file_path = os.path.join(self.data_dir_clean, "next_gw_id.pkl")
         if check_cache_validity(file_path):
             print("Valid cache found for {}".format(file_path))
@@ -80,6 +113,11 @@ class DataLoader(object):
         return gw
 
     def get_live_gameweek_data(self):
+        """
+        Load live gameweek points data
+        :return: live gameweek df
+        :rtype: pd.DataFrame
+        """
         this_gw = self.get_next_gameweek_id() - 1
         file_path = os.path.join(self.data_dir_clean, "snapshot_players_gw_{}.csv".format(this_gw))
         if check_cache_validity(file_path):
@@ -91,9 +129,14 @@ class DataLoader(object):
         return df
 
     def get_top_manager_picks(self):
+        """
+        Load top manager picks data for the current gameweek
+        :return: top managers picks dataframe
+        :rtype: pd.DataFrame()
+        """
         this_gw = int(self.get_next_gameweek_id() - 1)
         file_path = os.path.join(self.data_dir_clean, "top_manager_picks_gw_{}.csv".format(this_gw))
-        if check_cache_validity(file_path, valid_days=1.0):
+        if check_cache_validity(file_path, valid_days=5.0):
             print("Valid cache found for {}".format(file_path))
         else:
             print("executing scrape ...")
@@ -102,6 +145,13 @@ class DataLoader(object):
         return df
 
     def get_manager_bank_balance(self, manager_id):
+        """
+        Load a manager's bank balance
+        :param manager_id: manager id
+        :type manager_id: str
+        :return: bank balance
+        :rtype: float
+        """
         this_gw = int(self.get_next_gameweek_id() - 1)
         file_path = os.path.join(self.data_dir_clean, "manager_{}_bank_gw_{}.csv".format(manager_id, this_gw))
         if check_cache_validity(file_path):

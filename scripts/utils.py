@@ -1,4 +1,5 @@
 import os
+import time
 import json
 from pathlib import Path
 
@@ -17,6 +18,21 @@ def load_config():
     with open("./assets/config.json", 'r') as f:
         config = json.load(f)
     return config
+
+
+def check_cache_validity(file_path, valid_days=0.15):
+    """
+    Check cache validity for particular file
+    :param file_path: path to the file
+    :type file_path: str
+    :param valid_days: cache validity threshold
+    :type valid_days: float
+    """
+    if os.path.isfile(file_path):
+        mod_time = os.path.getmtime(file_path)
+        if (time.time() - mod_time) / 3600 < 24 * valid_days:
+            return True
+    return False
 
 
 if __name__ == "__main__":

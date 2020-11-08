@@ -1,28 +1,27 @@
 import os
+import re
 import sys
 import pdb
 import json
 import pickle
 import requests
-
-import re
 import codecs
-from bs4 import BeautifulSoup
-
 import pandas as pd
-from datetime import datetime
-
-sys.path.insert(0, './')
-from scripts.utils import load_config, check_create_dir
 
 from tqdm import tqdm
-from multiprocessing.dummy import Pool as ThreadPool
-import concurrent.futures
+from datetime import datetime
+from bs4 import BeautifulSoup
+
+sys.path.insert(0, './')
+try:
+    from scripts.utils import load_config, check_create_dir
+except:
+    raise ImportError
 
 
 def fetch_data(url):
     """
-    get json data from API
+    get json data from FPL API
     :param url: web url
     :type url: str
     :return: json data
@@ -39,7 +38,7 @@ def fetch_data(url):
 
 class DataScraper(object):
     """
-    Provides interface to fetch fantasy premier league data
+    Provides interface to fetch Fantasy Premier League (FPL) data
     """
 
     def __init__(self, config):
@@ -53,6 +52,7 @@ class DataScraper(object):
         self.data = None
         self.data_dir = os.path.join(config["source_dir"], config["season"])
         check_create_dir(self.data_dir)
+
         # set fpl urls
         self.fpl_url = "https://fantasy.premierleague.com/api/"
         self.login_url = "https://users.premierleague.com/accounts/login/"
@@ -62,7 +62,6 @@ class DataScraper(object):
         self.bootstrap_suburl = "bootstrap-static/"
         self.player_suburl = "element-summary/"
         self.fixtures_suburl = "fixtures/"
-
         self.league_standing_url = self.fpl_url + self.classic_league_suburl
 
         try:
@@ -83,18 +82,30 @@ class DataScraper(object):
 
     def get_bootstrap_data(self):
         """
-        Retrieve the fpl player data from static url
+        Fetch latest FPL data from static url
+        :return: data
+        :rtype: JSON
         """
         url = self.fpl_url + self.bootstrap_suburl
         data = fetch_data(url)
         return data
 
     def get_fixtures_data(self):
+        """
+        Fetch fixtures data for the current season
+        :return: fixtures data
+        :rtype: JSON
+        """
         url = self.fpl_url + self.fixtures_suburl
         data = fetch_data(url)
         return data
 
     def get_gameweek_metadata(self):
+        """
+        Fetch all 38 gameweek metadata e.g. average score, most capped player
+        :return: gameweek metadata
+        :rtype: JSON
+        """
         bootstrap_data = self.get_bootstrap_data()
         gameweek_data = bootstrap_data["events"]
         return gameweek_data
@@ -102,8 +113,8 @@ class DataScraper(object):
     def get_all_players_data(self):
         """
         Fetch player specific data from the FPL REST API endpoint
-        :return:
-        :rtype:
+        :return: player data
+        :rtype: JSON
         """
 
         bootstrap_data = self.get_bootstrap_data()
@@ -118,15 +129,22 @@ class DataScraper(object):
         return players
 
     def get_player_data(self, player_id):
+        """
+        Fetch fpl data for a specific player
+        :param player_id: fpl id of the player
+        :type player_id: int
+        :return: player data
+        :rtype: JSON
+        """
         url = self.fpl_url + self.player_suburl + "/{}/".format(player_id)
         data = fetch_data(url)
         return data
 
     def get_team_data(self):
         """
-        Fetch teams data
-        :return:
-        :rtype:
+        Fetch teams data for the current season
+        :return: Team data
+        :rtype: JSON
         """
         data = self.get_bootstrap_data()
         teams_data = data['teams']
@@ -134,19 +152,24 @@ class DataScraper(object):
 
     def save_json_data(self, filename, data):
         """
-        save data extracted from the FPL api
-        :param filename:
-        :type filename:
-        :param data:
-        :type data:
-        :return:
-        :rtype:
+        Save data extracted from the FPL api
+        :param filename: desired filename
+        :type filename: str
+        :param data: data to be saved
+        :type data: JSON
         """
         filepath = os.path.join(self.data_dir, filename)
         with open(filepath, 'w') as f:
             json.dump(data, f)
 
     def get_fpl_manager_entry_ids(self, league_id="1457340"):
+        """
+        Fetch manager ids in a particular league
+        :param league_id: league code
+        :type league_id: str
+        :return: summary data for managers in a particular league
+        :rtype: pd.DataFrame
+        """
         entries = []
         entry_names = []
         player_names = []
@@ -154,17 +177,23 @@ class DataScraper(object):
         ranks = []
         last_rank = []
         cur_gw_points = []
+
         ls_page = 1
-        while (True):
+        max_pages = 25
+
+        while True:
             league_url = self.league_standing_url + str(
                 league_id) + "/standings/" + "?page_new_entries=1&page_standings=" + str(ls_page) + "&phase=1"
-            # print(league_url)
             response = self.session.get(league_url)
             json_response = response.json()
             managers = json_response["standings"]["results"]
+
             if not managers:
                 print("Total managers: {}".format(len(entries)))
                 break
+            if ls_page > max_pages:
+                break
+
             for manager in managers:
                 entries.append(manager["entry"])
                 entry_names.append(manager["entry_name"])
@@ -174,6 +203,7 @@ class DataScraper(object):
                 last_rank.append(manager["last_rank"])
                 cur_gw_points.append(manager["event_total"])
             ls_page += 1
+
         df_manager = pd.DataFrame()
         df_manager["entry_id"] = entries
         df_manager["entry_name"] = entry_names
@@ -184,23 +214,30 @@ class DataScraper(object):
         df_manager["gw_points"] = cur_gw_points
 
         # keep top 100 manages
-        n_keep = min(100, len(df_manager))
-        df_manager = df_manager.sort_values(by="score", ascending=False).head(n_keep)
+        # n_keep = min(100, len(df_manager))
+        df_manager = df_manager.sort_values(by="score", ascending=False)  # .head(n_keep)
 
         return df_manager
 
     def get_league_start_gameweek(self, league_id="1457340"):
+        """
+        Fetch Gameweek at which point counting started for a particular league
+        :param league_id: league code
+        :type league_id: str
+        :return: gameweek id
+        :rtype: int
+        """
         league_url = self.league_standing_url + str(league_id) + "/standings/"
         data = fetch_data(league_url)
         return int(data['league']['start_event'])
 
     def get_entry_data(self, entry_id):
         """
-        Fet team picks for a particular FPL manager
-        :param entry_id:
-        :type entry_id:
-        :return:
-        :rtype:
+        Fetch all history data for a particular FPL manager
+        :param entry_id: manager id
+        :type entry_id: str
+        :return: manager picks data
+        :rtype: JSON
         """
 
         url = self.manager_url + str(entry_id) + "/history/"
@@ -209,11 +246,11 @@ class DataScraper(object):
 
     def get_entry_personal_data(self, entry_id):
         """
-        get personal data of FPL manager
-        :param entry_id:
-        :type entry_id:
-        :return:
-        :rtype:
+        Fetch personal data of FPL manager
+        :param entry_id: manager id
+        :type entry_id: str
+        :return: personal data of FPL manager
+        :rtype: JSON
         """
         url = self.manager_url + str(entry_id) + "/"
         data = fetch_data(url)
@@ -221,13 +258,13 @@ class DataScraper(object):
 
     def get_entry_gw_picks_history(self, entry_id, num_gws):
         """
-        get gameweek picks of fantasy managers
-        :param entry_id:
-        :type entry_id:
-        :param num_gws: how many gw data to extract
+        Fetch gameweek picks of FPL managers
+        :param entry_id: manager id
+        :type entry_id: str
+        :param num_gws: Max gameweek data to extract
         :type num_gws: int
-        :return:
-        :rtype:
+        :return: list of gameweek by gameweek picks of this FPL manager
+        :rtype: List
         """
         gw_data = []
         for i in range(1, num_gws + 1):
@@ -241,11 +278,11 @@ class DataScraper(object):
 
     def get_entry_current_gw_picks(self, entry_id):
         """
-        get gameweek picks of fantasy managers
-        :param entry_id:
-        :type entry_id:
-        :return:
-        :rtype:
+        Fetch current gameweek picks of a FPL manager
+        :param entry_id: manager id
+        :type entry_id: str
+        :return: current gameweek picks of this manager
+        :rtype: JSON
         """
         current_gw = int(self.get_next_gameweek_id() - 1)
         url = self.manager_url + str(entry_id) + "/event/" + str(current_gw) + "/picks/"
@@ -257,28 +294,41 @@ class DataScraper(object):
         return data
 
     def get_entry_bank_balance(self, entry_id):
+        """
+        Fetch current bank balance of a FPL Manager
+        :param entry_id: manager id
+        :type entry_id: str
+        :return: current bank balance
+        :rtype: float
+        """
         current_gw = int(self.get_next_gameweek_id() - 1)
         url = self.manager_url + str(entry_id) + "/event/" + str(current_gw) + "/picks/"
         try:
             data = fetch_data(url)
         except:
             print("Squad data not found for {} in gw {}".format(entry_id, current_gw))
-        bb = data["entry_history"]["bank"]/10
+            return 0
+        bb = data["entry_history"]["bank"] / 10
         return bb
 
     def get_entry_gw_transfers(self, entry_id):
         """
-        get transfer data of fpl managers
-        :param entry_id:
-        :type entry_id:
-        :return:
-        :rtype:
+        Fetch player transfer history of a FPL Manager
+        :param entry_id: manager id
+        :type entry_id: str
+        :return: transfer history data
+        :rtype: JSON
         """
         url = self.manager_url + str(entry_id) + "/transfers/"
         data = fetch_data(url)
         return data
 
     def get_next_gameweek_id(self):
+        """
+        Fetch next gameweek id
+        :return: next gameweek id
+        :rtype: int
+        """
         gws = self.get_gameweek_metadata()
         now = datetime.utcnow()
         for gw in gws:
@@ -286,10 +336,14 @@ class DataScraper(object):
             if deadline > now:
                 return gw['id']
 
-    def execute_all(self):
-        pass
-
     def get_top_manager_picks(self, n_pages=12):
+        """
+        Fetch leading manager ids in the overall league
+        :param n_pages: number of pages to scrape, each page has 50 managers
+        :type n_pages: int
+        :return: current gameweek picks for the top managers
+        :rtype: pd.DataFrame
+        """
         league_id = 314
         all_pages = [i + 1 for i in range(n_pages)]
         entries = []
@@ -303,19 +357,7 @@ class DataScraper(object):
                 entries.append(manager["entry"])
 
         dfs = []
-        # step_size = 10
-        # n_steps = int(len(entries)//step_size)
-        # for i in tqdm(range(n_steps)):
-        #    with concurrent.futures.ThreadPoolExecutor() as executor:
-        #        entries_subset = entries[i*step_size:(i+1)*step_size]
-        #        results = executor.map(self.get_entry_current_gw_picks, entries_subset)
-        #        dfs.extend(results)
-
-        # for i in tqdm(range(n_steps)):
-        #    entries_subset = entries[i*step_size:(i+1)*step_size]
-        #    results = pool.map(self.get_entry_current_gw_picks, entries_subset)
-        #    dfs.extend(results)
-        for entry in tqdm(entries):
+        for entry in tqdm(entries):  # TODO: use multi-threading
             manager_data = self.get_entry_current_gw_picks(entry)
             df_manager_picks = pd.DataFrame(manager_data["picks"])
             dfs.append(df_manager_picks)
@@ -324,6 +366,13 @@ class DataScraper(object):
 
 
 def get_understat_data(url):
+    """
+    Helper function for extracting understat data
+    :param url: understat url
+    :type url: str
+    :return: understat raw data
+    :rtype: List
+    """
     response = requests.get(url)
     if response.status_code != 200:
         raise Exception("Response was code " + str(response.status_code))
@@ -338,6 +387,13 @@ def get_understat_data(url):
 
 
 def get_understat_epl_season_data(season='2020'):
+    """
+    Fetch understat player and team data for a given season
+    :param season: EPL season
+    :type season: str
+    :return: understat player and team data
+    :rtype: List, List
+    """
     url = "https://understat.com/league/EPL/" + str(season)
     scripts = get_understat_data(url)
     teamData, playerData = {}, {}
@@ -360,12 +416,12 @@ if __name__ == "__main__":
     this_config = {"season": "2020_21", "source_dir": "./data/raw/"}
     data_scraper = DataScraper(this_config)
     # data_scraper.get_top_manager_picks()
-    this_entry_id = '2235933'
-    bank = data_scraper.get_entry_bank_balance(this_entry_id)
-    print(bank)
+    # this_entry_id = '2235933'
+    # bank = data_scraper.get_entry_bank_balance(this_entry_id)
+    # print(bank)
 
-    # gw_data = data_scraper.get_gameweek_data()
-    # print(gw_data[2])
+    tmp_gw_data = data_scraper.get_gameweek_metadata()
+    print(tmp_gw_data)
     # print(len(gw_data))
 
     # this_player_id = 4
