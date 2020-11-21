@@ -13,7 +13,6 @@ except:
 
 
 def make_optimization_settings_section():
-
     next_gw = query_next_gameweek()
     focus_gws = [next_gw - 2, next_gw - 1, next_gw]
     gw_options = [{'label': gw_id, 'value': gw_id} for gw_id in focus_gws]
@@ -68,6 +67,31 @@ def make_optimization_settings_section():
     return section
 
 
+def make_transfer_analyzer_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+    df_league = query_league_standing()
+    manager_ids = df_league["entry_id"].unique().tolist()
+    manager_names = df_league["entry_name"].unique().tolist()
+    manager_options = [{'label': manager, 'value': manager_id} for manager, manager_id in
+                       zip(manager_names, manager_ids)]
+    dropdown_manager = make_dropdown('manager-selection-transfer-analyzer', manager_options,
+                                     placeholder="Select Manager ...")
+
+    dropdown_section = html.Div(
+        children=[
+            html.Div(dropdown_manager, className='col-12'),
+        ],
+        className='row'
+    )
+    section = html.Div(
+        children=[
+            html.Div("Transfer Analyzer", className='subtitle inline-header'),
+            dropdown_section,
+            dcc.Loading(html.Div(id='transfer-analyzer-output', style=margin_style), color='black')
+        ])
+    return section
+
+
 def make_left_layout_squad():
     header = make_header("Squad Optimization")
     layout = html.Div(
@@ -86,6 +110,7 @@ def make_left_layout_squad():
             html.Div("Bench", className='subtitle inline-header'),
             html.Div(" ", style={"margin-top": "2rem", "margin-bottom": "2rem"}),
             dcc.Loading(html.Div(id='squad-optim-output-bench'), color='black'),
+            make_transfer_analyzer_section(),
 
         ],
     )

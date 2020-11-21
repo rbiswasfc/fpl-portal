@@ -258,12 +258,12 @@ def execute_player_comparison(player_a, player_b, gw_id):
     df_a_xpts["xpts"] = df_a_xpts["xpts"].round(2)
     df_b_xpts["xpts"] = df_b_xpts["xpts"].round(2)
 
-    df_a_xpts["size"] = df_a_xpts["pts"]
+    df_a_xpts["size"] = df_a_xpts["pts"] * 3
     df_a_xpts["size"] = df_a_xpts["size"].fillna(2)
     df_a_xpts["size"] = df_a_xpts["size"].astype(float)
     df_a_xpts["size"] = df_a_xpts["size"] + 5
 
-    df_b_xpts["size"] = df_b_xpts["pts"]
+    df_b_xpts["size"] = df_b_xpts["pts"] * 3
     df_b_xpts["size"] = df_b_xpts["size"].fillna(2)
     df_b_xpts["size"] = df_b_xpts["size"].astype(float)
     df_b_xpts["size"] = df_b_xpts["size"] + 5
@@ -337,7 +337,7 @@ def execute_player_comparison(player_a, player_b, gw_id):
     fig.add_shape(type="line", x0=gw_id, y0=0, x1=gw_id, y1=y_max + 0.25,
                   line=dict(color="LightSeaGreen", width=4, dash="dash"))
 
-    fig.add_trace(go.Scatter(x=[gw_id + 0.5], y=[y_max / 2.0],
+    fig.add_trace(go.Scatter(x=[gw_id - 0.5], y=[y_max / 2.0],
                              text=["Next GW"], mode="text", showlegend=False))
     pred_graph = dcc.Graph(figure=fig)
 
@@ -458,3 +458,89 @@ def execute_transfer_suggestions(n_clicks, manager_id, num_transfers, gw_id, mod
         return output
 
     return html.P("Button Not Clicked!")
+
+
+@app.callback(Output('transfer-analyzer-output', 'children'),
+              [Input('manager-selection-transfer-analyzer', 'value')],
+              prevent_initial_call=True)
+def execute_transfer_analyzer(manager_id):
+    if not manager_id:
+        msg = html.P("Please select manager...")
+        return msg
+
+    forward_window = 5
+    config = load_config()
+    data_scraper = DataScraper(config)
+    data_maker = ModelDataMaker(CONFIG_2020)
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+
+    next_gw = data_scraper.get_next_gameweek_id()
+    picks_data = data_scraper.get_entry_gw_picks_history(manager_id, next_gw - 1)
+    dfs = []
+    gw_num_transfer_map = dict()
+    gw_penalty_map = dict()
+    for this_pick in picks_data:
+        gw_id = this_pick["entry_history"]["event"]
+        num_transfer = this_pick["entry_history"]["event_transfers"]
+        penalty = this_pick["entry_history"]["event_transfers_cost"]
+        gw_num_transfer_map[gw_id] = num_transfer
+        gw_penalty_map[gw_id] = penalty
+        picks = this_pick["picks"]
+        tmp_df = pd.DataFrame(picks)
+        tmp_df["gw"] = gw_id
+        dfs.append(tmp_df)
+
+    df_picks = pd.concat(dfs)
+    df_fpl = pd.read_csv("./data/model_data/2020_21/merged_gw.csv")
+    df_fpl = df_fpl[["element", "gw", "total_points"]].copy()
+    df_picks = pd.merge(df_picks, df_fpl, how='left', on=["element", "gw"])
+    df_picks["total_points"] = df_picks["total_points"].fillna(0)
+
+    data = data_scraper.get_entry_gw_transfers(manager_id)
+    df_transfer = pd.DataFrame(data)
+    gameweeks = df_transfer["event"].unique().tolist()
+    summary_dfs = []
+    for this_gw in gameweeks:
+        tmp_df = df_transfer[df_transfer["event"] == this_gw].copy()
+
+        tmp_df = tmp_df.drop_duplicates(subset=["element_in", "element_out"])
+        in_out_map = dict()
+        for idx, row in tmp_df.iterrows():
+            transfer_in, transfer_out = row["element_in"], row["element_out"]
+            in_out_map[transfer_in] = transfer_out
+        transfer_in = tmp_df["element_in"].unique().tolist()
+        cond_a = (df_picks["gw"] >= this_gw) & (df_picks["gw"] < this_gw + forward_window)
+        cond_b = df_picks["element"].isin(transfer_in)
+        df_focus = df_picks[cond_a & cond_b].copy()
+        df_focus = df_focus.rename(columns={"element": "element_in", "total_points": "in_points"})
+        df_focus["element_out"] = df_focus["element_in"].apply(lambda x: in_out_map[x])
+        df_focus = pd.merge(df_focus, df_fpl, how='left', left_on=["element_out", "gw"], right_on=["element", "gw"])
+        df_focus = df_focus.drop(columns=["element"])
+        df_focus = df_focus.rename(columns={"total_points": "out_points"})
+        df_focus["out_points"] = df_focus["out_points"].fillna(0)
+        df_focus["impact"] = (df_focus["in_points"] - df_focus["out_points"]) * df_focus["multiplier"]
+        df_summary = df_focus.groupby("element_in")["impact"].agg('sum').reset_index()
+        df_summary["gw"] = this_gw
+        df_summary["element_out"] = df_summary["element_in"].apply(lambda x: in_out_map[x])
+        summary_dfs.append(df_summary)
+    df_final = pd.concat(summary_dfs)
+    df_final["Transfer In"] = df_final["element_in"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_final["Transfer Out"] = df_final["element_out"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_final["GW"] = df_final["gw"].astype(int)
+    df_final["Delta"] = df_final["impact"].astype(int)
+    df_final = df_final[["GW", "Transfer In", "Transfer Out", "Delta"]].copy()
+    table = make_table(df_final)
+
+    df_final = df_final.groupby("GW")["Delta"].agg('sum').reset_index()
+    df_final["# Transfers"] = df_final["GW"].apply(lambda x: gw_num_transfer_map[x])
+    df_final["Hits"] = df_final["GW"].apply(lambda x: gw_penalty_map[x])
+    df_final = df_final[["GW", "# Transfers", "Hits", "Delta"]].copy()
+    table_meta = make_table(df_final)
+
+    output_section = html.Div(children=[
+        table,
+        html.Div("", style={"margin-top": "2rem"}),
+        table_meta
+    ])
+
+    return output_section
