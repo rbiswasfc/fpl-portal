@@ -396,6 +396,25 @@ def execute_fastai_return_scoring(n_clicks, gw):
         return html.Div("Button Not Clicked!", style={"text-align": "center"})
 
 
+@app.callback(Output('lgbm-next-7-predict-output', 'children'),
+              [Input('lgbm-next-7-predict-btn', 'n_clicks')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_lgbm_next_7_scoring(n_clicks, gw):
+    print("LGBM Prediction Next 7 click={}".format(n_clicks))
+    if n_clicks:
+        if not gw:
+            return html.P("Please Select GW")
+        print("Scoring from LGBM NEXT 7 Model for gameweek={}".format(gw))
+        n_next_gws = 7
+        for this_gw in range(gw, gw + n_next_gws):
+            print("Scoring for gw {}".format(this_gw))
+            result = perform_lgbm_point_scoring(this_gw)
+        return html.Div("Done!", style={"text-align": "center"})
+    else:
+        return html.Div("Button Not Clicked!", style={"text-align": "center"})
+
+
 # Leads Update
 @app.callback([Output('gk-leads', 'children'),
                Output('def-leads', 'children'),

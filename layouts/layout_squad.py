@@ -116,7 +116,8 @@ def make_player_comparison_section():
         children=[
             html.Div("Player Comparison", className='subtitle inline-header'),
             player_dropdown_section,
-            html.Div(id='player-compare-output', style=margin_style)
+            dcc.Loading(html.Div(id='player-compare-output', style=margin_style), color='black'),
+            dcc.Loading(html.Div(id='player-prediction-compare-output', style=margin_style), color='black'),
         ])
     return section
 

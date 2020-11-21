@@ -392,7 +392,14 @@ class ModelDataMaker(object):
         df_scoring = self.make_scoring_base()
         if len(df_scoring) > 0:
             scoring_gw = int(self.config["scoring_gw"])
+            df_gw["gw_id"] = df_gw["gw_id"].fillna(-1)
+            print(df_gw["gw_id"].value_counts())
             df_gw = df_gw[df_gw["gw_id"] < scoring_gw].copy()
+            max_gw_past = int(df_gw["gw_id"].max())
+            shift = scoring_gw - max_gw_past - 1
+            print("SHIFT = {}".format(shift))
+            df_scoring["effective_gw_id"] = df_scoring["effective_gw_id"] - shift
+            df_scoring["effective_gw_id"] = df_scoring["effective_gw_id"].astype(int)
             df_gw = pd.concat([df_gw, df_scoring])
 
         df_teams = df_teams[["id", "name", "strength", "strength_attack_away",

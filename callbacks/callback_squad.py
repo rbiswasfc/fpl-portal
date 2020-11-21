@@ -25,7 +25,7 @@ try:
     from scripts.model_data_ingestion import DataIngestor
     from scripts.feature_engineering import make_XY_data
     from scripts.models import load_data, train_lgbm_model, train_fastai_model
-    from callbacks.callback_cache import load_leads, CONFIG_2020
+    from callbacks.callback_cache import load_leads, CONFIG_2020, load_all_point_predictions
 except:
     raise ImportError
 
@@ -214,7 +214,8 @@ def transfer_optimizer(df_leads, manager_id, num_transfers, model_name):
     return df_res
 
 
-@app.callback(Output('player-compare-output', 'children'),
+@app.callback([Output('player-compare-output', 'children'),
+               Output('player-prediction-compare-output', 'children')],
               [Input('player-selection-dropdown-a', 'value'),
                Input('player-selection-dropdown-b', 'value'),
                Input('gw-selection-dropdown-squad', 'value')],
@@ -222,15 +223,16 @@ def transfer_optimizer(df_leads, manager_id, num_transfers, model_name):
 def execute_player_comparison(player_a, player_b, gw_id):
     if not player_a:
         msg = html.P("Please select first player")
-        return msg
+        return msg, ""
     if not player_b:
         msg = html.P("Please select second player")
-        return msg
+        return msg, ""
     if not gw_id:
         msg = html.P("Please select gameweek in left layout")
-        return msg
+        return msg, ""
     #
     df_leads = load_leads(gw_id)
+    df_preds = load_all_point_predictions(gw_id)
 
     # normalization
     pot_div = 12
@@ -248,6 +250,24 @@ def execute_player_comparison(player_a, player_b, gw_id):
 
     df_a = df_leads[df_leads["name"] == player_a].copy()
     df_b = df_leads[df_leads["name"] == player_b].copy()
+    df_a_xpts = df_preds[df_preds["name"] == player_a].copy()
+    df_b_xpts = df_preds[df_preds["name"] == player_b].copy()
+
+    df_a_xpts = df_a_xpts.sort_values(by="gw")
+    df_b_xpts = df_b_xpts.sort_values(by="gw")
+    df_a_xpts["xpts"] = df_a_xpts["xpts"].round(2)
+    df_b_xpts["xpts"] = df_b_xpts["xpts"].round(2)
+
+    df_a_xpts["size"] = df_a_xpts["pts"]
+    df_a_xpts["size"] = df_a_xpts["size"].fillna(2)
+    df_a_xpts["size"] = df_a_xpts["size"].astype(float)
+    df_a_xpts["size"] = df_a_xpts["size"] + 5
+
+    df_b_xpts["size"] = df_b_xpts["pts"]
+    df_b_xpts["size"] = df_b_xpts["size"].fillna(2)
+    df_b_xpts["size"] = df_b_xpts["size"].astype(float)
+    df_b_xpts["size"] = df_b_xpts["size"] + 5
+
     keep_cols = ["LGBM Point", "LGBM Potential", "LGBM Return",
                  "Fast Point", "Fast Potential", "Fast Return", "Cost"]
     df_a = df_a[keep_cols].copy().T.reset_index()
@@ -264,8 +284,64 @@ def execute_player_comparison(player_a, player_b, gw_id):
                                   fill='toself', name=player_b))
     fig.update_layout(polar=dict(radialaxis=dict(visible=False)), showlegend=True)
     # fig = px.line_polar(df_a, r='r', theta='theta', line_close=True)
-    graph = dcc.Graph(figure=fig)
-    return graph
+    radar_graph = dcc.Graph(figure=fig)
+
+    # Compare player predictions
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(name=player_a,
+                             x=df_a_xpts["gw"].values,
+                             y=df_a_xpts["xpts"].values,
+                             marker_size=df_a_xpts['size'],
+                             hovertext=df_a_xpts['name'],
+                             hoverlabel=dict(namelength=0),
+                             hovertemplate='%{hovertext}<br>Pred: %{y} | GW: %{x}' + '<br>%{text}</br>',
+                             text=['Opponent: {} | Pts: {}| Flag: {}'.format(a, b, c) for a, b, c in
+                                   zip(df_a_xpts["opponent"].values, df_a_xpts["pts"].values,
+                                       df_a_xpts["chance_of_play"].values)]
+                             ))
+    fig.add_trace(go.Scatter(name=player_b,
+                             x=df_b_xpts["gw"].values,
+                             y=df_b_xpts["xpts"].values,
+                             marker_size=df_b_xpts['size'],
+                             hovertext=df_b_xpts['name'],
+                             hoverlabel=dict(namelength=0),
+                             hovertemplate='%{hovertext}<br>Pred: %{y}' + '<br>%{text}</br>',
+                             text=['Opponent: {} | Pts: {}| Flag: {}'.format(a, b, c) for a, b, c in
+                                   zip(df_b_xpts["opponent"].values, df_b_xpts["pts"].values,
+                                       df_b_xpts["chance_of_play"].values)]
+                             ))
+    fig.layout.template = 'seaborn'
+    layout = go.Layout(xaxis={'title': 'Gameweek'},
+                       yaxis={'title': 'xPts'},
+                       margin={'l': 5, 'b': 75, 't': 25, 'r': 5},
+                       hovermode='x')
+    fig.update_layout(layout)
+    fig.update_layout(
+        legend=dict(
+            x=0.8,
+            y=0.05,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            ),
+        )
+    )
+
+    x_max, x_min = df_a_xpts["gw"].max(), df_a_xpts["gw"].min()
+    y_max = max(df_a_xpts["xpts"].max(), df_b_xpts["xpts"].max())
+    fig.update_xaxes(range=(x_min, x_max), ticks="inside", tick0=x_min, dtick=1)
+    fig.update_yaxes(range=(0, y_max + 0.25), ticks="inside", tick0=0, dtick=1)
+
+    fig.add_shape(type="line", x0=gw_id, y0=0, x1=gw_id, y1=y_max + 0.25,
+                  line=dict(color="LightSeaGreen", width=4, dash="dash"))
+
+    fig.add_trace(go.Scatter(x=[gw_id + 0.5], y=[y_max / 2.0],
+                             text=["Next GW"], mode="text", showlegend=False))
+    pred_graph = dcc.Graph(figure=fig)
+
+    return radar_graph, pred_graph
 
 
 @app.callback([Output('squad-optim-output-play-xi', 'children'),
@@ -363,7 +439,7 @@ def execute_transfer_suggestions(n_clicks, manager_id, num_transfers, gw_id, mod
 
     if n_clicks:
         tables = []
-        n_suggestions = 5
+        n_suggestions = 1
         df_leads = load_leads(gw_id)
 
         for i in range(n_suggestions):

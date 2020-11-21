@@ -183,6 +183,15 @@ def make_scoring_section():
         style=margin_style
     )
 
+    button_scoring_lgbm_future = html.Div(
+        children=[
+            html.Div(make_button("LGBM Next GWs Predictor", 'lgbm-next-7-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="lgbm-next-7-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
     scoring = html.Div(
         children=[
             html.Div("Scoring", className='subtitle inline-header'),
@@ -191,7 +200,8 @@ def make_scoring_section():
             button_scoring_lgbm_potential,
             button_scoring_fastai_potential,
             button_scoring_lgbm_return,
-            button_scoring_fastai_return
+            button_scoring_fastai_return,
+            button_scoring_lgbm_future
         ])
     scoring_section = html.Div(scoring)
     return scoring_section

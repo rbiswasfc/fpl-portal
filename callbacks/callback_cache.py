@@ -6,6 +6,7 @@ from tqdm import tqdm
 from fastai.tabular import load_learner
 from pathlib import Path
 import shap
+import pdb
 
 try:
     from scripts.data_loader import DataLoader
@@ -58,7 +59,9 @@ def ingest_data():
 
 @cache.memoize(timeout=TIMEOUT)
 def prepare_xy_model_data(gw):
-    make_XY_data(gw)
+    n_next_gws = 7
+    for this_gw in range(gw, gw + n_next_gws):
+        make_XY_data(this_gw)
     result = html.P("Done!", style={"text-align": "center"})
     return result
 
@@ -410,7 +413,7 @@ def load_leads(gw_id):
                  fastai_point_path, fastai_potential_path, fastai_return_path]
     dfs = []
     for file_path in all_paths:
-        if not check_cache_validity(file_path, valid_days=2.0):
+        if not check_cache_validity(file_path, valid_days=5.0):
             return html.P("refresh model scores")
         df = pd.read_csv(file_path)
         dfs.append(df)
@@ -462,3 +465,58 @@ def load_leads(gw_id):
     max_net = df_leads["Net"].max()
     df_leads["Net"] = df_leads["Net"] / max_net
     return df_leads
+
+
+# @cache.memoize(timeout=TIMEOUT)
+def load_all_point_predictions(gw_id):
+    output_dir = "./data/model_outputs/"
+
+    data_maker = ModelDataMaker(CONFIG_2020)
+    df_map = data_maker.get_effective_gameweek_map()
+    player_id_team_id_map = data_maker.get_player_id_team_id_map()
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    player_id_player_position_map = data_maker.get_player_id_player_position_map()
+    team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    player_id_cost_map = data_maker.get_player_id_cost_map()
+    player_id_play_chance_map = data_maker.get_player_id_play_chance_map()
+    player_id_selection_map = data_maker.get_player_id_selection_map()
+
+    dfs = []
+    for this_gw in range(gw_id - 3, gw_id + 7):
+        try:
+            lgbm_point_path = os.path.join(output_dir, "lgbm_point_predictions_gw_{}.csv".format(this_gw))
+            df = pd.read_csv(lgbm_point_path)
+            dfs.append(df)
+        except:
+            print("Scores not found for GW={}".format(this_gw))
+
+    XY_train, _, _, _ = load_data(gw_id)
+    XY_train = XY_train[XY_train["season_id"] == 2].copy()
+    XY_train = XY_train[["player_id", "gw_id", "total_points"]].copy()
+    XY_train = XY_train.rename(columns={"gw_id": "gw"})
+    XY_train = XY_train.drop_duplicates(subset=["player_id", "gw"])
+
+    df_preds = pd.concat(dfs)
+    df_map = df_map[["gw_id", "own_team_id", "fixture_opp_team_id"]].copy()
+    df_map = df_map.rename(columns={"gw_id": "gw", "own_team_id": "team_id"})
+    df_map = df_map.drop_duplicates(subset=["gw", "team_id"])
+    df_preds["name"] = df_preds["player_id"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_preds["team_id"] = df_preds["player_id"].apply(lambda x: player_id_team_id_map.get(x, x))
+
+    df_preds = pd.merge(df_preds, df_map, how='left', on=["gw", "team_id"])
+    df_preds = pd.merge(df_preds, XY_train, how='left', on=["player_id", "gw"])
+
+    df_preds["team"] = df_preds["player_id"].apply(lambda x: team_id_team_name_map[player_id_team_id_map.get(x, x)])
+    df_preds["opponent"] = df_preds["fixture_opp_team_id"].apply(lambda x: team_id_team_name_map.get(x, 'NA'))
+    df_preds["position"] = df_preds["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
+    df_preds["chance_of_play"] = df_preds["player_id"].apply(lambda x: player_id_play_chance_map.get(x, x))
+    df_preds["cost"] = df_preds["player_id"].apply(lambda x: player_id_cost_map.get(x, x))/10.0
+    df_preds["cost"] = df_preds["cost"].round(1)
+    df_preds["selection_pct"] = df_preds["player_id"].apply(lambda x: player_id_selection_map.get(x, x))
+    df_preds = df_preds.rename(columns={"lgbm_point_pred": "xpts", "total_points": "pts"})
+    df_preds = df_preds.drop_duplicates(subset=["player_id", "gw"])
+
+    keep_cols = ["player_id", "name", "team", "position", "gw", "cost", "chance_of_play", "opponent", "xpts", "pts"]
+    df_preds = df_preds[keep_cols].copy()
+
+    return df_preds

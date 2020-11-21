@@ -143,6 +143,7 @@ def make_gw_history_plot(teams, league_id):
     fig.update_xaxes(range=(x_start, current_gw + 0.05), ticks="inside", tick0=x_start, dtick=1)
     fig.update_yaxes(ticks="inside")
     fig.update_layout(
+        title="Expected Scores Predictions",
         legend=dict(
             x=0.8,
             y=0.05,

@@ -278,12 +278,12 @@ def train_lgbm_model(gw, target="reg_target"):
             'boosting_type': 'gbdt',
             'objective': 'regression',
             'metric': 'l1',
-            'learning_rate': 0.005,
-            'feature_fraction': 0.8,
-            'bagging_fraction': 0.8,
+            'learning_rate': 0.01,
+            'feature_fraction': 0.75,
+            'bagging_fraction': 0.75,
             'verbose': -1,
             "max_depth": 7,
-            "num_leaves": 31,
+            "num_leaves": 15,
             "max_bin": 64
         }
     else:
@@ -292,12 +292,12 @@ def train_lgbm_model(gw, target="reg_target"):
             'boosting_type': 'gbdt',
             'objective': 'binary',
             'metric': 'auc',
-            'learning_rate': 0.005,
+            'learning_rate': 0.01,
             'feature_fraction': 0.8,
             'bagging_fraction': 0.8,
             'verbose': -1,
             "max_depth": 7,
-            "num_leaves": 31,
+            "num_leaves": 15,
             "max_bin": 64,
             'is_unbalance': 'true'
         }
