@@ -572,4 +572,59 @@ def execute_squad_analyzer(manager_id):
     df_captain = df_captain[["GW", "Cap", "Popular Cap", "Top Player", "Cap Score", "Popular Cap Score", "Top Score"]].copy()
     cap_table = make_table(df_captain)
 
-    return transfer_output_section, cap_table
+    cap_total = df_captain["Cap Score"].sum()
+    cap_ave = df_captain["Cap Score"].mean()
+    pop_total = df_captain["Popular Cap Score"].sum()
+    pop_ave = df_captain["Popular Cap Score"].mean()
+
+    df_captain["cap_agg"] = df_captain["Cap Score"].cumsum()
+    df_captain["pop_agg"] = df_captain["Popular Cap Score"].cumsum()
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(name="Captain Score",
+                             x=df_captain["GW"].values,
+                             y=df_captain["cap_agg"].values))
+    fig.add_trace(go.Scatter(name="Popular Captain Score",
+                             x=df_captain["GW"].values,
+                             y=df_captain["pop_agg"].values))
+
+    fig.layout.template = 'seaborn'
+    layout = go.Layout(xaxis={'title': 'Gameweek'},
+                       yaxis={'title': 'Total Score'},
+                       margin={'l': 5, 'b': 75, 't': 25, 'r': 5},
+                       hovermode='x')
+    fig.update_layout(layout)
+    fig.update_layout(
+        title="Captaincy Comparison",
+        legend=dict(
+            x=0.8,
+            y=0.05,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            ),
+        )
+    )
+
+    x_max, x_min = df_captain["GW"].max(), df_captain["GW"].min()
+    # y_max = max(df_a_xpts["xpts"].max(), df_b_xpts["xpts"].max())
+    fig.update_xaxes(range=(x_min, x_max), ticks="inside", tick0=x_min, dtick=1)
+    # fig.update_yaxes(range=(0, y_max + 0.25), ticks="inside", tick0=0, dtick=1)
+
+    # fig.add_shape(type="line", x0=x_min, y0=cap_ave, x1=x_max, y1=cap_ave,
+    #              line=dict(color="LightSeaGreen", width=4, dash="dash"))
+
+    # fig.add_trace(go.Scatter(x=[x_max - 2], y=[cap_ave + 0.5],
+    #                         text=["Ave Cap Score = {:.2f}".format(cap_ave)], mode="text", showlegend=False))
+    cap_graph = dcc.Graph(figure=fig)
+
+    cap_output = html.Div(children=[
+        cap_table,
+        html.Div("", style={"margin-top": "2rem"}),
+        cap_graph,
+        html.Div("", style={"margin-top": "2rem"}),
+        html.P("Average Captain Score: Manager = {:.2f}, Popular = {:.2f}".format(cap_ave, pop_ave))
+    ])
+
+    return transfer_output_section, cap_output
