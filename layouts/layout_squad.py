@@ -67,7 +67,7 @@ def make_optimization_settings_section():
     return section
 
 
-def make_transfer_analyzer_section():
+def make_squad_analyzer_section():
     margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
     df_league = query_league_standing()
     manager_ids = df_league["entry_id"].unique().tolist()
@@ -85,9 +85,12 @@ def make_transfer_analyzer_section():
     )
     section = html.Div(
         children=[
-            html.Div("Transfer Analyzer", className='subtitle inline-header'),
+            html.Div("Squad Analyzer", className='subtitle inline-header'),
             dropdown_section,
-            dcc.Loading(html.Div(id='transfer-analyzer-output', style=margin_style), color='black')
+            html.Div("Transfers", className='subtitle inline-header', style=margin_style),
+            dcc.Loading(html.Div(id='transfer-analyzer-output', style=margin_style), color='black'),
+            html.Div("Captaincy", className='subtitle inline-header', style=margin_style),
+            dcc.Loading(html.Div(id='captaincy-analyzer-output', style=margin_style), color='black'),
         ])
     return section
 
@@ -110,7 +113,8 @@ def make_left_layout_squad():
             html.Div("Bench", className='subtitle inline-header'),
             html.Div(" ", style={"margin-top": "2rem", "margin-bottom": "2rem"}),
             dcc.Loading(html.Div(id='squad-optim-output-bench'), color='black'),
-            make_transfer_analyzer_section(),
+            html.Div(" ", style={"margin-top": "2rem", "margin-bottom": "2rem"}),
+            make_squad_analyzer_section(),
 
         ],
     )

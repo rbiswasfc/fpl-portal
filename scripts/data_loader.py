@@ -163,6 +163,21 @@ class DataLoader(object):
             bb = pickle.load(f)
         return bb
 
+    def get_gameweek_metadata(self):
+        """
+        Load gameweek metadata
+        :return:
+        :rtype:
+        """
+        file_path = os.path.join(self.data_dir_clean, 'gw_metadata.csv')
+        if check_cache_validity(file_path):
+            print("Valid cache found for {}".format(file_path))
+        else:
+            print("executing scrape ...")
+            self.data_processor.save_gameweek_metadata()
+        df = pd.read_csv(file_path)
+        return df
+
 
 if __name__ == "__main__":
     pass

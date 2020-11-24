@@ -6,6 +6,7 @@ from tqdm import tqdm
 from fastai.tabular import load_learner
 from pathlib import Path
 import shap
+from itertools import product
 import pdb
 
 try:
@@ -68,8 +69,8 @@ def prepare_xy_model_data(gw):
 
 # LGBM Model Training
 @cache.memoize(timeout=TIMEOUT)
-def perform_lgbm_point_training(gw):
-    model, evaluation_results = train_lgbm_model(gw, target="reg_target")
+def perform_lgbm_point_training(gw, params=None):
+    model, evaluation_results = train_lgbm_model(gw, target="reg_target", params=params)
     return model, evaluation_results
 
 
@@ -107,16 +108,74 @@ def perform_fastai_return_training(gw):
 # scoring
 @cache.memoize(timeout=TIMEOUT)
 def perform_lgbm_point_scoring(gw):
-    model, _ = perform_lgbm_point_training(gw)
     XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
-    preds = model.predict(XY_scoring)
-    df = pd.DataFrame()
-    df["player_id"] = XY_scoring["player_id"].values
-    df["gw"] = gw
-    df['lgbm_point_pred'] = preds
+    # ensemble approach
+    task = ['train']
+    boosting_type = ['gbdt']
+    objective = ['regression']
+    metric = ['l1']
+    learning_rate = [0.02, 0.01, 0.005]
+    feature_fraction = [0.75]
+    bagging_fraction = [0.75]
+    verbose = [-1]
+    max_depth = [6, 7, 8]
+    num_leaves = [15]
+    max_bin = [64]
+    iter_params = product(task, boosting_type, objective, metric,
+                          learning_rate, feature_fraction, bagging_fraction,
+                          verbose, max_depth, num_leaves, max_bin)
+
+    res_dict = dict()
+    for i, param_val in enumerate(iter_params):
+        print("==" * 50)
+        print("Model instance: {}".format(i))
+        params = {
+            'task': param_val[0],
+            'boosting_type': param_val[1],
+            'objective': param_val[2],
+            'metric': param_val[3],
+            'learning_rate': param_val[4],
+            'feature_fraction': param_val[5],
+            'bagging_fraction': param_val[6],
+            'verbose': param_val[7],
+            "max_depth": param_val[8],
+            "num_leaves": param_val[9],
+            "max_bin": param_val[10]
+        }
+        print(params)
+        model, _ = perform_lgbm_point_training(gw, params)
+        preds = model.predict(XY_scoring)
+        df = pd.DataFrame()
+        df["player_id"] = XY_scoring["player_id"].values
+        df["gw"] = gw
+        df['pred'] = preds
+        print("==" * 50)
+        tmp_dict = {'params': params, 'result': df}
+        res_dict[i] = tmp_dict
+
+    # aggregate
+    cnt = 1
+    dfs = []
+    for k, v in res_dict.items():
+        df_res = v['result']
+        df_tmp = df_res[["player_id", "pred"]].copy()
+        df_tmp = df_tmp.rename(columns={"pred": "pred_{}".format(cnt)})
+        cnt = cnt + 1
+        dfs.append(df_tmp)
+
+    df_final = dfs[0].copy()
+    for i in range(1, len(dfs)):
+        df_final = pd.merge(df_final, dfs[i], how='left', on='player_id')
+
+    pred_cols = [col for col in df_final.columns if 'pred_' in col]
+    df_final["lgbm_point_pred"] = df_final[pred_cols].apply(lambda x: np.mean(x), axis=1)
+    df_final["gw"] = gw
+    print(df_final.head())
+    df_final = df_final[["player_id", "gw", "lgbm_point_pred"]].copy()
+
     save_path = os.path.join(model.model_output_dir, "lgbm_point_predictions_gw_{}.csv".format(gw))
-    df.to_csv(save_path, index=False)
-    print(df.head())
+    df_final.to_csv(save_path, index=False)
+
     result = html.P("Done!", style={"text-align": "center"})
     return result
 
@@ -510,7 +569,7 @@ def load_all_point_predictions(gw_id):
     df_preds["opponent"] = df_preds["fixture_opp_team_id"].apply(lambda x: team_id_team_name_map.get(x, 'NA'))
     df_preds["position"] = df_preds["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
     df_preds["chance_of_play"] = df_preds["player_id"].apply(lambda x: player_id_play_chance_map.get(x, x))
-    df_preds["cost"] = df_preds["player_id"].apply(lambda x: player_id_cost_map.get(x, x))/10.0
+    df_preds["cost"] = df_preds["player_id"].apply(lambda x: player_id_cost_map.get(x, x)) / 10.0
     df_preds["cost"] = df_preds["cost"].round(1)
     df_preds["selection_pct"] = df_preds["player_id"].apply(lambda x: player_id_selection_map.get(x, x))
     df_preds = df_preds.rename(columns={"lgbm_point_pred": "xpts", "total_points": "pts"})

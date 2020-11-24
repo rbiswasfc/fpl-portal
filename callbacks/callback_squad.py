@@ -317,6 +317,7 @@ def execute_player_comparison(player_a, player_b, gw_id):
                        hovermode='x')
     fig.update_layout(layout)
     fig.update_layout(
+        title="LGBM Next Gameweeks Prediction Comparison",
         legend=dict(
             x=0.8,
             y=0.05,
@@ -460,10 +461,11 @@ def execute_transfer_suggestions(n_clicks, manager_id, num_transfers, gw_id, mod
     return html.P("Button Not Clicked!")
 
 
-@app.callback(Output('transfer-analyzer-output', 'children'),
+@app.callback([Output('transfer-analyzer-output', 'children'),
+               Output('captaincy-analyzer-output', 'children')],
               [Input('manager-selection-transfer-analyzer', 'value')],
               prevent_initial_call=True)
-def execute_transfer_analyzer(manager_id):
+def execute_squad_analyzer(manager_id):
     if not manager_id:
         msg = html.P("Please select manager...")
         return msg
@@ -471,6 +473,7 @@ def execute_transfer_analyzer(manager_id):
     forward_window = 5
     config = load_config()
     data_scraper = DataScraper(config)
+    data_loader = DataLoader(config)
     data_maker = ModelDataMaker(CONFIG_2020)
     player_id_player_name_map = data_maker.get_player_id_player_name_map()
 
@@ -537,10 +540,36 @@ def execute_transfer_analyzer(manager_id):
     df_final = df_final[["GW", "# Transfers", "Hits", "Delta"]].copy()
     table_meta = make_table(df_final)
 
-    output_section = html.Div(children=[
+    transfer_output_section = html.Div(children=[
         table,
         html.Div("", style={"margin-top": "2rem"}),
         table_meta
     ])
 
-    return output_section
+    def get_score(element, gw):
+        this_df = df_fpl[(df_fpl["element"] == element) & (df_fpl["gw"] == gw)].copy()
+        if len(this_df) == 0:
+            return 'NA'
+        else:
+            score = this_df["total_points"].values[0]
+            return int(score)
+
+    # captaincy output
+    df_meta = data_loader.get_gameweek_metadata()
+    df_meta = df_meta[["id", "top_element", "most_captained"]].copy()
+    # df_meta["top_element_points"] = df_meta["top_element_info"].apply(lambda x: x["points"] if x else 'NA')
+    # df_meta = df_meta.drop(columns=["top_element_info"])
+    df_meta = df_meta.rename(columns={"id": "gw"})
+    df_captain = df_picks[df_picks["multiplier"] == 2].copy()
+    df_captain = pd.merge(df_captain, df_meta, how='left', on='gw')
+    df_captain["Cap"] = df_captain["element"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_captain["Cap Score"] = df_captain["total_points"]
+    df_captain["GW"] = df_captain["gw"]
+    df_captain["Popular Cap"] = df_captain["most_captained"].apply(lambda x: player_id_player_name_map.get(int(x), x))
+    df_captain["Popular Cap Score"] = df_captain[["most_captained", "gw"]].apply(lambda x: get_score(int(x[0]), int(x[1])), axis=1)
+    df_captain["Top Player"] = df_captain["top_element"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_captain["Top Score"] = df_captain[["top_element", "gw"]].apply(lambda x: get_score(int(x[0]), int(x[1])), axis=1)
+    df_captain = df_captain[["GW", "Cap", "Popular Cap", "Top Player", "Cap Score", "Popular Cap Score", "Top Score"]].copy()
+    cap_table = make_table(df_captain)
+
+    return transfer_output_section, cap_table

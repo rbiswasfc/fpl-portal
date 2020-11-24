@@ -74,9 +74,11 @@ class LgbModel(object):
         self.model_output_dir = "./data/model_outputs/"
         check_create_dir(self.model_output_dir)
 
-    def train(self, xy_train, features, target, cat_features=None, pct_valid=0.15, n_trees=3000, esr=25):
+    def train(self, xy_train, features, target, cat_features=None, pct_valid=0.15, n_trees=3000, esr=25, seed=42):
         """
         Train lgb model
+        :param seed:
+        :type seed:
         :param xy_train: training data
         :type xy_train: pd.DataFrame
         :param features: features list
@@ -98,7 +100,7 @@ class LgbModel(object):
             cat_features = []
         self.target = target
         X, y = xy_train[features].copy(), xy_train[target].values
-        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=pct_valid, random_state=42)
+        X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=pct_valid, random_state=seed)
         train_data = lgbm.Dataset(X_train, label=y_train, feature_name=features)
         valid_data = lgbm.Dataset(X_valid, label=y_valid, feature_name=features, reference=train_data)
         evaluation_results = {}
@@ -245,9 +247,11 @@ class FastaiModel(object):
         return fast_scores
 
 
-def train_lgbm_model(gw, target="reg_target"):
+def train_lgbm_model(gw, target="reg_target", params=None):
     """
     Train light gbm model
+    :param params:
+    :type params:
     :param gw: scoring gameweek
     :type gw: int
     :param target: target column
@@ -271,43 +275,49 @@ def train_lgbm_model(gw, target="reg_target"):
         cat_features = remove_next_features(cat_features)
         print("# features after removing next features = {}".format(len(features)))
         print("# cat features after removing next features = {}".format(len(cat_features)))
-
-    if target != "star_target":
-        params = {
-            'task': 'train',
-            'boosting_type': 'gbdt',
-            'objective': 'regression',
-            'metric': 'l1',
-            'learning_rate': 0.01,
-            'feature_fraction': 0.75,
-            'bagging_fraction': 0.75,
-            'verbose': -1,
-            "max_depth": 7,
-            "num_leaves": 15,
-            "max_bin": 64
-        }
-    else:
-        params = {
-            'task': 'train',
-            'boosting_type': 'gbdt',
-            'objective': 'binary',
-            'metric': 'auc',
-            'learning_rate': 0.01,
-            'feature_fraction': 0.8,
-            'bagging_fraction': 0.8,
-            'verbose': -1,
-            "max_depth": 7,
-            "num_leaves": 15,
-            "max_bin": 64,
-            'is_unbalance': 'true'
-        }
+    if not params:
+        if target != "star_target":
+            params = {
+                'task': 'train',
+                'boosting_type': 'gbdt',
+                'objective': 'regression',
+                'metric': 'l1',
+                'learning_rate': 0.01,
+                'feature_fraction': 0.75,
+                'bagging_fraction': 0.75,
+                'verbose': -1,
+                "max_depth": 7,
+                "num_leaves": 15,
+                "max_bin": 64
+            }
+        else:
+            params = {
+                'task': 'train',
+                'boosting_type': 'gbdt',
+                'objective': 'binary',
+                'metric': 'auc',
+                'learning_rate': 0.01,
+                'feature_fraction': 0.8,
+                'bagging_fraction': 0.8,
+                'verbose': -1,
+                "max_depth": 7,
+                "num_leaves": 15,
+                "max_bin": 64,
+                'is_unbalance': 'true'
+            }
 
     print("Shape before removing null targets: {}".format(XY_train.shape))
     XY_train = XY_train[~XY_train[target].isna()].copy()
     print("Shape after removing null targets: {}".format(XY_train.shape))
 
+    if target == "reg_target":
+        # make soft target
+        amp = 0.5
+        XY_train[target] = XY_train[target].apply(lambda y: y + (np.random.rand() - 0.5) * amp)
+    seed = np.random.randint(1, 1000)
+
     model = LgbModel(params)
-    evaluation_results = model.train(XY_train, features, target, cat_features=cat_features)
+    evaluation_results = model.train(XY_train, features, target, cat_features=cat_features, seed=seed)
     model.save_model()
     df_imp = model.get_feature_importance()
     df_imp.to_csv(os.path.join(model.model_output_dir, "lgbm_{}_feature_imp.csv".format(target)), index=False)
