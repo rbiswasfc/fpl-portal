@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import plotly.figure_factory as ff
 
 try:
     from layouts.layout_utils import make_table, make_dropdown, make_line_plot
@@ -463,13 +464,14 @@ def execute_transfer_suggestions(n_clicks, manager_id, num_transfers, gw_id, mod
 
 
 @app.callback([Output('transfer-analyzer-output', 'children'),
-               Output('captaincy-analyzer-output', 'children')],
+               Output('captaincy-analyzer-output', 'children'),
+               Output('point-analyzer-output', 'children')],
               [Input('manager-selection-transfer-analyzer', 'value')],
               prevent_initial_call=True)
 def execute_squad_analyzer(manager_id):
     if not manager_id:
         msg = html.P("Please select manager...")
-        return msg
+        return msg, "", ""
 
     forward_window = 5
     config = load_config()
@@ -477,6 +479,7 @@ def execute_squad_analyzer(manager_id):
     data_loader = DataLoader(config)
     data_maker = ModelDataMaker(CONFIG_2020)
     player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    player_id_player_position_map = data_maker.get_player_id_player_position_map()
 
     next_gw = data_scraper.get_next_gameweek_id()
     picks_data = data_scraper.get_entry_gw_picks_history(manager_id, next_gw - 1)
@@ -667,7 +670,137 @@ def execute_squad_analyzer(manager_id):
         html.P("Average Captain Score: Manager = {:.2f}, Popular = {:.2f}".format(cap_ave, pop_ave))
     ])
 
-    return transfer_output_section, cap_output
+    df_picks["name"] = df_picks["element"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_picks["position"] = df_picks["element"].apply(lambda x: player_id_player_position_map.get(x, x))
+    df_picks["effective_points"] = df_picks["multiplier"] * df_picks["total_points"]
+
+    df_contributor = df_picks[df_picks["multiplier"] > 0].copy()
+    df_contributor_tot = df_contributor.groupby("element")["total_points"].agg('sum').reset_index()
+    df_contributor_ave = df_contributor.groupby("element")["total_points"].agg('count').reset_index()
+    df_contributor_ave = df_contributor_ave.rename(columns={"total_points": "# Picked"})
+    df_contributor_tot = df_contributor_tot.rename(columns={"total_points": "Score"})
+    df_contributor_agg = pd.merge(df_contributor_tot, df_contributor_ave, on='element')
+    df_contributor_agg["Name"] = df_contributor_agg["element"].apply(lambda x: player_id_player_name_map.get(x, x))
+    df_contributor_agg["Position"] = df_contributor_agg["element"].apply(
+        lambda x: player_id_player_position_map.get(x, x))
+    df_contributor_agg = df_contributor_agg[["Name", "Position", "Score", "# Picked"]].copy()
+    df_contributor_agg["PPG"] = df_contributor_agg["Score"] / df_contributor_agg["# Picked"]
+    df_contributor_agg["PPG"] = df_contributor_agg["PPG"].round(2)
+    df_contributor_agg = df_contributor_agg.sort_values(by="Score", ascending=False)
+
+    contribution_table = make_table(df_contributor_agg)
+
+    df_breakdown = df_picks[df_picks["multiplier"] > 0].copy()
+    df_gk = df_breakdown[df_picks["position"] == "GK"].copy()
+    df_def = df_breakdown[df_picks["position"] == "DEF"].copy()
+    df_mid = df_breakdown[df_picks["position"] == "MID"].copy()
+    df_fwd = df_breakdown[df_picks["position"] == "FWD"].copy()
+
+    df_gk_pts = df_gk.groupby("gw")["effective_points"].agg('sum').reset_index()
+    df_gk_picks = df_gk.groupby("gw")["multiplier"].agg('sum').reset_index()
+    df_gk_agg = pd.merge(df_gk_pts, df_gk_picks, on='gw')
+    df_gk_agg["average"] = df_gk_agg["effective_points"] / df_gk_agg["multiplier"]
+    df_gk_agg["average"] = df_gk_agg["average"].round(2)
+    df_gk_agg["accu_points"] = df_gk_agg["effective_points"].cumsum()
+    df_gk_agg["accu_multi"] = df_gk_agg["multiplier"].cumsum()
+    df_gk_agg["accu_average"] = df_gk_agg["accu_points"] / df_gk_agg["accu_multi"]
+    df_gk_agg["accu_average"] = df_gk_agg["accu_average"].round(1)
+
+    df_def_pts = df_def.groupby("gw")["effective_points"].agg('sum').reset_index()
+    df_def_picks = df_def.groupby("gw")["multiplier"].agg('sum').reset_index()
+    df_def_agg = pd.merge(df_def_pts, df_def_picks, on='gw')
+    df_def_agg["average"] = df_def_agg["effective_points"] / df_def_agg["multiplier"]
+    df_def_agg["average"] = df_def_agg["average"].round(2)
+    df_def_agg["accu_points"] = df_def_agg["effective_points"].cumsum()
+    df_def_agg["accu_multi"] = df_def_agg["multiplier"].cumsum()
+    df_def_agg["accu_average"] = df_def_agg["accu_points"] / df_def_agg["accu_multi"]
+    df_def_agg["accu_average"] = df_def_agg["accu_average"].round(1)
+
+    df_mid_pts = df_mid.groupby("gw")["effective_points"].agg('sum').reset_index()
+    df_mid_picks = df_mid.groupby("gw")["multiplier"].agg('sum').reset_index()
+    df_mid_agg = pd.merge(df_mid_pts, df_mid_picks, on='gw')
+    df_mid_agg["average"] = df_mid_agg["effective_points"] / df_mid_agg["multiplier"]
+    df_mid_agg["average"] = df_mid_agg["average"].round(2)
+    df_mid_agg["accu_points"] = df_mid_agg["effective_points"].cumsum()
+    df_mid_agg["accu_multi"] = df_mid_agg["multiplier"].cumsum()
+    df_mid_agg["accu_average"] = df_mid_agg["accu_points"] / df_mid_agg["accu_multi"]
+    df_mid_agg["accu_average"] = df_mid_agg["accu_average"].round(1)
+
+    df_fwd_pts = df_fwd.groupby("gw")["effective_points"].agg('sum').reset_index()
+    df_fwd_picks = df_fwd.groupby("gw")["multiplier"].agg('sum').reset_index()
+    df_fwd_agg = pd.merge(df_fwd_pts, df_fwd_picks, on='gw')
+    df_fwd_agg["average"] = df_fwd_agg["effective_points"] / df_fwd_agg["multiplier"]
+    df_fwd_agg["average"] = df_fwd_agg["average"].round(2)
+    df_fwd_agg["accu_points"] = df_fwd_agg["effective_points"].cumsum()
+    df_fwd_agg["accu_multi"] = df_fwd_agg["multiplier"].cumsum()
+    df_fwd_agg["accu_average"] = df_fwd_agg["accu_points"] / df_fwd_agg["accu_multi"]
+    df_fwd_agg["accu_average"] = df_fwd_agg["accu_average"].round(1)
+
+    gk_mean = df_gk_agg["effective_points"].sum() / df_gk_agg["multiplier"].sum()
+    def_mean = df_def_agg["effective_points"].sum() / df_def_agg["multiplier"].sum()
+    mid_mean = df_mid_agg["effective_points"].sum() / df_mid_agg["multiplier"].sum()
+    fwd_mean = df_fwd_agg["effective_points"].sum() / df_fwd_agg["multiplier"].sum()
+    # pdb.set_trace()
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(name="GK",
+                             x=df_gk_agg["gw"].values,
+                             y=df_gk_agg["accu_average"].values))
+
+    fig.add_trace(go.Scatter(name="DEF",
+                             x=df_def_agg["gw"].values,
+                             y=df_def_agg["accu_average"].values))
+
+    fig.add_trace(go.Scatter(name="MID",
+                             x=df_mid_agg["gw"].values,
+                             y=df_mid_agg["accu_average"].values))
+
+    fig.add_trace(go.Scatter(name="FWD",
+                             x=df_fwd_agg["gw"].values,
+                             y=df_fwd_agg["accu_average"].values))
+
+    fig.layout.template = 'seaborn'
+    layout = go.Layout(xaxis={'title': 'Gameweek'},
+                       yaxis={'title': 'Average Score'},
+                       margin={'l': 5, 'b': 75, 't': 25, 'r': 5},
+                       hovermode='x')
+    fig.update_layout(layout)
+    fig.update_layout(
+        title="Points Breakdown",
+        legend=dict(
+            x=0.8,
+            y=0.05,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            ),
+        )
+    )
+
+    x_max, x_min = df_mid_agg["gw"].max(), df_mid_agg["gw"].min()
+    # y_max = max(df_a_xpts["xpts"].max(), df_b_xpts["xpts"].max())
+    fig.update_xaxes(range=(x_min, x_max), ticks="inside", tick0=x_min, dtick=1)
+    # fig.update_yaxes(range=(0, y_max + 0.25), ticks="inside", tick0=0, dtick=1)
+
+    # fig.add_shape(type="line", x0=x_min, y0=cap_ave, x1=x_max, y1=cap_ave,
+    #              line=dict(color="LightSeaGreen", width=4, dash="dash"))
+
+    # fig.add_trace(go.Scatter(x=[x_max - 2], y=[cap_ave + 0.5],
+    #                         text=["Ave Cap Score = {:.2f}".format(cap_ave)], mode="text", showlegend=False))
+    breakdown_graph = dcc.Graph(figure=fig)
+
+    breakdown_output = html.Div(children=[
+        contribution_table,
+        html.Div("", style={"margin-top": "2rem"}),
+        breakdown_graph,
+        html.Div("", style={"margin-top": "2rem"}),
+        html.P("Average Score: GK = {:.2f}, DEF = {:.2f},  MID = {:.2f},  FWD = {:.2f}".format(gk_mean, def_mean,
+                                                                                               mid_mean, fwd_mean))
+    ])
+
+    return transfer_output_section, cap_output, breakdown_output
 
 
 @app.callback(Output('transfer-container', 'children'),
@@ -899,3 +1032,201 @@ def get_squad_score(players, df_pred, gw, penalty=0):
             squad = df[["player_id", "gw", "name", "team", "position", "multiplier"]].copy()
         max_points = max_points - penalty
     return squad, max_points
+
+
+@app.callback(Output('ticker-predict-output', 'children'),
+              [Input('ticker-section-dropdown', 'value'),
+               Input('ticker-window-dropdown', 'value'),
+               Input('team-fdr-dropdown', 'value')],
+              prevent_initial_call=True)
+def display_fixtures_ticker(ticker, future_window, team):
+    if not ticker:
+        msg = html.P("Select Ticker Type...")
+        return msg
+    if not future_window:
+        msg = html.P("Select Window Size...")
+        return msg
+
+    if not team:
+        msg = html.P("Select Team...")
+        return msg
+
+    margin_style = {"margin-top": "1rem", "margin-bottom": "1rem"}
+
+    next_gw = query_next_gameweek()
+    dfs = []
+    for gw in range(next_gw, next_gw + int(future_window)):
+        file_path = "./data/model_outputs/lgbm_fdr_predictions_gw_{}.csv".format(gw)
+        df = pd.read_csv(file_path)
+        df["own_xg"] = df["own_xg"].round(2)
+        df["opp_xg"] = df["opp_xg"].round(2)
+        dfs.append(df)
+    df_fdr = pd.concat(dfs)
+    df_fdr_team = df_fdr[df_fdr["own_team"] == team].copy()
+    print(df_fdr_team)
+
+    df_attack_fdr = df_fdr.pivot(index='own_team', columns='gw', values='own_xg')
+    df_attack_fdr.columns = df_attack_fdr.columns.tolist()
+    df_attack_fdr = pd.DataFrame(df_attack_fdr.to_records())
+    # df_attack_fdr = df_attack_fdr.reset_index()
+
+    df_attack_opp = df_fdr.pivot(index='own_team', columns='gw', values='opp_team')
+    df_attack_opp.columns = df_attack_opp.columns.tolist()
+    df_attack_opp = pd.DataFrame(df_attack_opp.to_records())
+
+    df_defence_fdr = df_fdr.pivot(index='own_team', columns='gw', values='opp_xg')
+    df_defence_fdr.columns = df_defence_fdr.columns.tolist()
+    df_defence_fdr = pd.DataFrame(df_defence_fdr.to_records())
+
+    df_defence_opp = df_fdr.pivot(index='own_team', columns='gw', values='opp_team')
+    df_defence_opp.columns = df_defence_opp.columns.tolist()
+    df_defence_opp = pd.DataFrame(df_defence_opp.to_records())
+
+    defence_table = make_table(df_defence_fdr)
+    # pdb.set_trace()
+    team_shorthand_map = {
+        "Arsenal": "ARS",
+        "Aston Villa": "AVL",
+        "Brighton": "BHA",
+        "Burnley": "BUR",
+        "Chelsea": "CHE",
+        "Crystal Palace": "CRY",
+        "Everton": "EVE",
+        "Fulham": "FUL",
+        "Leicester": "LEI",
+        "Leeds": "LEE",
+        "Liverpool": "LIV",
+        "Man City": "MCI",
+        "Man Utd": "MUN",
+        "Newcastle": "NEW",
+        "Sheffield Utd": "SHU",
+        "Southampton": "SOU",
+        "Spurs": "TOT",
+        "West Brom": "WBA",
+        "West Ham": "WHU",
+        "Wolves": "WOL"
+    }
+
+    if ticker == "Attack":
+
+        # Table
+        df_attack_fdr = df_attack_fdr.rename(columns={"own_team": "Team"})
+        cols, gw_cols = [], []
+        for col in df_attack_fdr.columns:
+            if col != "Team":
+                col = "GW " + str(col)
+                gw_cols.append(col)
+            cols.append(col)
+
+        df_attack_fdr.columns = cols
+        df_attack_opp.columns = cols
+
+        # attack_table = make_table(df_attack_fdr)
+        df_attack_fdr["team_code"] = df_attack_fdr["Team"].apply(lambda x: team_shorthand_map.get(x, x))
+        df_attack_fdr["mean_xg"] = df_attack_fdr[gw_cols].apply(lambda x: np.mean(x), axis=1)
+        df_attack_opp["mean_xg"] = df_attack_fdr["mean_xg"]
+        df_attack_fdr = df_attack_fdr.sort_values(by="mean_xg", ascending=True)
+        df_attack_opp = df_attack_opp.sort_values(by="mean_xg", ascending=True)
+        for col in gw_cols:
+            df_attack_opp[col] = df_attack_opp[col].apply(lambda x: team_shorthand_map.get(x, x))
+
+        # Heat MAP
+        print(df_attack_fdr["Team"].values.tolist())
+        fig = ff.create_annotated_heatmap(df_attack_fdr[gw_cols].values,
+                                          x=gw_cols,
+                                          y=df_attack_fdr["Team"].values.tolist(),
+                                          annotation_text=df_attack_opp[gw_cols].values,
+                                          colorscale='Blues',
+                                          hoverinfo='z',
+                                          showscale=True)
+
+        fig.update_layout(title="Ticker Heatmap: Attack",
+                          yaxis={"title": 'Team'},
+                          # width=1200,
+                          height=700,
+                          xaxis={"title": 'Gameweek'}, )
+        heat_map = dcc.Graph(figure=fig)
+
+        # Bar Plot
+        net_xg = df_fdr_team["own_xg"].sum()
+        fig = px.bar(df_fdr_team, y='own_xg', x='opp_team', text='own_xg',
+                     title="{} {} Ticker: xG = {:.2f}".format(team, ticker, net_xg),
+                     labels={"own_xg": "xG", "opp_team": "Opponent"},
+                     template="seaborn",
+                     color='own_xg',
+                     color_continuous_scale='Blues')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+        fig.update_layout(margin={'l': 5, 'b': 75, 't': 25, 'r': 0})
+        ticker_bar = dcc.Graph(figure=fig)
+
+        section = html.Div(
+            children=[
+                # attack_table,
+                html.Div("", style=margin_style),
+                ticker_bar,
+                html.Div("", style=margin_style),
+                heat_map
+            ]
+        )
+        return section
+    # DEFENCE TICKER #
+    else:
+        df_defence_fdr = df_defence_fdr.rename(columns={"own_team": "Team"})
+        cols, gw_cols = [], []
+        for col in df_defence_fdr.columns:
+            if col != "Team":
+                col = "GW " + str(col)
+                gw_cols.append(col)
+            cols.append(col)
+
+        df_defence_fdr.columns = cols
+        df_defence_opp.columns = cols
+
+        # attack_table = make_table(df_attack_fdr)
+        df_defence_fdr["team_code"] = df_defence_fdr["Team"].apply(lambda x: team_shorthand_map.get(x, x))
+        df_defence_fdr["mean_xga"] = df_defence_fdr[gw_cols].apply(lambda x: np.mean(x), axis=1)
+        df_defence_opp["mean_xga"] = df_defence_fdr["mean_xga"]
+        df_defence_fdr = df_defence_fdr.sort_values(by="mean_xga", ascending=False)
+        df_defence_opp = df_defence_opp.sort_values(by="mean_xga", ascending=False)
+        for col in gw_cols:
+            df_defence_opp[col] = df_defence_opp[col].apply(lambda x: team_shorthand_map.get(x, x))
+
+        # Heat MAP
+        print(df_defence_fdr["Team"].values.tolist())
+        fig = ff.create_annotated_heatmap(df_defence_fdr[gw_cols].values,
+                                          x=gw_cols,
+                                          y=df_defence_fdr["Team"].values.tolist(),
+                                          annotation_text=df_defence_opp[gw_cols].values,
+                                          colorscale='Reds',
+                                          hoverinfo='z',
+                                          showscale=True)
+
+        fig.update_layout(title="Ticker Heatmap: Defence",
+                          yaxis={"title": 'Team'},
+                          # width=1200,
+                          height=700,
+                          xaxis={"title": 'Gameweek'}, )
+        heat_map = dcc.Graph(figure=fig)
+
+        # Bar Plot
+        net_xga = df_fdr_team["opp_xg"].sum()
+        fig = px.bar(df_fdr_team, y='opp_xg', x='opp_team', text='opp_xg',
+                     title="{} {} Ticker: xGA = {:.2f}".format(team, ticker, net_xga),
+                     labels={"opp_xg": "xGA", "opp_team": "Opponent"},
+                     template="seaborn",
+                     color='opp_xg',
+                     color_continuous_scale='Reds')
+        fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+        fig.update_layout(margin={'l': 5, 'b': 75, 't': 25, 'r': 0})
+        ticker_bar = dcc.Graph(figure=fig)
+
+        section = html.Div(
+            children=[
+                # attack_table,
+                html.Div("", style=margin_style),
+                ticker_bar,
+                html.Div("", style=margin_style),
+                heat_map
+            ]
+        )
+        return section

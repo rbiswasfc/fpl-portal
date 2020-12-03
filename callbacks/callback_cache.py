@@ -19,6 +19,7 @@ try:
     from scripts.model_data_ingestion import DataIngestor
     from scripts.feature_engineering import make_XY_data
     from scripts.models import load_data, train_lgbm_model, train_fastai_model
+    from scripts.models import LgbModel
 except:
     raise ImportError
 
@@ -176,6 +177,90 @@ def perform_lgbm_point_scoring(gw):
     save_path = os.path.join(model.model_output_dir, "lgbm_point_predictions_gw_{}.csv".format(gw))
     df_final.to_csv(save_path, index=False)
 
+    result = html.P("Done!", style={"text-align": "center"})
+    return result
+
+
+@cache.memoize(timeout=TIMEOUT)
+def perform_lgbm_fdr_scoring(gw):
+    XY_train, XY_test, XY_scoring, features_dict = load_data(gw)
+
+    team_feats = ["strength_overall_home", "strength_overall_away", "strength_attack_home",
+                  "strength_attack_away", "strength_defence_home", "strength_defence_away"]
+
+    understat_features = ["xg", "xga", "npxg", "npxga", "deep", "deep_allowed", "xpts", "npxgd",
+                          "ppda_att", "ppda_def", "ppda_allowed_att", "ppda_allowed_def"]
+
+    opp_team_features = ["opp_" + feat for feat in team_feats]
+    opp_understat_features = ["opp_" + feat for feat in understat_features]
+    own_team_features = ["own_" + feat for feat in team_feats]
+    own_understat_features = ["own_" + feat for feat in understat_features]
+
+    lag_dict = [1, 2, 3]
+
+    opp_team_lag_features = []
+    for lag in lag_dict:
+        for feat in opp_team_features:
+            opp_team_lag_features.append(feat + '_lag_{}'.format(lag))
+
+    opp_understat_lag_features = []
+    for lag in lag_dict:
+        for feat in opp_understat_features:
+            opp_understat_lag_features.append(feat + '_lag_{}'.format(lag))
+
+    own_understat_lag_features = []
+    for lag in lag_dict:
+        for feat in own_understat_features:
+            own_understat_lag_features.append(feat + '_lag_{}'.format(lag))
+
+    lag_features = own_understat_lag_features + opp_team_lag_features + opp_understat_lag_features
+    static_feats = ["is_home"] + opp_team_features + own_team_features
+    features = static_feats + lag_features
+    keep_cols = ["own_team_id", "opp_team_id", "team_h_score", "team_a_score"] + static_feats + lag_features
+
+    XY_team_train = XY_train.drop_duplicates(subset=["opp_team_id", "own_team_id", "season_id"])
+    XY_team_scoring = XY_scoring.drop_duplicates(subset=["opp_team_id", "own_team_id", "season_id"])
+    XY_team_train = XY_team_train[keep_cols].copy()
+    XY_team_scoring = XY_team_scoring[keep_cols].copy()
+
+    XY_team_train["own_score"] = XY_team_train[["is_home", "team_h_score", "team_a_score"]].apply(
+        lambda x: x[1] if x[0] else x[2], axis=1)
+    XY_team_train["opp_score"] = XY_team_train[["is_home", "team_h_score", "team_a_score"]].apply(
+        lambda x: x[2] if x[0] else x[1], axis=1)
+
+    params = {
+        'task': 'train',
+        'boosting_type': 'gbdt',
+        'objective': 'regression',
+        'metric': 'l1',
+        'learning_rate': 0.01,
+        'feature_fraction': 0.75,
+        'bagging_fraction': 0.75,
+        'verbose': -1,
+        "max_depth": 7,
+        "num_leaves": 15,
+        "max_bin": 64
+    }
+
+    model = LgbModel(params)
+    evaluation_results = model.train(XY_team_train, features, "own_score", cat_features=[])
+    preds = model.predict(XY_team_scoring)
+    XY_team_scoring["own_xg"] = preds
+
+    model = LgbModel(params)
+    evaluation_results = model.train(XY_team_train, features, "opp_score", cat_features=[])
+    preds = model.predict(XY_team_scoring)
+    XY_team_scoring["opp_xg"] = preds
+    XY_team_scoring = XY_team_scoring[["own_team_id", "opp_team_id", "own_xg", "opp_xg"]].copy()
+
+    data_maker = ModelDataMaker(CONFIG_2020)
+    team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    XY_team_scoring["own_team"] = XY_team_scoring["own_team_id"].apply(lambda x: team_id_team_name_map[x])
+    XY_team_scoring["opp_team"] = XY_team_scoring["opp_team_id"].apply(lambda x: team_id_team_name_map[x])
+    XY_team_scoring["gw"] = gw
+    XY_team_scoring = XY_team_scoring[["gw", "own_team", "opp_team", "own_xg", "opp_xg"]].copy()
+    save_path = os.path.join(model.model_output_dir, "lgbm_fdr_predictions_gw_{}.csv".format(gw))
+    XY_team_scoring.to_csv(save_path, index=False)
     result = html.P("Done!", style={"text-align": "center"})
     return result
 

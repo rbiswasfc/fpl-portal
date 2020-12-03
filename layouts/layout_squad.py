@@ -8,6 +8,7 @@ try:
     from layouts.layout_utils import make_header, make_table, make_dropdown, make_button, make_input
     from layouts.layout_cache import query_next_gameweek, query_player_id_player_name_map, query_league_standing
     from layouts.layout_cache import CONFIG_2020
+    from scripts.data_preparation import ModelDataMaker
 except:
     raise ImportError
 
@@ -91,6 +92,8 @@ def make_squad_analyzer_section():
             dcc.Loading(html.Div(id='transfer-analyzer-output', style=margin_style), color='black'),
             html.Div("Captaincy", className='subtitle inline-header', style=margin_style),
             dcc.Loading(html.Div(id='captaincy-analyzer-output', style=margin_style), color='black'),
+            html.Div("Points Breakdown", className='subtitle inline-header', style=margin_style),
+            dcc.Loading(html.Div(id='point-analyzer-output', style=margin_style), color='black'),
         ])
     return section
 
@@ -182,6 +185,48 @@ def make_transfers_section():
     return section
 
 
+def make_fixtures_ticker_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "1rem"}
+
+    data_maker = ModelDataMaker(CONFIG_2020)
+    team_id_team_name_map = data_maker.get_team_id_team_name_map()
+    team_names = []
+    for k, v in team_id_team_name_map.items():
+        team_names.append(v)
+    team_names = list(set(team_names))
+    team_names = sorted(team_names)
+
+    team_options = [{'label': team, 'value': team} for team in team_names]
+    dropdown_team = make_dropdown('team-fdr-dropdown', team_options, placeholder="Select Team ...")
+
+    ticker_category = ["Attack", "Defence"]
+    ticker_options = [{'label': cat, 'value': cat} for cat in ticker_category]
+    dropdown_ticker = make_dropdown('ticker-section-dropdown', ticker_options, placeholder="Select Ticker ...")
+
+    window_size = [3, 4, 5, 6, 7]
+    window_options = [{'label': window, 'value': window} for window in window_size]
+    dropdown_window = make_dropdown('ticker-window-dropdown', window_options, placeholder="Select Window Size ...")
+
+    dropdown_window = make_dropdown('ticker-window-dropdown', window_options, placeholder="Select Window Size ...")
+
+    dropdown_section = html.Div(
+        children=[
+            html.Div(dropdown_ticker, className='col-6'),
+            html.Div(dropdown_window, className='col-6'),
+        ],
+        className='row'
+    )
+
+    section = html.Div(
+        children=[
+            html.Div("Fixtures Ticker", className='subtitle inline-header'),
+            dropdown_section,
+            dropdown_team,
+            dcc.Loading(html.Div(id='ticker-predict-output', style=margin_style), color='black')
+        ])
+    return section
+
+
 def make_transfer_explorer_section():
     margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
     df_league = query_league_standing()
@@ -237,6 +282,7 @@ def make_right_layout_squad():
             make_player_comparison_section(),
             make_transfer_explorer_section(),
             make_transfers_section(),
+            make_fixtures_ticker_section(),
         ],
     )
     return layout

@@ -192,6 +192,15 @@ def make_scoring_section():
         style=margin_style
     )
 
+    button_scoring_fdr = html.Div(
+        children=[
+            html.Div(make_button("FDR Predictor", 'lgbm-fdr-predict-btn'), className="col-6"),
+            dcc.Loading(html.Div(id="lgbm-fdr-predict-output", className="col-6"), color='black'),
+        ],
+        className="row",
+        style=margin_style
+    )
+
     scoring = html.Div(
         children=[
             html.Div("Scoring", className='subtitle inline-header'),
@@ -201,7 +210,8 @@ def make_scoring_section():
             button_scoring_fastai_potential,
             button_scoring_lgbm_return,
             button_scoring_fastai_return,
-            button_scoring_lgbm_future
+            button_scoring_lgbm_future,
+            button_scoring_fdr
         ])
     scoring_section = html.Div(scoring)
     return scoring_section

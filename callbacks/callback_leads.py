@@ -26,7 +26,7 @@ try:
     from callbacks.callback_cache import perform_fastai_point_training, perform_fastai_potential_training, \
         perform_fastai_return_training, perform_lgbm_point_scoring, perform_lgbm_potential_scoring, \
         perform_lgbm_return_scoring, perform_fastai_point_scoring, perform_fastai_potential_scoring, \
-        perform_fastai_return_scoring, perform_shap_analysis
+        perform_fastai_return_scoring, perform_shap_analysis, perform_lgbm_fdr_scoring
     from callbacks.callback_cache import CONFIG_2020
 except:
     raise ImportError
@@ -411,6 +411,25 @@ def execute_lgbm_next_7_scoring(n_clicks, gw):
             print("Scoring for gw {}".format(this_gw))
             result = perform_lgbm_point_scoring(this_gw)
         return html.Div("Done!", style={"text-align": "center"})
+    else:
+        return html.Div("Button Not Clicked!", style={"text-align": "center"})
+
+
+@app.callback(Output('lgbm-fdr-predict-output', 'children'),
+              [Input('lgbm-fdr-predict-btn', 'n_clicks')],
+              [State('gw-selection-dropdown', 'value')],
+              prevent_initial_call=True)
+def execute_lgbm_fdr_scoring(n_clicks, gw):
+    print("LGBM FDR Next 7 click={}".format(n_clicks))
+    if n_clicks:
+        if not gw:
+            return html.P("Please Select GW")
+        print("Scoring from LGBM NEXT 7 Model for gameweek={}".format(gw))
+        n_next_gws = 7
+        for this_gw in range(gw, gw + n_next_gws):
+            print("FDR Scoring for gw {}".format(this_gw))
+            result = perform_lgbm_fdr_scoring(this_gw)
+        return result
     else:
         return html.Div("Button Not Clicked!", style={"text-align": "center"})
 
