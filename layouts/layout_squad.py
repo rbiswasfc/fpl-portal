@@ -182,6 +182,51 @@ def make_transfers_section():
     return section
 
 
+def make_transfer_explorer_section():
+    margin_style = {"margin-top": "1rem", "margin-bottom": "2rem"}
+    df_league = query_league_standing()
+    manager_ids = df_league["entry_id"].unique().tolist()
+    manager_names = df_league["entry_name"].unique().tolist()
+    manager_options = [{'label': manager, 'value': manager_id} for manager, manager_id in
+                       zip(manager_names, manager_ids)]
+    dropdown_manager = make_dropdown('manager-selection-transfer-explorer', manager_options,
+                                     placeholder="Select Manager ...")
+    banked_transfers = [0, 1]
+    transfer_options = [{'label': num, 'value': num} for num in banked_transfers]
+    dropdown_num_transfers = make_dropdown('transfer-banked-numbers', transfer_options,
+                                           placeholder="# Banked Transfer ...")
+    dropdown_section = html.Div(
+        children=[
+            html.Div(dropdown_manager, className='col-6'),
+            html.Div(dropdown_num_transfers, className='col-6'),
+        ],
+        className='row'
+    )
+
+    submit_btn = html.Div(make_button("Submit", 'transfer-explorer-submit-btn')),
+    add_btn = html.Div(make_button("Add Transfer", 'transfer-explorer-add-btn')),
+
+    button_section = html.Div(
+        children=[
+            html.Div(add_btn, className='col-6'),
+            html.Div(submit_btn, className='col-6'),
+        ],
+        className='row'
+    )
+
+    section = html.Div(
+        children=[
+            html.Div("Transfer Explorer", className='subtitle inline-header'),
+            dropdown_section,
+            html.Div(id='transfer-container', children=[]),
+            button_section,
+            dcc.Loading(html.Div(id='transfer-explorer-output', style=margin_style), color='black')
+        ],
+    )
+
+    return section
+
+
 def make_right_layout_squad():
     header = make_header("Transfers")
     layout = html.Div(
@@ -190,6 +235,7 @@ def make_right_layout_squad():
         children=[
             header,
             make_player_comparison_section(),
+            make_transfer_explorer_section(),
             make_transfers_section(),
         ],
     )

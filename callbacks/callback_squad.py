@@ -6,7 +6,7 @@ import shap
 from pathlib import Path
 import dash_html_components as html
 import dash_core_components as dcc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, MATCH, ALL
 from app import app
 from tqdm import tqdm
 import pandas as pd
@@ -26,6 +26,7 @@ try:
     from scripts.feature_engineering import make_XY_data
     from scripts.models import load_data, train_lgbm_model, train_fastai_model
     from callbacks.callback_cache import load_leads, CONFIG_2020, load_all_point_predictions
+    from layouts.layout_cache import query_next_gameweek
 except:
     raise ImportError
 
@@ -244,7 +245,7 @@ def execute_player_comparison(player_a, player_b, gw_id):
     df_leads["LGBM Point"] = df_leads["LGBM Point"] / point_div
     df_leads["Fast Point"] = df_leads["Fast Point"] / point_div
     df_leads["LGBM Return"] = df_leads["LGBM Return"] / 0.8
-    df_leads["Fast Return"] = df_leads["Fast Return"] / 0.4
+    df_leads["Fast Return"] = df_leads["Fast Return"] / 0.8
     df_leads["Net"] = df_leads["Net"] / 0.4
     df_leads["Cost"] = df_leads["cost"] / 10.0
 
@@ -502,7 +503,7 @@ def execute_squad_analyzer(manager_id):
     data = data_scraper.get_entry_gw_transfers(manager_id)
     df_transfer = pd.DataFrame(data)
     gameweeks = df_transfer["event"].unique().tolist()
-    summary_dfs = []
+    summary_dfs, gw_impact_dfs = [], []
     for this_gw in gameweeks:
         tmp_df = df_transfer[df_transfer["event"] == this_gw].copy()
 
@@ -522,10 +523,15 @@ def execute_squad_analyzer(manager_id):
         df_focus = df_focus.rename(columns={"total_points": "out_points"})
         df_focus["out_points"] = df_focus["out_points"].fillna(0)
         df_focus["impact"] = (df_focus["in_points"] - df_focus["out_points"]) * df_focus["multiplier"]
+
         df_summary = df_focus.groupby("element_in")["impact"].agg('sum').reset_index()
         df_summary["gw"] = this_gw
         df_summary["element_out"] = df_summary["element_in"].apply(lambda x: in_out_map[x])
         summary_dfs.append(df_summary)
+
+        df_gw = df_focus.groupby("gw")["impact"].agg('sum').reset_index()
+        gw_impact_dfs.append(df_gw)
+
     df_final = pd.concat(summary_dfs)
     df_final["Transfer In"] = df_final["element_in"].apply(lambda x: player_id_player_name_map.get(x, x))
     df_final["Transfer Out"] = df_final["element_out"].apply(lambda x: player_id_player_name_map.get(x, x))
@@ -540,10 +546,41 @@ def execute_squad_analyzer(manager_id):
     df_final = df_final[["GW", "# Transfers", "Hits", "Delta"]].copy()
     table_meta = make_table(df_final)
 
+    # evolution
+    df_evolve = pd.concat(gw_impact_dfs)
+    df_evolve = df_evolve.groupby('gw')["impact"].agg('sum').reset_index()
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(name="GW Transfer Impact",
+                             x=df_evolve["gw"].values,
+                             y=df_evolve["impact"].values,
+                             showlegend=False))
+
+    fig.layout.template = 'seaborn'
+    layout = go.Layout(xaxis={'title': 'Gameweek'},
+                       yaxis={'title': 'Impact'},
+                       margin={'l': 5, 'b': 75, 't': 25, 'r': 5},
+                       hovermode='x')
+    fig.update_layout(layout)
+    fig.update_layout(title="Transfer Impact Evolution")
+    ave_impact = df_evolve["impact"].mean()
+
+    x_max, x_min = df_evolve["gw"].max(), df_evolve["gw"].min()
+    fig.update_xaxes(range=(x_min, x_max), ticks="inside", tick0=x_min, dtick=1)
+
+    fig.add_shape(type="line", x0=x_min, y0=ave_impact, x1=x_max, y1=ave_impact,
+                  line=dict(color="LightSeaGreen", width=4, dash="dash"))
+    fig.add_trace(go.Scatter(x=[max(x_max - 4, x_min)], y=[ave_impact + 2],
+                             text=["Ave Impact = {:.2f}".format(ave_impact)], mode="text", showlegend=False))
+
+    impact_graph = dcc.Graph(figure=fig)
+
     transfer_output_section = html.Div(children=[
         table,
         html.Div("", style={"margin-top": "2rem"}),
-        table_meta
+        table_meta,
+        html.Div("", style={"margin-top": "2rem"}),
+        impact_graph
     ])
 
     def get_score(element, gw):
@@ -566,10 +603,12 @@ def execute_squad_analyzer(manager_id):
     df_captain["Cap Score"] = df_captain["total_points"]
     df_captain["GW"] = df_captain["gw"]
     df_captain["Popular Cap"] = df_captain["most_captained"].apply(lambda x: player_id_player_name_map.get(int(x), x))
-    df_captain["Popular Cap Score"] = df_captain[["most_captained", "gw"]].apply(lambda x: get_score(int(x[0]), int(x[1])), axis=1)
+    df_captain["Popular Cap Score"] = df_captain[["most_captained", "gw"]].apply(
+        lambda x: get_score(int(x[0]), int(x[1])), axis=1)
     df_captain["Top Player"] = df_captain["top_element"].apply(lambda x: player_id_player_name_map.get(x, x))
     df_captain["Top Score"] = df_captain[["top_element", "gw"]].apply(lambda x: get_score(int(x[0]), int(x[1])), axis=1)
-    df_captain = df_captain[["GW", "Cap", "Popular Cap", "Top Player", "Cap Score", "Popular Cap Score", "Top Score"]].copy()
+    df_captain = df_captain[
+        ["GW", "Cap", "Popular Cap", "Top Player", "Cap Score", "Popular Cap Score", "Top Score"]].copy()
     cap_table = make_table(df_captain)
 
     cap_total = df_captain["Cap Score"].sum()
@@ -579,6 +618,7 @@ def execute_squad_analyzer(manager_id):
 
     df_captain["cap_agg"] = df_captain["Cap Score"].cumsum()
     df_captain["pop_agg"] = df_captain["Popular Cap Score"].cumsum()
+
     fig = go.Figure()
     fig.add_trace(go.Scatter(name="Captain Score",
                              x=df_captain["GW"].values,
@@ -628,3 +668,234 @@ def execute_squad_analyzer(manager_id):
     ])
 
     return transfer_output_section, cap_output
+
+
+@app.callback(Output('transfer-container', 'children'),
+              [Input('transfer-explorer-add-btn', 'n_clicks')],
+              [State('transfer-container', 'children')],
+              prevent_initial_call=True)
+def add_transfers(n_clicks, children):
+    if not n_clicks:
+        msg = html.P("Click add transfer for exploration...")
+        return msg
+
+    config = load_config()
+    data_maker = ModelDataMaker(CONFIG_2020)
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    next_gw = query_next_gameweek()
+    future_window = 5
+
+    transfer_options = [{'label': v, 'value': k} for k, v in player_id_player_name_map.items()]
+    gw_options = [{'label': gw, 'value': gw} for gw in range(next_gw, next_gw + future_window)]
+    transfer_in_id = {
+        'type': 'transfer-in-dropdown',
+        'index': n_clicks
+    }
+    transfer_out_id = {
+        'type': 'transfer-out-dropdown',
+        'index': n_clicks
+    }
+    gw_element_id = {
+        'type': 'transfer-gw-dropdown',
+        'index': n_clicks
+    }
+    dropdown_transfer_in = make_dropdown(transfer_in_id, transfer_options, placeholder="Select Transfer In Player ...")
+    dropdown_transfer_out = make_dropdown(transfer_out_id, transfer_options,
+                                          placeholder="Select Transfer Out Player ...")
+    dropdown_gw = make_dropdown(gw_element_id, gw_options, placeholder="Select Transfer GW ...")
+
+    new_transfer_section = html.Div(
+        children=[
+            html.Div(dropdown_transfer_in, className='col-4'),
+            html.Div(dropdown_transfer_out, className='col-4'),
+            html.Div(dropdown_gw, className='col-4'),
+        ],
+        className='row'
+    )
+    children.append(new_transfer_section)
+    return children
+
+
+@app.callback(Output('transfer-explorer-output', 'children'),
+              [Input('transfer-explorer-submit-btn', 'n_clicks'),
+               Input('manager-selection-transfer-explorer', 'value'),
+               Input('transfer-banked-numbers', 'value'),
+               Input({'type': 'transfer-in-dropdown', 'index': ALL}, 'value'),
+               Input({'type': 'transfer-out-dropdown', 'index': ALL}, 'value'),
+               Input({'type': 'transfer-gw-dropdown', 'index': ALL}, 'value')],
+              prevent_initial_call=True)
+def execute_transfer_evaluation(n_clicks, manager_id, free_transfers, players_in, players_out, gws):
+    if not n_clicks:
+        msg = html.P("Click submit for exploration...")
+        return msg
+    config = load_config()
+    data_scraper = DataScraper(config)
+    data_loader = DataLoader(config)
+    data_maker = ModelDataMaker(CONFIG_2020)
+
+    player_id_player_name_map = data_maker.get_player_id_player_name_map()
+    picks_data = data_scraper.get_entry_current_gw_picks(manager_id)
+    df_org = pd.DataFrame(picks_data["picks"])
+    df_org["player_name"] = df_org["element"].apply(lambda x: player_id_player_name_map[x])
+    next_gw = query_next_gameweek()
+    df_leads = load_all_point_predictions(next_gw)
+    print(df_org)
+    # print(df_leads.head())
+
+    n_future = 7
+    gw_to_transfers_in_map = dict()
+    gw_to_transfers_out_map = dict()
+
+    original_squad = df_org["element"].unique().tolist()
+    gw_to_squad_map = dict()
+
+    for gw in range(next_gw, next_gw + n_future):
+        gw_to_transfers_in_map[gw] = []
+        gw_to_transfers_out_map[gw] = []
+
+    for gw, trans_in, trans_out in zip(gws, players_in, players_out):
+        gw_to_transfers_in_map[gw].append(trans_in)
+        gw_to_transfers_out_map[gw].append(trans_out)
+
+    current_squad = original_squad.copy()
+    print(current_squad)
+    for gw in range(next_gw, next_gw + n_future):
+        # pdb.set_trace()
+        this_in = gw_to_transfers_in_map[gw]
+        this_out = gw_to_transfers_out_map[gw]
+        if len(this_in) > 0:
+            current_squad.extend(this_in)
+            for elem in this_out:
+                try:
+                    current_squad.remove(elem)
+                except:
+                    return html.P("Transferred out player ({}) not found!!".format(elem))
+        try:
+            assert len(current_squad) == 15
+            gw_to_squad_map[gw] = current_squad.copy()
+        except:
+            return html.P("Inconsistent transfers made in gw {}".format(gw))
+
+    # get scores
+    org_scores, mod_scores = [], []
+    for gw in range(next_gw, next_gw + n_future):
+        _, org_gw_score = get_squad_score(original_squad, df_leads, gw)
+        _, mod_gw_score = get_squad_score(gw_to_squad_map[gw], df_leads, gw)
+        org_scores.append(org_gw_score)
+        mod_scores.append(mod_gw_score)
+
+    df_res = pd.DataFrame()
+    df_res["org"] = org_scores
+    df_res["mod"] = mod_scores
+    df_res["mod_accu"] = df_res["mod"].cumsum()
+    df_res["org_accu"] = df_res["org"].cumsum()
+    df_res["delta_accu"] = df_res["mod_accu"] - df_res["org_accu"]
+    df_res["gw"] = [gw for gw in range(next_gw, next_gw + n_future)]
+
+    df_res["mod_accu"] = df_res["mod_accu"].round(2)
+    df_res["org_accu"] = df_res["org_accu"].round(2)
+    df_res["delta_accu"] = df_res["delta_accu"].round(2)
+    # PLOT
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(name="Net Delta",
+                             x=df_res["gw"].values,
+                             y=df_res["delta_accu"].values))
+    # fig.add_trace(go.Scatter(name="No Transfers",
+    #                         x=df_res["gw"].values,
+    #                         y=df_res["org_accu"].values))
+
+    fig.layout.template = 'seaborn'
+    layout = go.Layout(xaxis={'title': 'Gameweek'},
+                       yaxis={'title': 'Accumulated xPts Delta'},
+                       margin={'l': 5, 'b': 75, 't': 25, 'r': 5},
+                       hovermode='x')
+    fig.update_layout(layout)
+    fig.update_layout(
+        title="Transfer Exploration",
+        legend=dict(
+            x=0.8,
+            y=0.05,
+            traceorder="normal",
+            font=dict(
+                family="sans-serif",
+                size=12,
+                color="black"
+            ),
+        )
+    )
+
+    x_max, x_min = df_res["gw"].max(), df_res["gw"].min()
+    # y_max = max(df_a_xpts["xpts"].max(), df_b_xpts["xpts"].max())
+    fig.update_xaxes(range=(x_min, x_max), ticks="inside", tick0=x_min, dtick=1)
+
+    transfer_graph = dcc.Graph(figure=fig)
+
+    df_res = df_res.rename(
+        columns={"gw": "GW", "mod_accu": "Active Score", "org_accu": "Passive Score", "delta_accu": "Delta"})
+    df_res = df_res[["GW", "Active Score", "Passive Score", "Delta"]].copy()
+    transfer_table = make_table(df_res)
+
+    transfer_output = html.Div(children=[
+        transfer_graph,
+        html.Div("", style={"margin-top": "2rem"}),
+        transfer_table,
+        html.Div("", style={"margin-top": "2rem"}),
+    ])
+    return transfer_output
+
+
+def get_squad_score(players, df_pred, gw, penalty=0):
+    # data_maker = ModelDataMaker(CONFIG_2020)
+    # player_id_player_position_map = data_maker.get_player_id_player_position_map()
+    formations = ['1-3-4-3', '1-3-5-2', '1-4-3-3', '1-4-5-1']
+    df = pd.DataFrame()
+    df["player_id"] = players
+    # df["position"] = df["player_id"].apply(lambda x: player_id_player_position_map.get(x, x))
+    df["gw"] = gw
+    df["multiplier"] = 0
+    df = pd.merge(df, df_pred, on=["player_id", "gw"])
+
+    df_gk = df[df["position"] == "GK"].copy()
+    df_def = df[df["position"] == "DEF"].copy()
+    df_mid = df[df["position"] == "MID"].copy()
+    df_fwd = df[df["position"] == "FWD"].copy()
+
+    max_points = 0
+    squad = pd.DataFrame()
+
+    for this_formation in formations:
+        pos_quota = this_formation.split("-")
+        pos_quota = [int(quota) for quota in pos_quota]
+        # set_trace()
+        df_gk = df_gk.sort_values(by="xpts", ascending=False)
+        df_gk_picked = df_gk.iloc[:pos_quota[0]].copy()
+        df_gk_bench = df_gk.iloc[pos_quota[0]:].copy()
+        df_gk_picked["multiplier"] = 1
+
+        df_def = df_def.sort_values(by="xpts", ascending=False)
+        df_def_picked = df_def.iloc[:pos_quota[1]].copy()
+        df_def_bench = df_def.iloc[pos_quota[1]:].copy()
+        df_def_picked["multiplier"] = 1
+
+        df_mid = df_mid.sort_values(by="xpts", ascending=False)
+        df_mid_picked = df_mid.iloc[:pos_quota[2]].copy()
+        df_mid_bench = df_mid.iloc[pos_quota[2]:].copy()
+        df_mid_picked["multiplier"] = 1
+
+        df_fwd = df_fwd.sort_values(by="xpts", ascending=False)
+        df_fwd_picked = df_fwd.iloc[:pos_quota[3]].copy()
+        df_fwd_bench = df_fwd.iloc[pos_quota[3]:].copy()
+        df_fwd_picked["multiplier"] = 1
+
+        df = pd.concat([df_gk_picked, df_def_picked, df_mid_picked, df_fwd_picked,
+                        df_gk_bench, df_def_bench, df_mid_bench, df_fwd_bench])
+
+        captain = df[df["xpts"] == df["xpts"].max()]["name"].values[0]
+        df.loc[df[df["name"] == captain].index, "multiplier"] = 2
+        df["point"] = df["xpts"] * df["multiplier"]
+        total_points = df["point"].sum()
+        if total_points > max_points:
+            max_points = total_points
+            squad = df[["player_id", "gw", "name", "team", "position", "multiplier"]].copy()
+        max_points = max_points - penalty
+    return squad, max_points
